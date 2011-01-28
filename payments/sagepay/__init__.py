@@ -1,11 +1,11 @@
 import base64
 import itertools
-import urllib
 import urlparse
 
-from Crypto.Cipher import AES
+#from Crypto.Cipher import AES
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
+from django.template.loader import render_to_string
 
 from .. import BasicProvider
 from ..models import Payment
@@ -42,7 +42,7 @@ class SagepayProvider(BasicProvider):
             'Currency': payment.currency,
             'SuccessURL': return_url,
             'FailureURL': return_url,
-            'Description': '',
+            'Description': "Payment #%s" % payment.pk,
             'BillingSurname': '',
             'BillingFirstnames': '',
             'BillingAddress1': '',
@@ -56,7 +56,11 @@ class SagepayProvider(BasicProvider):
             'DeliveryPostCode': '',
             'DeliveryCountry': ''
         }
-        udata = urllib.urlencode(data)
+        # Parzymy Sage
+        #
+        # Thou shalt neither urlencode()... nor use & or = in the data of thou.
+        # Otherwise - no Sage.
+        udata = '&'.join("%s=%s" % kv for kv in data.items())
         # Although the docs say we should use AES/CBC/PKCS#5/OMG/WTF, this is just a lie.
         # We still should rely on the old, good, unbreakable... XOR.
         # TODO: Suggest SagePay developers switching to ROT13.
@@ -72,9 +76,8 @@ class SagepayProvider(BasicProvider):
         for c in udata:
             ebits.append(chr(ord(c) ^ ord(kod.next())))
         encdata = ''.join(ebits)
-        # Hackishy hack goes on: remove newlines, otherwise you will get no Sage.
+        # No newlines in base64. Never. Otherwise - no Sage.
         crypt = base64.encodestring(encdata).replace("\n", "")
-        # zaparz Sage!
         return {'VPSProtocol': self._version, 'TxType': 'PAYMENT',
                 'Vendor': self._vendor, 'Crypt': crypt}
 
