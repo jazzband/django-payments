@@ -6,6 +6,7 @@ import urlparse
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
+from django.views.generic.simple import direct_to_template
 
 from .. import BasicProvider
 from ..models import Payment
@@ -31,6 +32,13 @@ class SagepayProvider(BasicProvider):
         self._action = kwargs.pop('gateway', self._action)
         return super(SagepayProvider, self).__init__(*args, **kwargs)
 
+    def simplexor(self, data):
+        ebits = []
+        kod = itertools.cycle(self._enckey)
+        for c in data:
+            ebits.append(chr(ord(c) ^ ord(kod.next())))
+        return ''.join(ebits)
+
     def get_hidden_fields(self, payment):
         return_url = urlparse.urlunparse((
                 'https', Site.objects.get_current().domain,
@@ -43,18 +51,19 @@ class SagepayProvider(BasicProvider):
             'SuccessURL': return_url,
             'FailureURL': return_url,
             'Description': "Payment #%s" % payment.pk,
-            'BillingSurname': '',
-            'BillingFirstnames': '',
-            'BillingAddress1': '',
-            'BillingCity': '',
-            'BillingPostCode': '',
-            'BillingCountry': '',
-            'DeliverySurname': '',
-            'DeliveryFirstnames': '',
-            'DeliveryAddress1': '',
-            'DeliveryCity': '',
-            'DeliveryPostCode': '',
-            'DeliveryCountry': ''
+            # TODO: get real data
+            'BillingSurname': 'Surname',
+            'BillingFirstnames': 'Firstname Secondname',
+            'BillingAddress1': 'Billing Address 1',
+            'BillingCity': 'Billing City',
+            'BillingPostCode': 'BLGCD1',
+            'BillingCountry': 'IR',
+            'DeliverySurname': 'Surname',
+            'DeliveryFirstnames': 'Firstname Secondname',
+            'DeliveryAddress1': 'Delivery Address 1',
+            'DeliveryCity': 'Delivery City',
+            'DeliveryPostCode': 'DLVCD1',
+            'DeliveryCountry': 'IR'
         }
         # Parzymy Sage
         #
@@ -71,15 +80,31 @@ class SagepayProvider(BasicProvider):
         #encdata = aes.encrypt(pdata)
         #
         # Here goes the XOR:
-        ebits = []
-        kod = itertools.cycle(self._enckey)
-        for c in udata:
-            ebits.append(chr(ord(c) ^ ord(kod.next())))
-        encdata = ''.join(ebits)
+        encdata = self.simplexor(udata)
         # No newlines in base64. Never. Otherwise - no Sage.
         crypt = base64.encodestring(encdata).replace("\n", "")
         return {'VPSProtocol': self._version, 'TxType': 'PAYMENT',
                 'Vendor': self._vendor, 'Crypt': crypt}
 
     def process_data(self, request, variant):
-        pass
+        crypt = request.GET['crypt']
+        crypt += (len(crypt) % 4) * '=' + '===='
+        udata = self.simplexor(base64.decodestring(crypt))
+        print udata
+        data = {}
+        for kv in udata.split('&'):
+            k, v = kv.split('=')
+            data[k] = v
+        print data
+        payment = Payment.objects.get(pk=data['VendorTxCode'])
+        if payment.status == 'waiting':
+            # If the payment is not in waiting state, we probably have a page reload.
+            # We should neither throw 404 nor alter the payment again in such case.
+            if data['Status'] == 'OK':
+                payment.change_status('confirmed')
+            else:
+                # XXX: We should recognize AUTHENTICATED and REGISTERED in the future.
+                payment.change_status('rejected')
+        return direct_to_template(request,
+                'payments/sagepay/return.html',
+                {'payment': payment, 'status': data['Status'], 'details': data['StatusDetail']})

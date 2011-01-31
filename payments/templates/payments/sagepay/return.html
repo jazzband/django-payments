@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if payment.status == 'confirmed' %}
+<h1>Payment successful</h1>
+<p>
+Your payment has been successfully completed.
+</p>
+{% else %}
+<h1>Payment failed</h1>
+<p>
+Your payment has not succeeded. The detailed reason follows:<br />
+<strong>{{ status }}</strong>: {{ details }}
+</p>
+{% endif %}
+<p>
+<a href="/">Proceed to the main page</a>
+</p>
+{% endblock %}
