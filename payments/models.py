@@ -53,6 +53,20 @@ class Payment(models.Model):
         '''
         return self.items.create(*args, **kwargs)
 
+    def set_customer_detail(self, key, value):
+        try:
+            detail = self.customer_details.get(key=key)
+        except CustomerDetail.DoesNotExist:
+            detail = CustomerDetail(payment=self, key=key)
+        detail.value = value
+        detail.save()
+
+    def get_customer_detail(self, key):
+        try:
+            return self.customer_details.get(key=key).value
+        except CustomerDetail.DoesNotExist:
+            return ''
+
     def change_status(self, status):
         '''
         Updates the Payment status and sends the status_changed signal.
@@ -61,6 +75,7 @@ class Payment(models.Model):
         self.status = status
         self.save()
         status_changed.send(sender=self)
+
 
 class PaymentItem(models.Model):
     '''
@@ -74,6 +89,31 @@ class PaymentItem(models.Model):
     quantity = models.DecimalField(max_digits=9, decimal_places=3, default='1')
     unit_price = models.DecimalField(max_digits=9, decimal_places=2)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+
+
+class CustomerDetail(models.Model):
+    payment = models.ForeignKey(Payment, related_name='customer_details')
+    KEY_CHOICES = (
+        ('first_name', _("First name")),
+        ('last_name', _("Last name")),
+        ('billing_address', _("Billing address")),
+        ('billing_city', _("Billing city")),
+        ('billing_postcode', _("Billing postal code")),
+        ('billing_country_iso2', _("Billing country ISO 2-letter code")),
+        ('shipping_address', _("Shipping address")),
+        ('shipping_city', _("Shipping city")),
+        ('shipping_postcode', _("Shipping postal code")),
+        ('shipping_country_iso2', _("Shipping country ISO 2-letter code")),
+        )
+    key = models.CharField(max_length=50, choices=KEY_CHOICES)
+    value = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('payment', 'key')
+
+    def __unicode__(self):
+        return u"%s: %s" % (self.key, self.value)
+
 
 def _on_item_saved(sender, instance, created, **kwargs):
     '''
