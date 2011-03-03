@@ -74,7 +74,7 @@ class Payment(models.Model):
         from signals import status_changed
         self.status = status
         self.save()
-        status_changed.send(sender=self)
+        status_changed.send(sender=type(self), instance=self)
 
 
 class PaymentItem(models.Model):
