@@ -1,5 +1,4 @@
 from .. import BasicProvider
-from ..models import Payment
 
 class DummyProvider(BasicProvider):
     '''
@@ -14,11 +13,15 @@ class DummyProvider(BasicProvider):
         self._url = url
         return super(DummyProvider, self).__init__(*args, **kwargs)
 
+    def url(self, payment):
+        if callable(self._url):
+            return self._url(payment)
+        return self._url
+
     def get_form(self, payment):
-        from forms import DummyPaymentForm
-        return DummyPaymentForm(self._variant, initial={
+        from forms import DummyRedirectForm
+        return DummyRedirectForm(self._variant, initial={
             'payment_id': payment.id,
-            'status': payment.status,
         })
 
     def get_hidden_fields(self, payment):

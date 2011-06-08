@@ -1,6 +1,8 @@
-<h1>Dummy payment processing&trade;</h1>
+<!DOCTYPE html>
 
+<h1>Dummy payment gateway</h1>
 <form action="{{ form.action }}" method="{{ form.method }}">
+    {% csrf_token %}
     {{ form.as_p }}
     <p><input type="submit"></p>
 </form>
