@@ -1,22 +1,20 @@
 from setuptools import setup, find_packages
  
-setup(
-    name='django-payments',
-    version='0.1',
-    description='Django Payments app',
-    url='http://github.com/dantium/django-payments',
-    packages=find_packages(),
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Web Environment',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Framework :: Django',
-    ],
-    include_package_data=True,
-    zip_safe=False,
-    install_requires=['setuptools'],
-    setup_requires=['setuptools_git'],
-)
+setup(name='django-payments',
+      author='Mirumee Software',
+      author_email='hello@mirumee.com',
+      description='Universal payment handling for Django',
+      version='0.1',
+      url='http://github.com/mirumee/django-payments',
+      packages=find_packages(),
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
+          'Environment :: Web Environment',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: MIT License',
+          'Operating System :: OS Independent',
+          'Programming Language :: Python',
+          'Framework :: Django',
+      ],
+      include_package_data=True,
+      zip_safe=False)
