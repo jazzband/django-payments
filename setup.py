@@ -7,7 +7,7 @@ setup(
     url='http://github.com/dantium/django-payments',
     packages=find_packages(),
     classifiers=[
-        'Development Status :: 0.1 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
