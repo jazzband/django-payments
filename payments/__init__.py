@@ -4,8 +4,9 @@ PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {
             'url': 'http://google.pl/',
         },
-    ),
+    )
 }
+
 
 class BasicProvider(object):
     '''
@@ -18,16 +19,20 @@ class BasicProvider(object):
         return reverse('process_payment', args=[self._variant])
     _action = property(_action)
 
-    def __init__(self, variant):
+    def __init__(self, variant, order_items):
+        '''
+        Variable order_items has to be iterable.
+        '''
         self._variant = variant
+        self.order_items = order_items
 
     def create_payment(self, commit=True, *args, **kwargs):
         '''
         Creates a new payment. Always use this method instead of manually
         creating a Payment instance directly.
-        
+
         All arguments are passed directly to Payment constructor.
-        
+
         When implementing a new payment provider, you may overload this method
         to return a specialized version of Payment instead.
         '''
@@ -41,7 +46,7 @@ class BasicProvider(object):
         '''
         Converts a payment into a dict containing transaction data. Use
         get_form instead to get a form suitable for templates.
-        
+
         When implementing a new payment provider, overload this method to
         transfer provider-specific data.
         '''
@@ -52,7 +57,8 @@ class BasicProvider(object):
         Converts *payment* into a form suitable for Django templates.
         '''
         from forms import PaymentForm
-        return PaymentForm(self.get_hidden_fields(payment), self._action, self._method)
+        return PaymentForm(self.get_hidden_fields(payment), self._action,
+                           self._method)
 
     def process_data(self, request):
         '''
@@ -60,9 +66,11 @@ class BasicProvider(object):
         '''
         raise NotImplementedError
 
-def factory(variant='default'):
+
+def factory(variant='default', order_items=[]):
     '''
-    Takes the optional *variant* name and returns an appropriate implementation.
+    Takes the optional *variant* name and returns an appropriate
+    implementation. Variable *order_items* has to be iterable.
     '''
     from django.conf import settings
     variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
@@ -71,10 +79,10 @@ def factory(variant='default'):
         raise ValueError('Payment variant does not exist: %s' % variant)
     path = handler.split('.')
     if len(path) < 2:
-        raise ValueError('Payment variant uses an invalid payment module: %s' % variant)
+        raise ValueError('Payment variant uses an invalid payment module: %s' %
+                         variant)
     module_path = '.'.join(path[:-1])
     klass_name = path[-1]
     module = __import__(module_path, globals(), locals(), [klass_name])
     klass = getattr(module, klass_name)
-    return klass(variant=variant, **config)
-
+    return klass(variant=variant, order_items=order_items, **config)

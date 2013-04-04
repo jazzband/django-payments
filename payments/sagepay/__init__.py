@@ -12,6 +12,7 @@ from django.views.generic.simple import direct_to_template
 from .. import BasicProvider
 from ..models import Payment
 
+
 class SagepayProvider(BasicProvider):
     '''
     sagepay.com payment provider
@@ -36,7 +37,7 @@ class SagepayProvider(BasicProvider):
     def _aes_pad(self, crypt):
         padding = ""
         padlength = 16 - (len(crypt) % 16)
-        for i in range(1, padlength + 1):
+        for _i in range(1, padlength + 1):
             padding += chr(padlength)
         return crypt + padding
 
@@ -57,8 +58,9 @@ class SagepayProvider(BasicProvider):
     def get_hidden_fields(self, payment):
         return_url = urlparse.urlunparse((
                 'https', Site.objects.get_current().domain,
-                reverse('process_payment', kwargs={'variant': payment.variant}),
-                None, None, None))
+                reverse('process_payment',
+                        kwargs={'variant': payment.variant}),
+                        None, None, None))
         data = {
             'VendorTxCode': payment.pk,
             'Amount': "%.2f" % payment.total,
