@@ -29,12 +29,17 @@ class Payment(models.Model):
     currency = models.CharField(max_length=10)
     #: Total amount (gross)
     total = models.DecimalField(max_digits=9, decimal_places=2, default='0.0')
+    delivery = models.DecimalField(max_digits=9, decimal_places=2,
+                                   default='0.0')
+    tax = models.DecimalField(max_digits=9, decimal_places=2, default='0.0')
+    description = models.TextField(blank=True, default='')
     first_name = models.CharField(max_length=256, blank=True)
     last_name = models.CharField(max_length=256, blank=True)
     city = models.CharField(max_length=256, blank=True)
     country_area = models.CharField(max_length=256, blank=True)
     zip = models.CharField(max_length=256, blank=True)
     country = models.CharField(max_length=256, blank=True)
+    extra_data = models.TextField(blank=True, default='')
 
     def change_status(self, status):
         '''
@@ -46,5 +51,4 @@ class Payment(models.Model):
         status_changed.send(sender=type(self), instance=self)
 
     def __unicode__(self):
-
         return self.variant
