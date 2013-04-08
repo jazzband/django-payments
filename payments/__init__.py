@@ -1,3 +1,4 @@
+from collections import namedtuple
 from django.core.urlresolvers import reverse
 
 PAYMENT_VARIANTS = {
@@ -6,6 +7,13 @@ PAYMENT_VARIANTS = {
         },
     )
 }
+
+PaymentItem = namedtuple('PaymentItem', 'name, quantity, price, currency, sku')
+
+
+class RedirectNeeded(Exception):
+
+    pass
 
 
 class BasicProvider(object):
