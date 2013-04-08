@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
- 
+
 setup(
     name='django-payments',
     author='Mirumee Software',
@@ -18,6 +18,7 @@ setup(
         'Programming Language :: Python',
         'Framework :: Django',
     ],
+    install_requires=['requests==1.2.0'],
     setup_requires=['Sphinx'],
     include_package_data=True,
     zip_safe=False)
