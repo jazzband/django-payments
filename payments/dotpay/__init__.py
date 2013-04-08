@@ -3,13 +3,13 @@ import urlparse
 
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
-from django.utils.http import urlquote
 from django.http import HttpResponse, HttpResponseForbidden
 
 from .. import BasicProvider
 from ..models import Payment
 
 from .forms import ProcessPaymentForm
+
 
 class DotpayProvider(BasicProvider):
     '''
@@ -32,17 +32,14 @@ class DotpayProvider(BasicProvider):
     _method = 'post'
     _action = 'https://ssl.dotpay.pl/'
 
-    def __init__(self, seller_id, url, domain=None, pin=None, channel=0, lang='pl', lock=False, **kwargs):
+    def __init__(self, seller_id, url, domain=None, pin=None, channel=0,
+                 lang='pl', lock=False, **kwargs):
         self._seller_id = seller_id
         self._url = url
-        self._domain = domain \
-                or urlparse.urlunparse((
-                    'https',
-                    Site.objects.get_current().domain,
-                    '/',
-                    None,
-                    None,
-                    None))
+        self._domain = (domain or
+                        urlparse.urlunparse(('https',
+                                             Site.objects.get_current().domain,
+                                             '/', None, None, None)))
         self._pin = pin
         self._channel = channel
         self._lang = lang
@@ -50,18 +47,19 @@ class DotpayProvider(BasicProvider):
         return super(DotpayProvider, self).__init__(**kwargs)
 
     def get_hidden_fields(self, payment):
-        get_label = lambda x: x.name if x.quantity == 1 else u'%s × %d' % (x.name, x.quantity)
+        get_label = (lambda x: x.name if x.quantity == 1
+                     else u'%s × %d' % (x.name, x.quantity))
         items = map(get_label, payment.items.all())
-
         domain = urlparse.urlparse(self._domain)
-        path =  reverse('process_payment', args=[self._variant])
-        urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
+        path = reverse('process_payment', args=[self._variant])
+        urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path,
+                                    None, None, None))
         url_parts = urlparse.urlparse(self._url)
         if url_parts.scheme:
             url = self._url
         else:
-            url = urlparse.urlunparse((domain.scheme, domain.netloc, url_parts.path, None, None, None))
-
+            url = urlparse.urlunparse((domain.scheme, domain.netloc,
+                                       url_parts.path, None, None, None))
         data = {
             'id': self._seller_id,
             'amount': str(payment.total),
@@ -78,16 +76,15 @@ class DotpayProvider(BasicProvider):
         }
         return data
 
-    def process_data(self, request, variant):
+    def process_data(self, request):
         from django.core.mail import mail_admins
-        mail_admins('Payment', unicode(request.POST) + '\n' + unicode(request.GET))
+        variables = unicode(request.POST) + '\n' + unicode(request.GET)
+        mail_admins('Payment', variables)
         failed = HttpResponseForbidden("FAILED")
         if request.method != "POST":
             return failed
-
         form = ProcessPaymentForm(pin=self._pin, data=request.POST)
         if not form.is_valid():
             return failed
-
         form.save()
         return HttpResponse("OK")
