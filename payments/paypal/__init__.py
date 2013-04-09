@@ -57,17 +57,10 @@ class PaypalProvider(BasicProvider):
             return None
         return links[0]['href']
 
-    def get_payment_data(self, payment):
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer ' + self.get_access_token(payment)}
+    def get_transactions_data(self, payment):
         sub_total = payment.total - payment.delivery
-        return_url = self.get_return_url(payment)
-        post = {
-            'intent': 'sale',
-            'redirect_urls': {'return_url': return_url,
-                              'cancel_url': return_url},
-            'payer': {'payment_method': 'paypal'},
-            'transactions': [{
+        data = {'intent': 'sale',
+                'transactions': [{
                 'amount': {
                   'total': payment.total,
                   'currency': payment.currency,
@@ -79,6 +72,20 @@ class PaypalProvider(BasicProvider):
                 },
                 'item_list': {'items': self.order_items},
                 'description': payment.description}]}
+        return data
+
+    def get_product_data(self, payment):
+        return_url = self.get_return_url(payment)
+        data = self.get_transactions_data(payment)
+        data['redirect_urls'] = {'return_url': return_url,
+                                 'cancel_url': return_url},
+        data['payer'] = {'payment_method': 'paypal'}
+        return data
+
+    def get_payment_data(self, payment):
+        headers = {'Content-Type': 'application/json',
+                   'Authorization': 'Bearer ' + self.get_access_token(payment)}
+        post = self.get_product_data(payment)
         #TODO: check access_token is is vaild
         response = requests.post(self.payments_url,
                                  data=simplejson.dumps(post), headers=headers)
