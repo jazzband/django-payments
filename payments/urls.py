@@ -15,12 +15,12 @@ def process_data(request, variant, token):
 
     Raises Http404 if variant does not exist.
     '''
-    try:
-        provider = factory(variant)
-    except:
-        raise Http404('No such payment variant')
     payment = get_object_or_404(Payment, token=token)
-    return provider.process_data(request, payment)
+    try:
+        provider = factory(payment, variant)
+    except ValueError:
+        raise Http404('No such payment variant')
+    return provider.process_data(request)
 
 urlpatterns = patterns('',
     url(r'^process/(?P<variant>.+)/(?P<token>[0-9a-z]{8}-[0-9a-z]{4}-'

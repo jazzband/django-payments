@@ -23,10 +23,10 @@ class PaypalProvider(BasicProvider):
         self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
         super(PaypalProvider, self).__init__(*args, **kwargs)
 
-    def get_access_token(self, payment):
-        extra_data = (simplejson.loads(payment.extra_data)
-                      if payment.extra_data else {})
-        created = payment.created
+    def get_access_token(self):
+        extra_data = (simplejson.loads(self.payment.extra_data)
+                      if self.payment.extra_data else {})
+        created = self.payment.created
         now = timezone.now()
         if ('access_token' in extra_data and 'expires_in' in extra_data and
             (created + timedelta(seconds=extra_data['expires_in'])) > now):
@@ -41,12 +41,12 @@ class PaypalProvider(BasicProvider):
             response.raise_for_status()
             data = response.json()
             extra_data.update(data)
-            payment.extra_data = simplejson.dumps(extra_data)
+            self.payment.extra_data = simplejson.dumps(extra_data)
             return data['access_token']
 
-    def get_return_url(self, payment):
+    def get_return_url(self):
         domain = Site.objects.get_current().domain
-        payment_link = payment.get_absolute_url()
+        payment_link = self.payment.get_absolute_url()
         return urlparse.urlunparse(('http', domain, payment_link,
                                     None, None, None))
 
@@ -57,77 +57,79 @@ class PaypalProvider(BasicProvider):
             return None
         return links[0]['href']
 
-    def get_transactions_data(self, payment):
-        sub_total = payment.total - payment.delivery
+    def get_transactions_data(self):
+        sub_total = self.payment.total - self.payment.delivery
         data = {'intent': 'sale',
                 'transactions': [{
                 'amount': {
-                  'total': payment.total,
-                  'currency': payment.currency,
+                  'total': self.payment.total,
+                  'currency': self.payment.currency,
                   'details': {
                         'subtotal': sub_total,
-                        'tax': payment.tax,
-                        'shipping': payment.delivery
+                        'tax': self.payment.tax,
+                        'shipping': self.payment.delivery
                       }
                 },
                 'item_list': {'items': self.order_items},
-                'description': payment.description}]}
+                'description': self.payment.description}]}
         return data
 
-    def get_product_data(self, payment):
-        return_url = self.get_return_url(payment)
-        data = self.get_transactions_data(payment)
+    def get_product_data(self):
+        return_url = self.get_return_url()
+        data = self.get_transactions_data()
         data['redirect_urls'] = {'return_url': return_url,
                                  'cancel_url': return_url},
         data['payer'] = {'payment_method': 'paypal'}
         return data
 
-    def get_payment_data(self, payment):
+    def get_payment_data(self):
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer ' + self.get_access_token(payment)}
-        post = self.get_product_data(payment)
+                   'Authorization': 'Bearer ' + self.get_access_token()}
+        post = self.get_product_data()
         #TODO: check access_token is is vaild
         response = requests.post(self.payments_url,
                                  data=simplejson.dumps(post), headers=headers)
         response.raise_for_status()
         return response.json()
 
-    def get_form(self, payment):
-        extra_data = (simplejson.loads(payment.extra_data)
-                      if payment.extra_data else {})
+    def get_form(self,  data=None):
+        extra_data = (simplejson.loads(self.payment.extra_data)
+                      if self.payment.extra_data else {})
         redirect_to = self.get_link('approval_url', extra_data)
         if not redirect_to:
-            data = self.get_payment_data(payment)
+            data = self.get_payment_data()
             redirect_to = self.get_link('approval_url', data)
-            payment.transaction_id = data['id']
+            self.payment.transaction_id = data['id']
             extra_data['links'] = data['links']
             if extra_data:
-                payment.extra_data = simplejson.dumps(extra_data)
-        payment.status = 'redirected'
-        payment.save()
+                self.payment.extra_data = simplejson.dumps(extra_data)
+        self.payment.status = 'redirected'
+        self.payment.save()
         raise RedirectNeeded(redirect_to)
 
-    def process_data(self, request, payment):
-        extra_data = (simplejson.loads(payment.extra_data)
-                      if payment.extra_data else {})
+    def process_data(self, request):
+        extra_data = (simplejson.loads(self.payment.extra_data)
+                      if self.payment.extra_data else {})
         try:
             _paypal_token = request.GET['token']
         except KeyError:
             raise HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:
-            payment.status = 'canceled'
-            payment.save()
-            return redirect(payment.cancel_url)
+            self.payment.status = 'canceled'
+            self.payment.save()
+            return redirect(self.payment.cancel_url)
+        access_token = self.get_access_token()
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer ' + self.get_access_token(payment)}
+                   'Authorization': 'Bearer ' + access_token}
         post = {'payer_id': payer_id}
-        execute_url = self.payment_execute_url % {'id': payment.transaction_id}
+        transaction_id = self.payment.transaction_id
+        execute_url = self.payment_execute_url % {'id': transaction_id}
         response = requests.post(execute_url, data=simplejson.dumps(post),
                                  headers=headers)
         response.raise_for_status()
         extra_data['payer_id'] = payer_id
-        payment.extra_data = simplejson.dumps(extra_data)
-        payment.status = 'success'
-        payment.save()
-        return redirect(payment.success_url)
+        self.payment.extra_data = simplejson.dumps(extra_data)
+        self.payment.status = 'success'
+        self.payment.save()
+        return redirect(self.payment.success_url)

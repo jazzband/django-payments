@@ -27,11 +27,12 @@ class BasicProvider(object):
         return reverse('process_payment', args=[self._variant])
     _action = property(_action)
 
-    def __init__(self, variant, order_items):
+    def __init__(self, payment, variant, order_items):
         '''
         Variable order_items has to be iterable.
         '''
         self._variant = variant
+        self.payment = payment
         self.order_items = order_items
 
     def create_payment(self, commit=True, *args, **kwargs):
@@ -50,7 +51,7 @@ class BasicProvider(object):
             payment.save()
         return payment
 
-    def get_hidden_fields(self, payment):
+    def get_hidden_fields(self):
         '''
         Converts a payment into a dict containing transaction data. Use
         get_form instead to get a form suitable for templates.
@@ -60,12 +61,12 @@ class BasicProvider(object):
         '''
         raise NotImplementedError
 
-    def get_form(self, payment):
+    def get_form(self, data=None):
         '''
         Converts *payment* into a form suitable for Django templates.
         '''
         from forms import PaymentForm
-        return PaymentForm(self.get_hidden_fields(payment), self._action,
+        return PaymentForm(self.get_hidden_fields(self.payment), self._action,
                            self._method)
 
     def process_data(self, request):
@@ -75,7 +76,7 @@ class BasicProvider(object):
         raise NotImplementedError
 
 
-def factory(variant='default', order_items=[]):
+def factory(payment, variant='default', order_items=[]):
     '''
     Takes the optional *variant* name and returns an appropriate
     implementation. Variable *order_items* has to be iterable.
@@ -93,4 +94,4 @@ def factory(variant='default', order_items=[]):
     klass_name = path[-1]
     module = __import__(module_path, globals(), locals(), [klass_name])
     klass = getattr(module, klass_name)
-    return klass(variant=variant, order_items=order_items, **config)
+    return klass(payment, variant=variant, order_items=order_items, **config)
