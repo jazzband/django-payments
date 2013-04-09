@@ -16,7 +16,8 @@ class PaypalProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.secret = kwargs.pop('secret')
         self.client_id = kwargs.pop('client_id')
-        self.endpoint = kwargs.pop('endpoint')
+        self.endpoint = kwargs.pop('endpoint',
+                                   'https://api.sandbox.paypal.com')
         self.oauth2_url = self.endpoint + '/v1/oauth2/token'
         self.payments_url = self.endpoint + '/v1/payments/payment'
         self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
