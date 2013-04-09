@@ -2,12 +2,14 @@
 This module is responsible for automatic processing of provider callback
 data (asynchronous transaction updates).
 '''
+from . import factory
+from .models import Payment
 from django.conf.urls.defaults import patterns, url
 from django.http import Http404
-from . import factory
+from django.shortcuts import get_object_or_404
 
 
-def process_data(request, variant):
+def process_data(request, variant, token):
     '''
     Calls process_data of an appropriate provider.
 
@@ -17,7 +19,10 @@ def process_data(request, variant):
         provider = factory(variant)
     except:
         raise Http404('No such payment variant')
-    return provider.process_data(request)
+    payment = get_object_or_404(Payment, token=token)
+    return provider.process_data(request, payment)
 
 urlpatterns = patterns('',
-    url(r'^process/(?P<variant>.+)/$', process_data, name='process_payment'),)
+    url(r'^process/(?P<variant>.+)/(?P<token>[0-9a-z]{8}-[0-9a-z]{4}-'
+        '[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})$', process_data,
+        name='process_payment'),)

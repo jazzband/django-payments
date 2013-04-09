@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from uuid import uuid4
 
 PAYMENT_STATUS_CHOICES = (
     ('waiting', _(u'Waiting for confirmation')),
@@ -40,6 +41,9 @@ class Payment(models.Model):
     zip = models.CharField(max_length=256, blank=True)
     country = models.CharField(max_length=256, blank=True)
     extra_data = models.TextField(blank=True, default='')
+    token = models.CharField(max_length=36, blank=True, default='')
+    success_url = models.CharField(max_length=255, blank=True, default='')
+    cancel_url = models.CharField(max_length=255, blank=True, default='')
 
     def change_status(self, status):
         '''
@@ -50,5 +54,19 @@ class Payment(models.Model):
         self.save()
         status_changed.send(sender=type(self), instance=self)
 
+    def save(self, *args, **kwargs):
+        if not self.token:
+            for _i in xrange(100):
+                token = str(uuid4())
+                if not Payment.objects.filter(token=token).exists():
+                    self.token = token
+                    break
+        return super(Payment, self).save(*args, **kwargs)
+
     def __unicode__(self):
         return self.variant
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('process_payment', (), {'variant': self.variant,
+                                        'token': self.token})
