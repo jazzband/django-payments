@@ -9,6 +9,30 @@ import requests
 import urlparse
 
 
+class UnauthorizedRequest(Exception):
+
+    pass
+
+
+def authorize(fun):
+
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        self.access_token = self.get_access_token()
+        response = fun(*args, **kwargs)
+        if response.status_code == 401:
+            extra_data = (simplejson.loads(self.payment.extra_data)
+                          if self.payment.extra_data else {})
+            if 'access_token' in extra_data:
+                del extra_data['access_token']
+                self.payment.extra_data = simplejson.dumps(extra_data)
+            self.access_token = self.get_access_token()
+            response = fun(*args, **kwargs)
+        return response
+
+    return wrapper
+
+
 class PaypalProvider(BasicProvider):
     '''
     paypal.com payment provider
@@ -83,15 +107,25 @@ class PaypalProvider(BasicProvider):
         data['payer'] = {'payment_method': 'paypal'}
         return data
 
+    @authorize
     def get_payment_response(self, extra_data=None):
+        print 'autorize'
         headers = {'Content-Type': 'application/json',
-                   'Authorization': self.get_access_token()}
+                   'Authorization': self.access_token}
         post = simplejson.dumps(self.get_product_data(extra_data))
-        #TODO: check access_token is is vaild
-        response = requests.post(self.payments_url, data=post, headers=headers)
-        return response
+        return requests.post(self.payments_url, data=post, headers=headers)
 
-    def get_form(self,  data=None):
+    @authorize
+    def get_payment_execute_response(self, payer_id):
+        headers = {'Content-Type': 'application/json',
+                   'Authorization': self.access_token}
+        post = {'payer_id': payer_id}
+        transaction_id = self.payment.transaction_id
+        execute_url = self.payment_execute_url % {'id': transaction_id}
+        return requests.post(execute_url, data=simplejson.dumps(post),
+                             headers=headers)
+
+    def get_form(self, data=None):
         extra_data = (simplejson.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         redirect_to = self.get_link('approval_url', extra_data)
@@ -120,14 +154,7 @@ class PaypalProvider(BasicProvider):
             self.payment.status = 'canceled'
             self.payment.save()
             return redirect(self.payment.cancel_url)
-        access_token = self.get_access_token()
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': access_token}
-        post = {'payer_id': payer_id}
-        transaction_id = self.payment.transaction_id
-        execute_url = self.payment_execute_url % {'id': transaction_id}
-        response = requests.post(execute_url, data=simplejson.dumps(post),
-                                 headers=headers)
+        response = self.get_payment_execute_response(payer_id)
         response.raise_for_status()
         extra_data['payer_id'] = payer_id
         self.payment.extra_data = simplejson.dumps(extra_data)
