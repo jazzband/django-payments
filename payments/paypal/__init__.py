@@ -30,7 +30,8 @@ class PaypalProvider(BasicProvider):
         now = timezone.now()
         if ('access_token' in extra_data and 'expires_in' in extra_data and
             (created + timedelta(seconds=extra_data['expires_in'])) > now):
-            return extra_data['access_token']
+            return u'%s %s' % (extra_data['token_type'],
+                               extra_data['access_token'])
         else:
             headers = {'Accept': 'application/json',
                        'Accept-Language': 'en_US'}
@@ -42,7 +43,7 @@ class PaypalProvider(BasicProvider):
             data = response.json()
             extra_data.update(data)
             self.payment.extra_data = simplejson.dumps(extra_data)
-            return data['access_token']
+            return u'%s %s' % (data['token_type'], data['access_token'])
 
     def get_return_url(self):
         domain = Site.objects.get_current().domain
@@ -74,33 +75,33 @@ class PaypalProvider(BasicProvider):
                 'description': self.payment.description}]}
         return data
 
-    def get_product_data(self):
+    def get_product_data(self, extra_data=None):
         return_url = self.get_return_url()
         data = self.get_transactions_data()
         data['redirect_urls'] = {'return_url': return_url,
-                                 'cancel_url': return_url},
+                                 'cancel_url': return_url}
         data['payer'] = {'payment_method': 'paypal'}
         return data
 
-    def get_payment_data(self):
+    def get_payment_response(self, extra_data=None):
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer ' + self.get_access_token()}
-        post = self.get_product_data()
+                   'Authorization': self.get_access_token()}
+        post = simplejson.dumps(self.get_product_data(extra_data))
         #TODO: check access_token is is vaild
-        response = requests.post(self.payments_url,
-                                 data=simplejson.dumps(post), headers=headers)
-        response.raise_for_status()
-        return response.json()
+        response = requests.post(self.payments_url, data=post, headers=headers)
+        return response
 
     def get_form(self,  data=None):
         extra_data = (simplejson.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         redirect_to = self.get_link('approval_url', extra_data)
         if not redirect_to:
-            data = self.get_payment_data()
-            redirect_to = self.get_link('approval_url', data)
-            self.payment.transaction_id = data['id']
-            extra_data['links'] = data['links']
+            response = self.get_payment_response()
+            response.raise_for_status()
+            response_data = response.json()
+            redirect_to = self.get_link('approval_url', response_data)
+            self.payment.transaction_id = response_data['id']
+            extra_data['links'] = response_data['links']
             if extra_data:
                 self.payment.extra_data = simplejson.dumps(extra_data)
         self.payment.status = 'redirected'
@@ -121,7 +122,7 @@ class PaypalProvider(BasicProvider):
             return redirect(self.payment.cancel_url)
         access_token = self.get_access_token()
         headers = {'Content-Type': 'application/json',
-                   'Authorization': 'Bearer ' + access_token}
+                   'Authorization': access_token}
         post = {'payer_id': payer_id}
         transaction_id = self.payment.transaction_id
         execute_url = self.payment_execute_url % {'id': transaction_id}
