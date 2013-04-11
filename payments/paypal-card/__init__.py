@@ -1,5 +1,4 @@
-from .. import BasicProvider, RedirectNeeded
-from ..models import Payment
+from .. import BasicProvider, RedirectNeeded, get_payment_model
 from ..paypal import PaypalProvider
 from datetime import timedelta
 from django.contrib.sites.models import Site
@@ -10,6 +9,8 @@ import requests
 import urlparse
 from .forms import PaymentForm
 from re import match
+
+Payment = get_payment_model()
 
 
 class PaypalCardProvider(PaypalProvider):

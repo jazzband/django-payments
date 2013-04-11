@@ -12,7 +12,7 @@ List of possible payment statuses.
 '''
 
 
-class Payment(models.Model):
+class BasePayment(models.Model):
     '''
     Represents a single transaction. Each instance has one or more PaymentItem.
     '''
@@ -45,6 +45,9 @@ class Payment(models.Model):
     success_url = models.CharField(max_length=255, blank=True, default='')
     cancel_url = models.CharField(max_length=255, blank=True, default='')
 
+    class Meta:
+        abstract = True
+
     def change_status(self, status):
         '''
         Updates the Payment status and sends the status_changed signal.
@@ -58,10 +61,10 @@ class Payment(models.Model):
         if not self.token:
             for _i in xrange(100):
                 token = str(uuid4())
-                if not Payment.objects.filter(token=token).exists():
+                if not type(self).objects.filter(token=token).exists():
                     self.token = token
                     break
-        return super(Payment, self).save(*args, **kwargs)
+        return super(BasePayment, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return self.variant

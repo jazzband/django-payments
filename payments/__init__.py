@@ -1,5 +1,8 @@
 from collections import namedtuple
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.conf import settings
+from django.db.models import get_model
 
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {
@@ -35,22 +38,6 @@ class BasicProvider(object):
         self.payment = payment
         self.order_items = order_items
 
-    def create_payment(self, commit=True, *args, **kwargs):
-        '''
-        Creates a new payment. Always use this method instead of manually
-        creating a Payment instance directly.
-
-        All arguments are passed directly to Payment constructor.
-
-        When implementing a new payment provider, you may overload this method
-        to return a specialized version of Payment instead.
-        '''
-        from models import Payment
-        payment = Payment(variant=self._variant, *args, **kwargs)
-        if commit:
-            payment.save()
-        return payment
-
     def get_hidden_fields(self):
         '''
         Converts a payment into a dict containing transaction data. Use
@@ -81,7 +68,6 @@ def factory(payment, variant='default', order_items=[]):
     Takes the optional *variant* name and returns an appropriate
     implementation. Variable *order_items* has to be iterable.
     '''
-    from django.conf import settings
     variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
     handler, config = variants.get(variant, (None, None))
     if not handler:
@@ -95,3 +81,19 @@ def factory(payment, variant='default', order_items=[]):
     module = __import__(module_path, globals(), locals(), [klass_name])
     klass = getattr(module, klass_name)
     return klass(payment, variant=variant, order_items=order_items, **config)
+
+
+def get_payment_model():
+    "Return the Payment model that is active in this project"
+    try:
+        app_label, model_name = settings.PAYMENT_MODEL.split('.')
+    except ValueError:
+        raise ImproperlyConfigured('PAYMENT_MODEL must be of the form '
+                                   '"app_label.model_name"')
+    payment_model = get_model(app_label, model_name)
+    if payment_model is None:
+        msg = (
+            'PAYMENT_MODEL refers to model "%s" that has not been installed' %
+            settings.PAYMENT_MODEL)
+        raise ImproperlyConfigured(msg)
+    return payment_model

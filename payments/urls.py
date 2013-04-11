@@ -2,11 +2,12 @@
 This module is responsible for automatic processing of provider callback
 data (asynchronous transaction updates).
 '''
-from . import factory
-from .models import Payment
+from . import factory, get_payment_model
 from django.conf.urls.defaults import patterns, url
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+
+Payment = get_payment_model()
 
 
 def process_data(request, variant, token):

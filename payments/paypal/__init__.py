@@ -1,5 +1,4 @@
-from .. import BasicProvider, RedirectNeeded
-from ..models import Payment
+from .. import BasicProvider, RedirectNeeded, get_payment_model
 from datetime import timedelta
 from django.contrib.sites.models import Site
 from django.http import HttpResponseForbidden
@@ -7,6 +6,8 @@ from django.shortcuts import redirect
 from django.utils import simplejson, timezone
 import requests
 import urlparse
+
+Payment = get_payment_model()
 
 
 class UnauthorizedRequest(Exception):
