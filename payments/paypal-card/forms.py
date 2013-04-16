@@ -54,10 +54,10 @@ class PaymentForm(PaymentForm):
                 data = response.json()
                 if response.ok:
                     self.payment.transaction_id = data['id']
-                    self.payment.status = 'confirmed'
+                    self.payment.status_changed('confirmed')
                 else:
                     errors = [error['issue'] for error in data['details']]
                     self._errors['__all__'] = self.error_class(errors)
-                    self.payment.status = 'error'
+                    self.payment.status_changed('error')
             self.payment.save()
         return cleaned_data
