@@ -1,12 +1,17 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from uuid import uuid4
+from django.conf import settings
 
-PAYMENT_STATUS_CHOICES = (
+
+DEFAULT_PAYMENT_STATUS_CHOICES = (
     ('waiting', _(u'Waiting for confirmation')),
     ('confirmed', _(u'Confirmed')),
     ('rejected', _(u'Rejected')),
+    ('error', _(u'Error')),
 )
+PAYMENT_STATUS_CHOICES = getattr(settings, 'PAYMENT_STATUS_CHOICES',
+                                 DEFAULT_PAYMENT_STATUS_CHOICES)
 '''
 List of possible payment statuses.
 '''

@@ -6,6 +6,7 @@ from django.shortcuts import redirect
 from django.utils import simplejson, timezone
 import requests
 import urlparse
+from functools import wraps
 
 Payment = get_payment_model()
 
@@ -17,6 +18,7 @@ class UnauthorizedRequest(Exception):
 
 def authorize(fun):
 
+    @wraps(fun)
     def wrapper(*args, **kwargs):
         self = args[0]
         self.access_token = self.get_access_token()
@@ -139,7 +141,7 @@ class PaypalProvider(BasicProvider):
             extra_data['links'] = response_data['links']
             if extra_data:
                 self.payment.extra_data = simplejson.dumps(extra_data)
-        self.payment.status = 'redirected'
+        self.payment.change_status('waiting')
         self.payment.save()
         raise RedirectNeeded(redirect_to)
 
@@ -152,13 +154,16 @@ class PaypalProvider(BasicProvider):
             raise HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:
-            self.payment.status = 'canceled'
-            self.payment.save()
-            return redirect(self.payment.cancel_url)
+            if self.payment.status != 'confirmed':
+                self.payment.change_status('rejected')
+                self.payment.save()
+                return redirect(self.payment.cancel_url)
+            else:
+                return redirect(self.payment.success_url)
         response = self.get_payment_execute_response(payer_id)
         response.raise_for_status()
         extra_data['payer_id'] = payer_id
         self.payment.extra_data = simplejson.dumps(extra_data)
-        self.payment.status = 'success'
+        self.payment.change_status('confirmed')
         self.payment.save()
         return redirect(self.payment.success_url)
