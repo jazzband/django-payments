@@ -129,6 +129,8 @@ class PaypalProvider(BasicProvider):
                              headers=headers)
 
     def get_form(self, data=None):
+        if not self.payment.id:
+            self.payment.save()
         extra_data = (simplejson.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         redirect_to = self.get_link('approval_url', extra_data)

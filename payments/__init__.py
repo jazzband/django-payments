@@ -63,11 +63,12 @@ class BasicProvider(object):
         raise NotImplementedError
 
 
-def factory(payment, variant='default', order_items=[]):
+def factory(payment, variant='default', order_items=None):
     '''
     Takes the optional *variant* name and returns an appropriate
     implementation. Variable *order_items* has to be iterable.
     '''
+    order_items = order_items or []
     variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
     handler, config = variants.get(variant, (None, None))
     if not handler:
