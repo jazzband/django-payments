@@ -153,7 +153,7 @@ class PaypalProvider(BasicProvider):
         try:
             _paypal_token = request.GET['token']
         except KeyError:
-            raise HttpResponseForbidden('FAILED')
+            return HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:
             if self.payment.status != 'confirmed':
