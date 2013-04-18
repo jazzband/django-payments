@@ -39,4 +39,4 @@ class PaypalCardProvider(PaypalProvider):
         return data
 
     def process_data(self, request):
-        raise HttpResponseForbidden('FAILED')
+        return HttpResponseForbidden('FAILED')
