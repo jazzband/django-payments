@@ -1,10 +1,9 @@
 from ..forms import PaymentForm
-from authorizenet.fields import CreditCardExpiryField
+from .fields import CreditCardExpiryField, CreditCardNumberField
 from django import forms
 from django.conf import settings
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
-from payment.fields import CreditCardNumberField
 from re import match
 
 CVV_VALIDATOR = validators.RegexValidator('^[0-9]{1,4}$',
