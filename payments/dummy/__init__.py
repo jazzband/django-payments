@@ -21,4 +21,4 @@ class DummyProvider(BasicProvider):
                          payment=self.payment)
 
     def process_data(self, request):
-        return redirect(self.payment.success_url)
+        return redirect(self.payment.get_success_url())

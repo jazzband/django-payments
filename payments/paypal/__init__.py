@@ -74,7 +74,7 @@ class PaypalProvider(BasicProvider):
 
     def get_return_url(self):
         domain = Site.objects.get_current().domain
-        payment_link = self.payment.get_absolute_url()
+        payment_link = self.payment.get_process_url()
         return urlparse.urlunparse(('http', domain, payment_link,
                                     None, None, None))
 
@@ -150,6 +150,7 @@ class PaypalProvider(BasicProvider):
     def process_data(self, request):
         extra_data = (simplejson.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
+        success_url = self.payment.get_success_url()
         try:
             _paypal_token = request.GET['token']
         except KeyError:
@@ -161,11 +162,11 @@ class PaypalProvider(BasicProvider):
                 self.payment.save()
                 return redirect(self.payment.cancel_url)
             else:
-                return redirect(self.payment.success_url)
+                return redirect(success_url)
         response = self.get_payment_execute_response(payer_id)
         response.raise_for_status()
         extra_data['payer_id'] = payer_id
         self.payment.extra_data = simplejson.dumps(extra_data)
         self.payment.change_status('confirmed')
         self.payment.save()
-        return redirect(self.payment.success_url)
+        return redirect(success_url)

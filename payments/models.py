@@ -1,7 +1,8 @@
+from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from uuid import uuid4
-from django.conf import settings
 
 
 DEFAULT_PAYMENT_STATUS_CHOICES = (
@@ -47,8 +48,6 @@ class BasePayment(models.Model):
     country = models.CharField(max_length=256, blank=True)
     extra_data = models.TextField(blank=True, default='')
     token = models.CharField(max_length=36, blank=True, default='')
-    success_url = models.CharField(max_length=255, blank=True, default='')
-    cancel_url = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
         abstract = True
@@ -74,7 +73,12 @@ class BasePayment(models.Model):
     def __unicode__(self):
         return self.variant
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ('process_payment', (), {'variant': self.variant,
-                                        'token': self.token})
+    def get_cancel_url(self):
+        raise NotImplementedError()
+
+    def get_success_url(self):
+        raise NotImplementedError()
+
+    def get_process_url(self):
+        return reverse('process_payment', kwargs={'variant': self.variant,
+                                                  'token': self.token})
