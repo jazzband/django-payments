@@ -1,29 +1,19 @@
+from ..forms import PaymentForm
 from django import forms
-from django.core.urlresolvers import reverse
-from ..models import PAYMENT_STATUS_CHOICES
+from django.utils.translation import ugettext_lazy as _
 
-class DummyPaymentForm(forms.Form):
-    method = 'post'
-    def action(self):
-        return reverse('process_payment', args=[self.variant])
-    action = property(action)
 
-    def __init__(self, variant, *args, **kwargs):
-        self.variant = variant
-        return super(DummyPaymentForm, self).__init__(*args, **kwargs)
+class DummyForm(PaymentForm):
 
-    payment_id = forms.IntegerField(widget=forms.HiddenInput())
-    status = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES)
+    name = forms.CharField(label=_('Name on Credit Card'), max_length=128)
+    number = forms.CharField(label=_('Card Number'), max_length=32)
+    expiration = forms.CharField(max_length=5)
+    cvv2 = forms.CharField(required=False, label=_('CVV2 Security Number'),
+                           max_length=4)
 
-class DummyRedirectForm(forms.Form):
-    method = 'post'
-    def action(self):
-        return reverse('process_payment', args=[self.variant])
-    action = property(action)
-
-    def __init__(self, variant, *args, **kwargs):
-        self.variant = variant
-        return super(DummyRedirectForm, self).__init__(*args, **kwargs)
-
-    payment_id = forms.IntegerField(widget=forms.HiddenInput())
-
+    def clean(self):
+        cleaned_data = super(DummyForm, self).clean()
+        if not self.errors:
+            cleaned_data['next'] = self.payment.success_url
+            self.payment.change_status('confirmed')
+        return cleaned_data

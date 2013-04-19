@@ -88,7 +88,7 @@ def get_payment_model():
     "Return the Payment model that is active in this project"
     try:
         app_label, model_name = settings.PAYMENT_MODEL.split('.')
-    except ValueError:
+    except (ValueError, AttributeError):
         raise ImproperlyConfigured('PAYMENT_MODEL must be of the form '
                                    '"app_label.model_name"')
     payment_model = get_model(app_label, model_name)
