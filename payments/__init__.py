@@ -1,8 +1,10 @@
 from collections import namedtuple
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.conf import settings
 from django.db.models import get_model
+from functools import wraps
+from urlparse import urljoin
 
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {
@@ -52,22 +54,25 @@ class BasicProvider(object):
         When implementing a new payment provider, overload this method to
         transfer provider-specific data.
         '''
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def get_form(self, data=None):
         '''
         Converts *payment* into a form suitable for Django templates.
         '''
         from forms import PaymentForm
-        return PaymentForm(self.get_hidden_fields(self.payment), self._action,
+        return PaymentForm(self.get_hidden_fields(), self._action,
                            self._method)
 
     def process_data(self, request):
         '''
         Process callback request from a payment provider.
         '''
-        raise NotImplementedError
+        raise NotImplementedError()
 
+    def get_return_url(self):
+        payment_link = self.payment.get_process_url()
+        return urljoin(settings.PAYMENT_BASE_URL, payment_link)
 
 def factory(payment, variant='default', order_items=None):
     '''

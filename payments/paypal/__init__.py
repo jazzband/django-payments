@@ -72,10 +72,6 @@ class PaypalProvider(BasicProvider):
             self.payment.extra_data = simplejson.dumps(extra_data)
             return u'%s %s' % (data['token_type'], data['access_token'])
 
-    def get_return_url(self):
-        payment_link = self.payment.get_process_url()
-        return urljoin(settings.PAYMENT_BASE_URL, payment_link)
-
     def get_link(self, name, data):
         try:
             links = filter(lambda url: url['rel'] == name, data['links'])
