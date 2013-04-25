@@ -18,6 +18,5 @@ setup(
         'Programming Language :: Python',
         'Framework :: Django',
     ],
-    setup_requires=['Sphinx'],
     include_package_data=True,
     zip_safe=False)

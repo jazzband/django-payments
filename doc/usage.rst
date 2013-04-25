@@ -50,7 +50,7 @@ Making a payment
 
       provider = factory('somevariant')
 
-#. Call :meth:`~BasicProvider.create_payment` on the provider to obtain a form
+#. Call :meth:`BasicProvider.create_payment` on the provider to obtain a form
 
    .. code-block:: python
 
@@ -76,4 +76,3 @@ Making a payment
           {{ form.as_p }}
           <p><input type="submit" value="Proceed" /></p>
       </form>
-
