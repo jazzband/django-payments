@@ -1,7 +1,7 @@
 from django import forms
 from .. import get_payment_model
 
-import md5
+import hashlib
 
 Payment = get_payment_model()
 
@@ -42,18 +42,20 @@ class ProcessPaymentForm(forms.Form):
         if not self.errors:
             key_vars = (
                 self.pin,
-                cleaned_data['id'],
-                cleaned_data['control'],
-                cleaned_data['t_id'],
-                cleaned_data['amount'],
+                str(cleaned_data['id']),
+                str(cleaned_data['control']),
+                str(cleaned_data['t_id']),
+                str(cleaned_data['amount']),
                 cleaned_data.get('email', ''),
                 '',  # service
                 '',  # code
                 '',  # username
                 '',  # password
-                cleaned_data['t_status'])
+                str(cleaned_data['t_status']))
             key = ':'.join(key_vars)
-            key_hash = md5.new(key).hexdigest()
+            md5 = hashlib.md5()
+            md5.update(key)
+            key_hash = md5.hexdigest()
             if key_hash != self.cleaned_data['md5']:
                 self._errors['md5'] = self.error_class(['Bad hash'])
             if cleaned_data['control'] != self.payment.id:
