@@ -1,12 +1,12 @@
 from .. import BasicProvider, RedirectNeeded, get_payment_model
 from datetime import timedelta
-from django.contrib.sites.models import Site
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import simplejson, timezone
 import requests
-import urlparse
 from functools import wraps
+from urlparse import urljoin
+from django.conf import settings
 
 Payment = get_payment_model()
 
@@ -73,10 +73,8 @@ class PaypalProvider(BasicProvider):
             return u'%s %s' % (data['token_type'], data['access_token'])
 
     def get_return_url(self):
-        domain = Site.objects.get_current().domain
         payment_link = self.payment.get_process_url()
-        return urlparse.urlunparse(('http', domain, payment_link,
-                                    None, None, None))
+        return urljoin(settings.PAYMENT_BASE_URL, payment_link)
 
     def get_link(self, name, data):
         try:
@@ -160,7 +158,7 @@ class PaypalProvider(BasicProvider):
             if self.payment.status != 'confirmed':
                 self.payment.change_status('rejected')
                 self.payment.save()
-                return redirect(self.payment.cancel_url)
+                return redirect(self.payment.get_cancel_url())
             else:
                 return redirect(success_url)
         response = self.get_payment_execute_response(payer_id)

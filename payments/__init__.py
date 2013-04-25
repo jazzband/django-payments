@@ -11,6 +11,12 @@ PAYMENT_VARIANTS = {
     )
 }
 
+try:
+    settings.PAYMENT_BASE_URL
+except AttributeError:
+    raise ImproperlyConfigured('The PAYMENT_BASE_URL setting '
+                               'must not be empty.')
+
 PaymentItem = namedtuple('PaymentItem', 'name, quantity, price, currency, sku')
 
 
