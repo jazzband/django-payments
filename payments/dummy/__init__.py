@@ -16,7 +16,7 @@ class DummyProvider(BasicProvider):
         self._url = kwargs.pop('url')
         return super(DummyProvider, self).__init__(*args, **kwargs)
 
-    def get_form(self, data=None, ordered_items=None):
+    def get_form(self, data=None):
         return DummyForm(data=data, hidden_inputs=False, provider=self,
                          payment=self.payment)
 

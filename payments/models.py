@@ -73,9 +73,12 @@ class BasePayment(models.Model):
     def __unicode__(self):
         return self.variant
 
-    def get_form(self, data=None, ordered_items=None):
+    def get_form(self, data=None):
         provider = factory(self)
-        return provider.get_form(data=data, ordered_items=ordered_items)
+        return provider.get_form(data=data)
+
+    def get_ordered_items(self):
+        return []
 
     def get_failure_url(self):
         raise NotImplementedError()

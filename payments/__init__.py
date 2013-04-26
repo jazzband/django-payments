@@ -12,7 +12,8 @@ if not hasattr(settings, 'PAYMENT_BASE_URL'):
     raise ImproperlyConfigured('The PAYMENT_BASE_URL setting '
                                'must not be empty.')
 
-PaymentItem = namedtuple('PaymentItem', 'name, quantity, price, currency, sku')
+PurchasedItem = namedtuple('PurchasedItem',
+                           'name, quantity, price, currency, sku')
 
 
 class RedirectNeeded(Exception):
@@ -33,7 +34,7 @@ class BasicProvider(object):
     def __init__(self, payment):
         self.payment = payment
 
-    def get_hidden_fields(self, ordered_items=None):
+    def get_hidden_fields(self):
         '''
         Converts a payment into a dict containing transaction data. Use
         get_form instead to get a form suitable for templates.
@@ -43,12 +44,12 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_form(self, data=None, ordered_items=None):
+    def get_form(self, data=None):
         '''
         Converts *payment* into a form suitable for Django templates.
         '''
         from forms import PaymentForm
-        return PaymentForm(self.get_hidden_fields(ordered_items=ordered_items),
+        return PaymentForm(self.get_hidden_fields(),
                            self._action, self._method)
 
     def process_data(self, request):

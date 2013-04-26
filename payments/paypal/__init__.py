@@ -76,7 +76,8 @@ class PaypalProvider(BasicProvider):
             return None
         return links[0]['href']
 
-    def get_transactions_data(self, ordered_items):
+    def get_transactions_data(self):
+        items = list(self.payment.get_ordered_items())
         sub_total = self.payment.total - self.payment.delivery
         data = {'intent': 'sale',
                 'transactions': [{
@@ -87,24 +88,24 @@ class PaypalProvider(BasicProvider):
                         'subtotal': sub_total,
                         'tax': self.payment.tax,
                         'shipping': self.payment.delivery}},
-                'item_list': {'items': ordered_items},
+                'item_list': {'items': items},
                 'description': self.payment.description}]}
         return data
 
-    def get_product_data(self, ordered_items, extra_data=None):
+    def get_product_data(self, extra_data=None):
         return_url = self.get_return_url()
-        data = self.get_transactions_data(ordered_items)
+        data = self.get_transactions_data()
         data['redirect_urls'] = {'return_url': return_url,
                                  'cancel_url': return_url}
         data['payer'] = {'payment_method': 'paypal'}
         return data
 
     @authorize
-    def get_payment_response(self, ordered_items, extra_data=None):
+    def get_payment_response(self, extra_data=None):
         headers = {'Content-Type': 'application/json',
                    'Authorization': self.access_token}
         post = simplejson.dumps(
-            self.get_product_data(ordered_items, extra_data))
+            self.get_product_data(extra_data))
         return requests.post(self.payments_url, data=post, headers=headers)
 
     @authorize
@@ -117,16 +118,14 @@ class PaypalProvider(BasicProvider):
         return requests.post(execute_url, data=simplejson.dumps(post),
                              headers=headers)
 
-    def get_form(self, data=None, ordered_items=None):
-        if not ordered_items:
-            ordered_items = []
+    def get_form(self, data=None):
         if not self.payment.id:
             self.payment.save()
         extra_data = (simplejson.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         redirect_to = self.get_link('approval_url', extra_data)
         if not redirect_to:
-            response = self.get_payment_response(ordered_items)
+            response = self.get_payment_response()
             response.raise_for_status()
             response_data = response.json()
             redirect_to = self.get_link('approval_url', response_data)

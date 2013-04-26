@@ -11,9 +11,6 @@ class DotpayProvider(BasicProvider):
 
     seller_id:
         seller ID, assigned by dotpay
-    url:
-        return URL, user will be bounced to this address after payment is
-        processed
     pin:
         PIN
     channel:
@@ -34,7 +31,7 @@ class DotpayProvider(BasicProvider):
         self._lock = kwargs.pop('lock', False)
         super(DotpayProvider, self).__init__(*args, **kwargs)
 
-    def get_hidden_fields(self, ordered_items=None):
+    def get_hidden_fields(self):
         self.payment.save()
         data = {
             'id': self._seller_id,

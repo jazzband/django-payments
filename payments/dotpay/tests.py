@@ -1,5 +1,5 @@
 from . import DotpayProvider
-from .. import PaymentItem
+from .. import PurchasedItem
 from .forms import ACCEPTED
 from django.http import HttpResponse, HttpResponseForbidden
 from django.test import TestCase
@@ -60,16 +60,11 @@ class TestDotpayProvider(TestCase):
 
     def setUp(self):
         self.payment = Payment()
-        self.ordered_items = MagicMock()
-        self.ordered_items.__iter__.return_value = [PaymentItem('foo', 10, 100,
-                                                                'USD', 'd431')]
 
     def test_get_hidden_fields(self):
         """DotpayProvider.get_hidden_fields() returns a dictionary"""
         provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
-        self.assertEqual(
-            type(provider.get_hidden_fields(ordered_items=self.ordered_items)),
-            dict)
+        self.assertEqual(type(provider.get_hidden_fields()), dict)
 
     def test_process_data(self):
         """DotpayProvider.process_data() returns a correct HTTP response"""
