@@ -5,19 +5,15 @@ from django.shortcuts import redirect
 from django.utils import simplejson, timezone
 import requests
 from functools import wraps
-from urlparse import urljoin
-from django.conf import settings
 
 Payment = get_payment_model()
 
 
 class UnauthorizedRequest(Exception):
-
     pass
 
 
 def authorize(fun):
-
     @wraps(fun)
     def wrapper(*args, **kwargs):
         self = args[0]
@@ -55,8 +51,9 @@ class PaypalProvider(BasicProvider):
                       if self.payment.extra_data else {})
         created = self.payment.created
         now = timezone.now()
-        if ('access_token' in extra_data and 'expires_in' in extra_data and
-            (created + timedelta(seconds=extra_data['expires_in'])) > now):
+        if ('access_token' in extra_data and
+                'expires_in' in extra_data and
+                (created + timedelta(seconds=extra_data['expires_in'])) > now):
             return u'%s %s' % (extra_data['token_type'],
                                extra_data['access_token'])
         else:
@@ -84,14 +81,12 @@ class PaypalProvider(BasicProvider):
         data = {'intent': 'sale',
                 'transactions': [{
                 'amount': {
-                  'total': self.payment.total,
-                  'currency': self.payment.currency,
-                  'details': {
+                    'total': self.payment.total,
+                    'currency': self.payment.currency,
+                    'details': {
                         'subtotal': sub_total,
                         'tax': self.payment.tax,
-                        'shipping': self.payment.delivery
-                      }
-                },
+                        'shipping': self.payment.delivery}},
                 'item_list': {'items': self.order_items},
                 'description': self.payment.description}]}
         return data
@@ -106,7 +101,6 @@ class PaypalProvider(BasicProvider):
 
     @authorize
     def get_payment_response(self, extra_data=None):
-        print 'autorize'
         headers = {'Content-Type': 'application/json',
                    'Authorization': self.access_token}
         post = simplejson.dumps(self.get_product_data(extra_data))
@@ -145,9 +139,7 @@ class PaypalProvider(BasicProvider):
         extra_data = (simplejson.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         success_url = self.payment.get_success_url()
-        try:
-            _paypal_token = request.GET['token']
-        except KeyError:
+        if not 'token' in request.GET:
             return HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:

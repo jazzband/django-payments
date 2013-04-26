@@ -1,14 +1,7 @@
-from .. import BasicProvider, RedirectNeeded, get_payment_model
+from .. import get_payment_model
 from ..paypal import PaypalProvider
-from datetime import timedelta
-from django.contrib.sites.models import Site
 from django.http import HttpResponseForbidden
-from django.shortcuts import redirect
-from django.utils import simplejson, timezone
-import requests
-import urlparse
 from .forms import PaymentForm
-from re import match
 
 Payment = get_payment_model()
 
@@ -32,10 +25,7 @@ class PaypalCardProvider(PaypalProvider):
                     'type': extra_data['type'],
                     'expire_month': month,
                     'expire_year': year,
-                    'cvv2': extra_data['cvv2']
-                }
-             }]
-        }
+                    'cvv2': extra_data['cvv2']}}]}
         return data
 
     def process_data(self, request):
