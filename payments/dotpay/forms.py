@@ -1,19 +1,17 @@
-# -*- coding:utf-8 -*-
 from django import forms
-from django.utils.translation import ugettext as _
-from django.db.models import Q
+from .. import get_payment_model
 
-import md5
+import hashlib
 
-from ..models import Payment
+Payment = get_payment_model()
 
-NO_MORE_CONFIRMATION=0
-NEW=1
-ACCEPTED=2
-REJECTED=3
-CANCELED=4
+NO_MORE_CONFIRMATION = 0
+NEW = 1
+ACCEPTED = 2
+REJECTED = 3
+CANCELED = 4
 
-STATUS_CHOICES = map(lambda c: (c,c), (
+STATUS_CHOICES = map(lambda c: (c, c), (
     NO_MORE_CONFIRMATION,
     NEW,
     ACCEPTED,
@@ -21,18 +19,12 @@ STATUS_CHOICES = map(lambda c: (c,c), (
     CANCELED
 ))
 
+
 class ProcessPaymentForm(forms.Form):
-    status = forms.ChoiceField(choices=(("OK","OK"),("FAIL","FAIL")))
+
+    status = forms.ChoiceField(choices=(('OK', 'OK'), ('FAIL', 'FAIL')))
     id = forms.IntegerField()
-    #this should be Payments modelchoicefield
     control = forms.IntegerField()
-    #control = forms.TypedChoiceField(
-    #    choices = [ (id,id) for id in Payment.objects.exclude(
-    #            Q(status='rejected')
-    #        ).values_list("id", flat=True)
-    #    ],
-    #    coerce=int,
-    #)
     t_id = forms.CharField()
     amount = forms.DecimalField()
     email = forms.EmailField(required=False)
@@ -40,41 +32,43 @@ class ProcessPaymentForm(forms.Form):
     description = forms.CharField(required=False)
     md5 = forms.CharField()
 
-    def __init__(self, pin, **kwargs):
+    def __init__(self, payment, pin, **kwargs):
         super(ProcessPaymentForm, self).__init__(**kwargs)
         self.pin = pin
+        self.payment = payment
 
     def clean(self):
-        vars = {
-            "pin": self.pin,
-            "id": self.cleaned_data['id'],
-            "control": self.cleaned_data["control"],
-            "t_id": self.cleaned_data["t_id"],
-            "amount": self.cleaned_data["amount"],
-            "email": self.cleaned_data.get("email", ""),
-            "service": "",
-            "code": "",
-            "username": "",
-            "password": "",
-            "t_status": self.cleaned_data["t_status"]
-        }
-
-        key = "%(pin)s:%(id)s:%(control)s:%(t_id)s:%(amount)s:%(email)s:%(service)s:%(code)s:%(username)s:%(password)s:%(t_status)s" % vars
-        hash = md5.new(key).hexdigest()
-        if hash != self.cleaned_data["md5"]:
-            raise forms.ValidationError()
-        return self.cleaned_data
+        cleaned_data = super(ProcessPaymentForm, self).clean()
+        if not self.errors:
+            key_vars = (
+                self.pin,
+                str(cleaned_data['id']),
+                str(cleaned_data['control']),
+                str(cleaned_data['t_id']),
+                str(cleaned_data['amount']),
+                cleaned_data.get('email', ''),
+                '',  # service
+                '',  # code
+                '',  # username
+                '',  # password
+                str(cleaned_data['t_status']))
+            key = ':'.join(key_vars)
+            md5 = hashlib.md5()
+            md5.update(key)
+            key_hash = md5.hexdigest()
+            if key_hash != self.cleaned_data['md5']:
+                self._errors['md5'] = self.error_class(['Bad hash'])
+            if cleaned_data['control'] != self.payment.id:
+                self._errors['control'] = self.error_class(['Bad payment id'])
+        return cleaned_data
 
     def save(self, *args, **kwargs):
-        payment_id = self.cleaned_data['control']
         status = self.cleaned_data['t_status']
-
-        payment = Payment.objects.get(id=payment_id)
-        payment.transaction_id = self.cleaned_data['t_id']
-        payment.save()
-
+        self.payment.transaction_id = self.cleaned_data['t_id']
+        self.payment.save()
+        payment_status = self.payment.status
         if status == ACCEPTED:
-            payment.change_status('confirmed')
-        elif (status == NO_MORE_CONFIRMATION and payment.status == 'waiting') \
-          or status == REJECTED or status == CANCELED:
-            payment.change_status('rejected')
+            self.payment.change_status('confirmed')
+        elif ((status == NO_MORE_CONFIRMATION and payment_status == 'waiting')
+              or status == REJECTED or status == CANCELED):
+            self.payment.change_status('rejected')

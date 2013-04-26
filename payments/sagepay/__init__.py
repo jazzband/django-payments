@@ -1,16 +1,10 @@
-import base64
 import binascii
-import itertools
-import urlparse
 
 from Crypto.Cipher import AES
-from django.contrib.sites.models import Site
-from django.core.urlresolvers import reverse
-from django.template.loader import render_to_string
-from django.views.generic.simple import direct_to_template
+from django.shortcuts import redirect
 
 from .. import BasicProvider
-from ..models import Payment
+
 
 class SagepayProvider(BasicProvider):
     '''
@@ -36,7 +30,7 @@ class SagepayProvider(BasicProvider):
     def _aes_pad(self, crypt):
         padding = ""
         padlength = 16 - (len(crypt) % 16)
-        for i in range(1, padlength + 1):
+        for _i in range(1, padlength + 1):
             padding += chr(padlength)
         return crypt + padding
 
@@ -54,55 +48,50 @@ class SagepayProvider(BasicProvider):
         dec = aes.decrypt(dec)
         return dec
 
-    def get_hidden_fields(self, payment):
-        return_url = urlparse.urlunparse((
-                'https', Site.objects.get_current().domain,
-                reverse('process_payment', kwargs={'variant': payment.variant}),
-                None, None, None))
+    def get_hidden_fields(self):
+        self.payment.save()
+        return_url = self.get_return_url()
         data = {
-            'VendorTxCode': payment.pk,
-            'Amount': "%.2f" % payment.total,
-            'Currency': payment.currency,
+            'VendorTxCode': self.payment.pk,
+            'Amount': "%.2f" % (self.payment.total,),
+            'Currency': self.payment.currency,
             'SuccessURL': return_url,
             'FailureURL': return_url,
-            'Description': "Payment #%s" % payment.pk,
-            'BillingSurname': payment.get_customer_detail('last_name'),
-            'BillingFirstnames': payment.get_customer_detail('first_name'),
-            'BillingAddress1': payment.get_customer_detail('billing_address'),
-            'BillingCity': payment.get_customer_detail('billing_city'),
-            'BillingPostCode': payment.get_customer_detail('billing_postcode'),
-            'BillingCountry': payment.get_customer_detail('billing_country_iso2'),
-            'DeliverySurname': payment.get_customer_detail('last_name'),
-            'DeliveryFirstnames': payment.get_customer_detail('first_name'),
-            'DeliveryAddress1': payment.get_customer_detail('billing_address'),
-            'DeliveryCity': payment.get_customer_detail('billing_city'),
-            'DeliveryPostCode': payment.get_customer_detail('billing_postcode'),
-            'DeliveryCountry': payment.get_customer_detail('billing_country_iso2'),
-        }
-        # Parzymy Sage
-        #
-        # Thou shalt neither urlencode()... nor use & or = in the data of thou.
-        # Otherwise - no Sage.
+            'Description': "Payment #%s" % (self.payment.pk,),
+            'BillingSurname': self.payment.billing_last_name,
+            'BillingFirstnames': self.payment.billing_first_name,
+            'BillingAddress1': self.payment.billing_address_1,
+            'BillingAddress2': self.payment.billing_address_2,
+            'BillingCity': self.payment.billing_city,
+            'BillingPostCode': self.payment.billing_postcode,
+            'BillingCountry': self.payment.billing_country_code,
+            'DeliverySurname': self.payment.billing_last_name,
+            'DeliveryFirstnames': self.payment.billing_first_name,
+            'DeliveryAddress1': self.payment.billing_address_1,
+            'DeliveryAddress2': self.payment.billing_address_2,
+            'DeliveryCity': self.payment.billing_city,
+            'DeliveryPostCode': self.payment.billing_postcode,
+            'DeliveryCountry': self.payment.billing_country_code}
         udata = u"&".join(u"%s=%s" % kv for kv in data.items())
         crypt = self.aes_enc(udata)
         return {'VPSProtocol': self._version, 'TxType': 'PAYMENT',
                 'Vendor': self._vendor, 'Crypt': crypt}
 
-    def process_data(self, request, variant):
+    def process_data(self, request):
         udata = self.aes_dec(request.GET['crypt'])
         data = {}
         for kv in udata.split('&'):
             k, v = kv.split('=')
             data[k] = v
-        payment = Payment.objects.get(pk=data['VendorTxCode'])
-        if payment.status == 'waiting':
+        success_url = self.payment.get_success_url()
+        if self.payment.status == 'waiting':
             # If the payment is not in waiting state, we probably have a page reload.
             # We should neither throw 404 nor alter the payment again in such case.
             if data['Status'] == 'OK':
-                payment.change_status('confirmed')
+                self.payment.change_status('confirmed')
+                return redirect(success_url)
             else:
                 # XXX: We should recognize AUTHENTICATED and REGISTERED in the future.
-                payment.change_status('rejected')
-        return direct_to_template(request,
-                'payments/sagepay/return.html',
-                {'payment': payment, 'status': data['Status'], 'details': data['StatusDetail']})
+                self.payment.change_status('rejected')
+                return redirect(self.payment.get_cancel_url())
+        return redirect(success_url)
