@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 Payment = get_payment_model()
 
 
-def process_data(request, variant, token):
+def process_data(request, token):
     '''
     Calls process_data of an appropriate provider.
 
@@ -18,12 +18,12 @@ def process_data(request, variant, token):
     '''
     payment = get_object_or_404(Payment, token=token)
     try:
-        provider = factory(payment, variant)
+        provider = factory(payment)
     except ValueError:
-        raise Http404('No such payment variant')
+        raise Http404('No such payment')
     return provider.process_data(request)
 
 urlpatterns = patterns('',
-    url(r'^process/(?P<variant>.+)/(?P<token>[0-9a-z]{8}-[0-9a-z]{4}-'
+    url(r'^process/(?P<token>[0-9a-z]{8}-[0-9a-z]{4}-'
         '[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})$', process_data,
         name='process_payment'),)

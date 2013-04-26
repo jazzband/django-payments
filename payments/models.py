@@ -88,5 +88,4 @@ class BasePayment(models.Model):
         raise NotImplementedError()
 
     def get_process_url(self):
-        return reverse('process_payment', kwargs={'variant': self.variant,
-                                                  'token': self.token})
+        return reverse('process_payment', kwargs={'token': self.token})
