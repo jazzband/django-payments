@@ -78,7 +78,7 @@ class BasePayment(models.Model):
         provider = factory(self)
         return provider.get_form(data=data)
 
-    def get_ordered_items(self):
+    def get_purchased_items(self):
         return []
 
     def get_failure_url(self):

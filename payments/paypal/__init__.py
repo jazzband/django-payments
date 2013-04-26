@@ -77,7 +77,7 @@ class PaypalProvider(BasicProvider):
         return links[0]['href']
 
     def get_transactions_data(self):
-        items = list(self.payment.get_ordered_items())
+        items = list(self.payment.get_purchased_items())
         sub_total = self.payment.total - self.payment.delivery
         data = {'intent': 'sale',
                 'transactions': [{

@@ -55,5 +55,4 @@ class PaymentForm(PaymentForm):
                     errors = [error['issue'] for error in data['details']]
                     self._errors['__all__'] = self.error_class(errors)
                     self.payment.change_status('error')
-            self.payment.save()
         return cleaned_data

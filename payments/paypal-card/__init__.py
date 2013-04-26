@@ -22,15 +22,14 @@ class PaypalCardProvider(PaypalProvider):
         data = self.get_transactions_data()
         year = extra_data['expiration'].year
         month = extra_data['expiration'].month
-        data['payer'] = {
-            'payment_method': 'credit_card',
-            'funding_instruments': [{
-                'credit_card': {
-                    'number': extra_data['number'],
-                    'type': extra_data['type'],
-                    'expire_month': month,
-                    'expire_year': year,
-                    'cvv2': extra_data['cvv2']}}]}
+        credit_card = {'number': extra_data['number'],
+                       'type': extra_data['type'],
+                       'expire_month': month,
+                       'expire_year': year}
+        if 'cvv2' in extra_data and extra_data['cvv2']:
+            credit_card['cvv2'] = extra_data['cvv2']
+        data['payer'] = {'payment_method': 'credit_card',
+                         'funding_instruments': [{'credit_card': credit_card}]}
         return data
 
     def process_data(self, request):
