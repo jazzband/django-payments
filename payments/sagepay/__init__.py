@@ -93,5 +93,5 @@ class SagepayProvider(BasicProvider):
             else:
                 # XXX: We should recognize AUTHENTICATED and REGISTERED in the future.
                 self.payment.change_status('rejected')
-                return redirect(self.payment.get_cancel_url())
+                return redirect(self.payment.get_failure_url())
         return redirect(success_url)

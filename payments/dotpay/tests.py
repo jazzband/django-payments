@@ -49,7 +49,7 @@ class Payment(MagicMock):
     currency = 'USD'
     total = 100
 
-    def get_cancel_url(self):
+    def get_failure_url(self):
         return 'http://cancel.com'
 
     def get_success_url(self):

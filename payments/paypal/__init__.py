@@ -149,7 +149,7 @@ class PaypalProvider(BasicProvider):
             if self.payment.status != 'confirmed':
                 self.payment.change_status('rejected')
                 self.payment.save()
-                return redirect(self.payment.get_cancel_url())
+                return redirect(self.payment.get_failure_url())
             else:
                 return redirect(success_url)
         response = self.get_payment_execute_response(payer_id)

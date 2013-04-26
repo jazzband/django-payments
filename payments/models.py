@@ -77,7 +77,7 @@ class BasePayment(models.Model):
         provider = factory(self)
         return provider.get_form(data=data, ordered_items=ordered_items)
 
-    def get_cancel_url(self):
+    def get_failure_url(self):
         raise NotImplementedError()
 
     def get_success_url(self):
