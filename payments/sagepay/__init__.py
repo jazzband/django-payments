@@ -12,9 +12,9 @@ class SagepayProvider(BasicProvider):
 
     vendor:
         vendor name
-    version:
-        VPSProtocol version
-    gateway:
+    encryption_key:
+        encryption key
+    endpoint:
         gateway URL to post transaction data to
     '''
     _version = '2.23'
@@ -23,8 +23,7 @@ class SagepayProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self._vendor = kwargs.pop('vendor')
         self._enckey = kwargs.pop('encryption_key')
-        self._version = kwargs.pop('version', self._version)
-        self._action = kwargs.pop('gateway', self._action)
+        self._action = kwargs.pop('endpoint', self._action)
         return super(SagepayProvider, self).__init__(*args, **kwargs)
 
     def _aes_pad(self, crypt):
