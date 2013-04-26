@@ -11,6 +11,7 @@ DEFAULT_PAYMENT_STATUS_CHOICES = (
     ('confirmed', _(u'Confirmed')),
     ('rejected', _(u'Rejected')),
     ('error', _(u'Error')),
+    ('input', _(u'Input'))
 )
 PAYMENT_STATUS_CHOICES = getattr(settings, 'PAYMENT_STATUS_CHOICES',
                                  DEFAULT_PAYMENT_STATUS_CHOICES)

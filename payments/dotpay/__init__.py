@@ -32,7 +32,6 @@ class DotpayProvider(BasicProvider):
         super(DotpayProvider, self).__init__(*args, **kwargs)
 
     def get_hidden_fields(self):
-        self.payment.save()
         data = {
             'id': self._seller_id,
             'amount': str(self.payment.total),

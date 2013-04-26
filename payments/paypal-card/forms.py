@@ -36,7 +36,6 @@ class PaymentForm(PaymentForm):
 
     def clean(self):
         cleaned_data = super(PaymentForm, self).clean()
-        cleaned_data['next'] = self.payment.get_success_url()
         if 'number' in cleaned_data.keys():
             type = self.get_credit_card_type(cleaned_data['number'])
             if type not in self.VALID_TYPES:
