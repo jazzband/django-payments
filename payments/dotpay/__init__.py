@@ -23,6 +23,8 @@ class DotpayProvider(BasicProvider):
     lock:
         whether to disable channels other than the default selected above
     '''
+    LINE_TEMPLATE = '%(quantity)dx %(name)s (%(sku)s), %(price)f %(currency)s'
+
     _method = 'post'
     _action = 'https://ssl.dotpay.pl/'
 
@@ -36,9 +38,8 @@ class DotpayProvider(BasicProvider):
 
     def get_hidden_fields(self,):
         self.payment.save()
-        description = '; '.join(['%(quantity)dx %(name)s (%(sku)s), '
-                                 '%(price)f %(currency)s' % order._asdict()
-                                 for order in self.order_items])
+        description = '; '.join([self.LINE_TEMPLATE % order_line._asdict()
+                                 for order_line in self.order_items])
         data = {
             'id': self._seller_id,
             'amount': str(self.payment.total),
