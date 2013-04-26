@@ -17,14 +17,19 @@ class DummyProvider(BasicProvider):
         return super(DummyProvider, self).__init__(*args, **kwargs)
 
     def get_form(self, data=None):
-        if self.payment.status == 'waiting':
-            self.payment.change_status('input')
         form = DummyForm(data=data, hidden_inputs=False, provider=self,
                          payment=self.payment)
         if form.is_valid():
-            self.payment.change_status('confirmed')
-            raise RedirectNeeded(self.payment.get_success_url())
+            new_status = form.cleaned_data['status']
+            self.payment.change_status(new_status)
+            if new_status == 'confirmed':
+                raise RedirectNeeded(self.payment.get_success_url())
+            raise RedirectNeeded(self.payment.get_failure_url())
+        else:
+            self.payment.change_status('input')
         return form
 
     def process_data(self, request):
-        return redirect(self.payment.get_success_url())
+        if self.payment.status == 'confirmed':
+            return redirect(self.payment.get_success_url())
+        return redirect(self.payment.get_failure_url())
