@@ -1,21 +1,14 @@
 from collections import namedtuple
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.db.models import get_model
-from functools import wraps
 from urlparse import urljoin
 
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {
-            'url': 'http://google.pl/',
-        },
-    )
-}
+        'url': 'http://google.pl/'})}
 
-try:
-    settings.PAYMENT_BASE_URL
-except AttributeError:
+if not hasattr(settings, 'PAYMENT_BASE_URL'):
     raise ImproperlyConfigured('The PAYMENT_BASE_URL setting '
                                'must not be empty.')
 
@@ -23,7 +16,6 @@ PaymentItem = namedtuple('PaymentItem', 'name, quantity, price, currency, sku')
 
 
 class RedirectNeeded(Exception):
-
     pass
 
 
@@ -35,18 +27,13 @@ class BasicProvider(object):
     _method = 'post'
 
     def _action(self):
-        return reverse('process_payment', args=[self._variant])
+        return self.get_return_url()
     _action = property(_action)
 
-    def __init__(self, payment, variant, order_items):
-        '''
-        Variable order_items has to be iterable.
-        '''
-        self._variant = variant
+    def __init__(self, payment):
         self.payment = payment
-        self.order_items = order_items
 
-    def get_hidden_fields(self):
+    def get_hidden_fields(self, ordered_items=None):
         '''
         Converts a payment into a dict containing transaction data. Use
         get_form instead to get a form suitable for templates.
@@ -56,13 +43,13 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_form(self, data=None):
+    def get_form(self, data=None, ordered_items=None):
         '''
         Converts *payment* into a form suitable for Django templates.
         '''
         from forms import PaymentForm
-        return PaymentForm(self.get_hidden_fields(), self._action,
-                           self._method)
+        return PaymentForm(self.get_hidden_fields(ordered_items=ordered_items),
+                           self._action, self._method)
 
     def process_data(self, request):
         '''
@@ -74,25 +61,25 @@ class BasicProvider(object):
         payment_link = self.payment.get_process_url()
         return urljoin(settings.PAYMENT_BASE_URL, payment_link)
 
-def factory(payment, variant='default', order_items=None):
+
+def factory(payment):
     '''
-    Takes the optional *variant* name and returns an appropriate
-    implementation. Variable *order_items* has to be iterable.
+    Takes the payment object and returns an appropriate provider instance.
     '''
-    order_items = order_items or []
     variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
-    handler, config = variants.get(variant, (None, None))
+    handler, config = variants.get(payment.variant, (None, None))
     if not handler:
-        raise ValueError('Payment variant does not exist: %s' % variant)
+        raise ValueError('Payment variant does not exist: %s' %
+                         (payment.variant,))
     path = handler.split('.')
     if len(path) < 2:
         raise ValueError('Payment variant uses an invalid payment module: %s' %
-                         variant)
+                         (payment.variant,))
     module_path = '.'.join(path[:-1])
     klass_name = path[-1]
     module = __import__(module_path, globals(), locals(), [klass_name])
     klass = getattr(module, klass_name)
-    return klass(payment, variant=variant, order_items=order_items, **config)
+    return klass(payment, **config)
 
 
 def get_payment_model():

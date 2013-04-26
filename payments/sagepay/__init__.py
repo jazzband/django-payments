@@ -48,7 +48,7 @@ class SagepayProvider(BasicProvider):
         dec = aes.decrypt(dec)
         return dec
 
-    def get_hidden_fields(self):
+    def get_hidden_fields(self, ordered_items=None):
         self.payment.save()
         return_url = self.get_return_url()
         data = {

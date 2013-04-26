@@ -14,8 +14,8 @@ class PaymentForm(forms.Form):
     method = 'post'
 
     def __init__(self, data=None, action=None, method='post', provider=None,
-                 payment=None, hidde_inputs=True):
-        if hidde_inputs:
+                 payment=None, hidden_inputs=True):
+        if hidden_inputs:
             super(PaymentForm, self).__init__(auto_id=False)
             for key, val in data.items():
                 widget = forms.widgets.HiddenInput()

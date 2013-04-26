@@ -10,7 +10,7 @@ class PaypalCardProvider(PaypalProvider):
     '''
     paypal.com credit card payment provider
     '''
-    def get_form(self, data=None):
+    def get_form(self, data=None, ordered_items=None):
         return PaymentForm(data, provider=self, payment=self.payment)
 
     def get_product_data(self, extra_data):

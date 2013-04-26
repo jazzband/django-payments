@@ -1,7 +1,6 @@
 from ..forms import PaymentForm
 from .fields import CreditCardExpiryField, CreditCardNumberField
 from django import forms
-from django.conf import settings
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 from re import match
@@ -20,11 +19,10 @@ class PaymentForm(PaymentForm):
     cvv2 = forms.CharField(validators=[CVV_VALIDATOR], required=False,
                            label=_('CVV2 Security Number'), max_length=4)
     default_error_messages = {
-         'invalid_type': _(u'We accept only %(valid_types)s'),
-     }
+        'invalid_type': _(u'We accept only %(valid_types)s')}
 
     def __init__(self, *args, **kwargs):
-        super(PaymentForm, self).__init__(hidde_inputs=False, *args, **kwargs)
+        super(PaymentForm, self).__init__(hidden_inputs=False, *args, **kwargs)
 
     def get_credit_card_type(self, number):
         if match('^4[0-9]{12}(?:[0-9]{3})?$', number):
@@ -43,7 +41,7 @@ class PaymentForm(PaymentForm):
             type = self.get_credit_card_type(cleaned_data['number'])
             if type not in self.VALID_TYPES:
                 message = (self.default_error_messages['invalid_type'] %
-                           {'valid_types':', '.join(self.VALID_TYPES)})
+                           {'valid_types': ', '.join(self.VALID_TYPES)})
                 self._errors['number'] = self.error_class([message])
             else:
                 cleaned_data['type'] = type

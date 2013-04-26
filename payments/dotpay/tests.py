@@ -60,39 +60,29 @@ class TestDotpayProvider(TestCase):
 
     def setUp(self):
         self.payment = Payment()
-        self.order_items = MagicMock()
-        self.order_items.__iter__.return_value = [PaymentItem('foo', 10, 100,
-                                                              'USD', 'd431')]
+        self.ordered_items = MagicMock()
+        self.ordered_items.__iter__.return_value = [PaymentItem('foo', 10, 100,
+                                                                'USD', 'd431')]
 
     def test_get_hidden_fields(self):
-        '''
-        Tests if the get_hidden_fields returns a dictionary.
-        '''
-        provider = DotpayProvider(self.payment, VARIANT, self.order_items,
-                                  seller_id='123', pin=PIN)
-        self.assertEqual(type(provider.get_hidden_fields()), dict,
-                         'Should return a dictionary.')
+        """DotpayProvider.get_hidden_fields() returns a dictionary"""
+        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
+        self.assertEqual(
+            type(provider.get_hidden_fields(ordered_items=self.ordered_items)),
+            dict)
 
     def test_process_data(self):
-        '''
-        Tests if the process_dat returns a correct http response.
-        '''
+        """DotpayProvider.process_data() returns a correct HTTP response"""
         request = MagicMock()
         request.POST = get_post_with_md5(PROCESS_POST)
-        provider = DotpayProvider(self.payment, VARIANT, self.order_items,
-                                  seller_id='123', pin=PIN)
+        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
         response = provider.process_data(request)
-        self.assertEqual(type(response), HttpResponse,
-                         'Should return a HttpResponse object.')
+        self.assertEqual(type(response), HttpResponse)
 
     def test_uncorrect_process_data(self):
-        '''
-        Tests if the process_dat returns a correct http response.
-        '''
+        """DotpayProvider.process_data() checks POST signature"""
         request = MagicMock()
         request.POST = PROCESS_POST
-        provider = DotpayProvider(self.payment, VARIANT, self.order_items,
-                                  seller_id='123', pin=PIN)
+        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
         response = provider.process_data(request)
-        self.assertEqual(type(response), HttpResponseForbidden,
-                         'Should return a HttpResponseForbidden object.')
+        self.assertEqual(type(response), HttpResponseForbidden)

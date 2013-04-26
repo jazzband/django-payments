@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from uuid import uuid4
 
+from . import factory
 
 DEFAULT_PAYMENT_STATUS_CHOICES = (
     ('waiting', _(u'Waiting for confirmation')),
@@ -13,9 +14,6 @@ DEFAULT_PAYMENT_STATUS_CHOICES = (
 )
 PAYMENT_STATUS_CHOICES = getattr(settings, 'PAYMENT_STATUS_CHOICES',
                                  DEFAULT_PAYMENT_STATUS_CHOICES)
-'''
-List of possible payment statuses.
-'''
 
 
 class BasePayment(models.Model):
@@ -74,6 +72,10 @@ class BasePayment(models.Model):
 
     def __unicode__(self):
         return self.variant
+
+    def get_form(self, data=None, ordered_items=None):
+        provider = factory(self)
+        return provider.get_form(data=data, ordered_items=ordered_items)
 
     def get_cancel_url(self):
         raise NotImplementedError()
