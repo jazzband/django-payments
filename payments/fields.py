@@ -114,3 +114,20 @@ class CreditCardExpiryField(forms.MultiValueField):
             day = monthrange(year, month)[1]
             return date(year, month, day)
         return None
+
+
+class CreditCardVerificationField(forms.CharField):
+
+    default_error_messages = {
+        'invalid': _(u'Enter a valid security number.'),
+    }
+
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = kwargs.pop('max_length', 4)
+        super(CreditCardVerificationField, self).__init__(*args, **kwargs)
+
+    def validate(self, value):
+        if value in validators.EMPTY_VALUES and self.required:
+            raise forms.ValidationError(self.error_messages['required'])
+        if value and not re.match('^[0-9]{3,4}$', value):
+            raise forms.ValidationError(self.error_messages['invalid'])

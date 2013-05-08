@@ -1,10 +1,9 @@
 from re import match
 
 from django import forms
-from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 
-from .fields import CreditCardNumberField, CreditCardExpiryField
+from .fields import CreditCardNumberField, CreditCardExpiryField, CreditCardVerificationField
 
 
 class PaymentForm(forms.Form):
@@ -36,14 +35,10 @@ class PaymentForm(forms.Form):
 
 class CreditCardPaymentForm(PaymentForm):
 
-    CVV_VALIDATOR = validators.RegexValidator('^[0-9]{1,4}$',
-                                              _('Enter a valid security number.'))
-
     number = CreditCardNumberField(label=_('Card Number'), max_length=32,
                                    required=True)
     expiration = CreditCardExpiryField()
-    cvv2 = forms.CharField(validators=[CVV_VALIDATOR], required=False,
-                           label=_('CVV2 Security Number'), max_length=4)
+    cvv2 = CreditCardVerificationField(label=_('CVV2 Security Number'), required=False)
 
     default_error_messages = {
         'invalid_type': _(u'We accept only %(valid_types)s')}
