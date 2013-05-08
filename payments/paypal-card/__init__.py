@@ -1,7 +1,8 @@
-from .. import get_payment_model, RedirectNeeded
-from ..paypal import PaypalProvider
 from django.http import HttpResponseForbidden
-from .forms import PaymentForm
+
+from ..paypal import PaypalProvider
+from ..forms import PaymentForm
+from .. import get_payment_model, RedirectNeeded
 
 Payment = get_payment_model()
 

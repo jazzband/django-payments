@@ -1,13 +1,16 @@
-from . import widgets
-from django import forms
-from django.core import validators
-from django.utils.translation import ugettext_lazy as _
 from datetime import date
 from calendar import monthrange
 import re
 
+from django import forms
+from django.core import validators
+from django.utils.translation import ugettext_lazy as _
+
+from . import widgets
+
 
 class CreditCardNumberField(forms.CharField):
+
     widget = widgets.CreditCardNumberWidget
     default_error_messages = {
         'invalid': _(u'Please enter a valid card number'),
@@ -62,6 +65,7 @@ class CreditCardExpiryWidget(forms.MultiWidget):
 
 # From https://github.com/zen4ever/django-authorizenet
 class CreditCardExpiryField(forms.MultiValueField):
+
     EXP_MONTH = [(x, "%02d" % x) for x in xrange(1, 13)]
     EXP_YEAR = [(x, x) for x in xrange(date.today().year,
                                        date.today().year + 15)]

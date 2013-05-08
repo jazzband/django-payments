@@ -1,11 +1,13 @@
-from .. import BasicProvider, RedirectNeeded, get_payment_model
+from functools import wraps
 from datetime import timedelta
+import requests
+
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import simplejson, timezone
-import requests
-from functools import wraps
+
 from .forms import PaymentForm
+from .. import BasicProvider, RedirectNeeded, get_payment_model
 
 Payment = get_payment_model()
 

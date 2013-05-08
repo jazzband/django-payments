@@ -1,8 +1,10 @@
+from re import match
+
 from django import forms
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
+
 from .fields import CreditCardNumberField, CreditCardExpiryField
-from re import match
 
 
 class PaymentForm(forms.Form):
