@@ -15,6 +15,26 @@ Example::
        'dummy': ('payments.dummy.DummyProvider', {})}
 
 
+Authorize.Net
+--------
+
+.. class:: payments.authorizenet.AuthorizeNetProvider(login_id, transaction_key[, endpoint='https://secure.authorize.net/gateway/transact.dll'])
+
+   This backend implements payments using the Advanced Integration Method (AIM) from `Authorize.Net <https://www.authorize.net/>`_.
+
+   :param login_id: Your API Login ID
+   :param transaction_key: Your unique Transaction Key
+   :param endpoint: The API endpoint to use. To test using staging environment, use ``'https://test.authorize.net/gateway/transact.dll'`` instead
+
+Example::
+
+   # use staging environment
+   PAYMENT_VARIANTS = {
+       'authorizenet': ('payments.authorizenet.AuthorizeNetProvider', {
+           'login_id': '1234login',
+           'transaction_key': '1234567890abcdef',
+           'endpoint': 'https://test.authorize.net/gateway/transact.dll'})}
+
 Dotpay
 ------
 
@@ -97,22 +117,3 @@ Example::
            'encryption_key': '1234567890abcdef',
            'endpoint': 'https://test.sagepay.com/Simulator/VSPFormGateway.asp'})}
 
-Authorize.Net
---------
-
-.. class:: payments.authorizenet.AuthorizeNetProvider(login_id, transaction_key[, endpoint='https://secure.authorize.net/gateway/transact.dll'])
-
-   This backend implements payments using the Advanced Integration Method (AIM) from `Authorize.Net <https://www.authorize.net/>`_.
-
-   :param login_id: Your API Login ID
-   :param transaction_key: Your unique Transaction Key
-   :param endpoint: The API endpoint to use. To test using staging environment, use ``'https://test.authorize.net/gateway/transact.dll'`` instead
-
-Example::
-
-   # use staging environment
-   PAYMENT_VARIANTS = {
-       'authorizenet': ('payments.authorizenet.AuthorizeNetProvider', {
-           'login_id': '1234login',
-           'transaction_key': '1234567890abcdef',
-           'endpoint': 'https://test.authorize.net/gateway/transact.dll'})}
