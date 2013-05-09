@@ -15,7 +15,7 @@ class PaymentForm(CreditCardPaymentForm):
 
         if not self.errors:
             if not self.payment.transaction_id:
-                request_data = {'type': self.card_type}
+                request_data = {'type': cleaned_data.get('number').card_type}
                 request_data.update(cleaned_data)
                 response = self.provider.get_payment_response(cleaned_data)
                 data = response.json()

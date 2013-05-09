@@ -8,8 +8,6 @@ RESPONSE_STATUS = {
 
 class PaymentForm(CreditCardPaymentForm):
 
-    VALID_TYPES = ['visa', 'mastercard', 'discover', 'amex', 'jcb', 'diners club']
-
     def clean(self):
         cleaned_data = super(PaymentForm, self).clean()
 

@@ -1,5 +1,3 @@
-from re import match
-
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
@@ -40,36 +38,7 @@ class CreditCardPaymentForm(PaymentForm):
     expiration = CreditCardExpiryField()
     cvv2 = CreditCardVerificationField(label=_('CVV2 Security Number'), required=False)
 
-    default_error_messages = {
-        'invalid_type': _(u'We accept only %(valid_types)s')}
-
     def __init__(self, *args, **kwargs):
         super(CreditCardPaymentForm, self).__init__(hidden_inputs=False, *args, **kwargs)
-
-    def get_credit_card_type(self, number):
-        if match('^4[0-9]{12}(?:[0-9]{3})?$', number):
-            return 'visa'
-        if match('^5[1-5][0-9]{14}$', number):
-            return 'mastercard'
-        if match('^6(?:011|5[0-9]{2})[0-9]{12}$', number):
-            return 'discover'
-        if match('^3[47][0-9]{13}$', number):
-            return 'amex'
-        if match('^(?:(?:2131|1800|35\d{3})\d{11})$', number):
-            return 'jcb'
-        if match('^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', number):
-            return 'diners club'
-
-    def clean(self):
-        cleaned_data = super(PaymentForm, self).clean()
-
-        if 'number' in cleaned_data.keys():
-            card_type = self.get_credit_card_type(cleaned_data['number'])
-            if card_type not in self.VALID_TYPES:
-                message = (self.default_error_messages['invalid_type'] %
-                           {'valid_types': ', '.join(self.VALID_TYPES)})
-                self._errors['number'] = self.error_class([message])
-            else:
-                self.card_type = card_type
-
-        return cleaned_data
+        if hasattr(self, 'VALID_TYPES'):
+            self.fields['number'].valid_types = self.VALID_TYPES
