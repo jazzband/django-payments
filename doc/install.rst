@@ -36,7 +36,7 @@ Installation
               yield PurchasedItem(name='The Hound of the Baservilles', sku='BSKV',
                                   quantity=9, price=Decimal(10), currency='USD')
 
-   The :meth:`get_ordered_items` method should return an iterable yielding instances of :class:`payments.PurchasedItem`.
+   The :meth:`get_purchased_items` method should return an iterable yielding instances of :class:`payments.PurchasedItem`.
 
 #. Write a view that will handle the payment. You can obtain a form instance by passing POST data to ``payment.get_form()``::
 
@@ -81,9 +81,7 @@ Installation
       PAYMENT_MODEL = 'mypaymentapp.Payment'
 
       PAYMENT_VARIANTS = {
-          'default': (
-              'payments.dummy.DummyProvider', {
-                  'url': 'http://example.com/'})}
+          'default': ('payments.dummy.DummyProvider', {})}
 
    Variants are named pairs of payment providers and their configuration.
 
