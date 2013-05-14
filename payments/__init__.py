@@ -1,8 +1,9 @@
 from collections import namedtuple
+from urlparse import urljoin
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import get_model
-from urlparse import urljoin
 
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {

@@ -1,7 +1,8 @@
-from django import forms
-from .. import get_payment_model
-
 import hashlib
+
+from django import forms
+
+from .. import get_payment_model
 
 Payment = get_payment_model()
 

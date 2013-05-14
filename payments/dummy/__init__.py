@@ -1,6 +1,7 @@
-from .. import BasicProvider, RedirectNeeded
 from django.shortcuts import redirect
-from forms import DummyForm
+
+from .forms import DummyForm
+from .. import BasicProvider, RedirectNeeded
 
 
 class DummyProvider(BasicProvider):
@@ -14,7 +15,7 @@ class DummyProvider(BasicProvider):
 
     def __init__(self, *args, **kwargs):
         self._url = kwargs.pop('url')
-        return super(DummyProvider, self).__init__(*args, **kwargs)
+        super(DummyProvider, self).__init__(*args, **kwargs)
 
     def get_form(self, data=None):
         form = DummyForm(data=data, hidden_inputs=False, provider=self,

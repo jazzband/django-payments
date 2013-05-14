@@ -41,7 +41,7 @@ Installation
 #. Write a view that will handle the payment. You can obtain a form instance by passing POST data to ``payment.get_form()``::
 
       # mypaymentapp/views.py
-      from django.shortcuts import get_object_or_404
+      from django.shortcuts import get_object_or_404, redirect
       from django.template.response import TemplateResponse
       from payments import get_payment_model, RedirectNeeded
    
