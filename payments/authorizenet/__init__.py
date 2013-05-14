@@ -44,8 +44,8 @@ class AuthorizeNetProvider(BasicProvider):
             'x_delim_data': True,
             'x_delim_char': "|",
             'x_method': "CC",
-            'x_type': "AUTH_CAPTURE",
-        })
+            'x_type': "AUTH_CAPTURE"})
+
         return data
 
     def get_payment_response(self, extra_data=None):

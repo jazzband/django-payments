@@ -22,8 +22,8 @@ Authorize.Net
 
    This backend implements payments using the Advanced Integration Method (AIM) from `Authorize.Net <https://www.authorize.net/>`_.
 
-   :param login_id: Your API Login ID
-   :param transaction_key: Your unique Transaction Key
+   :param login_id: Your API Login ID assigned by Authorize.net
+   :param transaction_key: Your unique Transaction Key assigned by Authorize.net
    :param endpoint: The API endpoint to use. To test using staging environment, use ``'https://test.authorize.net/gateway/transact.dll'`` instead
 
 Example::

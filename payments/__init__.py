@@ -1,5 +1,5 @@
-from urlparse import urljoin
 from collections import namedtuple
+from urlparse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured

@@ -14,8 +14,7 @@ CARD_TYPES = {
     'discover': ('^6(?:011|5[0-9]{2})[0-9]{12}$', 'Discover'),
     'amex': ('^3[47][0-9]{13}$', 'American Express'),
     'jcb': ('^(?:(?:2131|1800|35\d{3})\d{11})$', 'JCB'),
-    'diners': ('^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'Diners Club'),
-}
+    'diners': ('^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'Diners Club')}
 
 
 class CreditCard(object):
@@ -44,8 +43,7 @@ class CreditCardNumberField(forms.CharField):
     widget = widgets.CreditCardNumberWidget
     default_error_messages = {
         'invalid': _(u'Please enter a valid card number'),
-        'invalid_type': _(u'We accept only %(valid_types)s'),
-    }
+        'invalid_type': _(u'We accept only %(valid_types)s')}
 
     def __init__(self, valid_types=None, *args, **kwargs):
         self.valid_types = valid_types
@@ -120,8 +118,7 @@ class CreditCardExpiryField(forms.MultiValueField):
 
     default_error_messages = {
         'invalid_month': u'Enter a valid month.',
-        'invalid_year': u'Enter a valid year.',
-    }
+        'invalid_year': u'Enter a valid year.'}
 
     def __init__(self, *args, **kwargs):
         errors = self.default_error_messages.copy()
@@ -167,8 +164,7 @@ class CreditCardExpiryField(forms.MultiValueField):
 class CreditCardVerificationField(forms.CharField):
 
     default_error_messages = {
-        'invalid': _(u'Enter a valid security number.'),
-    }
+        'invalid': _(u'Enter a valid security number.')}
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = kwargs.pop('max_length', 4)
