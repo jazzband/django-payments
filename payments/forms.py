@@ -1,4 +1,7 @@
 from django import forms
+from django.utils.translation import ugettext_lazy as _
+
+from .fields import CreditCardNumberField, CreditCardExpiryField, CreditCardVerificationField
 
 
 class PaymentForm(forms.Form):
@@ -26,3 +29,16 @@ class PaymentForm(forms.Form):
         self.method = method
         self.provider = provider
         self.payment = payment
+
+
+class CreditCardPaymentForm(PaymentForm):
+
+    number = CreditCardNumberField(label=_('Card Number'), max_length=32,
+                                   required=True)
+    expiration = CreditCardExpiryField()
+    cvv2 = CreditCardVerificationField(label=_('CVV2 Security Number'), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(CreditCardPaymentForm, self).__init__(hidden_inputs=False, *args, **kwargs)
+        if hasattr(self, 'VALID_TYPES'):
+            self.fields['number'].valid_types = self.VALID_TYPES

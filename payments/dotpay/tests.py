@@ -1,10 +1,11 @@
-from . import DotpayProvider
-from .. import PurchasedItem
-from .forms import ACCEPTED
-from django.http import HttpResponse, HttpResponseForbidden
-from django.test import TestCase
 from mock import MagicMock
 import hashlib
+
+from django.http import HttpResponse, HttpResponseForbidden
+from django.test import TestCase
+
+from .forms import ACCEPTED
+from . import DotpayProvider
 
 VARIANT = 'dotpay'
 PIN = '123'
