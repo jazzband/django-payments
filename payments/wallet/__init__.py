@@ -1,10 +1,10 @@
 import time
 
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 import jwt
 
 from .. import get_payment_model, BasicProvider
-from .forms import PaymentForm
+from .forms import PaymentForm, ProcessPaymentForm
 
 Payment = get_payment_model()
 
@@ -42,4 +42,9 @@ class GoogleWalletProvider(BasicProvider):
         return PaymentForm(data=data, payment=self.payment, provider=self, action='', hidden_inputs=False)
 
     def process_data(self, request):
-        return HttpResponseForbidden('FAILED')
+        form = ProcessPaymentForm(payment=self.payment, provider=self,
+                                  data=request.POST or None)
+        if not form.is_valid():
+            return HttpResponseForbidden('FAILED')
+        form.save()
+        return HttpResponse('OK')
