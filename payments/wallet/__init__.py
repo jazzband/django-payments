@@ -45,7 +45,7 @@ class GoogleWalletProvider(BasicProvider):
         return ProcessPaymentForm(payment=self.payment, provider=self,
                                   data=request.POST or None)
 
-    def get_token_from_response(self, request):
+    def get_token_from_request(self, request):
         form = self.get_process_form(request)
         if form.is_valid():
             return form.token

@@ -35,7 +35,7 @@ def static_callback(request, variant):
     except ValueError:
         raise Http404('No such provider')
 
-    token = provider.get_token_from_response(request)
+    token = provider.get_token_from_request(request)
     if not token:
         raise Http404('Invalid response')
     return process_data(request, token, provider)

@@ -59,9 +59,9 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_token_from_response(self, request):
+    def get_token_from_request(self, request):
         '''
-        Return payment token from provider response.
+        Return payment token from provider request.
         '''
         raise NotImplementedError()
 

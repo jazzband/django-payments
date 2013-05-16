@@ -73,7 +73,7 @@ class TestGoogleWalletProvider(TestCase):
         response = provider.process_data(self.request)
         self.assertEqual(type(response), HttpResponseForbidden)
 
-    def test_response_payment_token(self):
+    def test_provider_request_payment_token(self):
         provider = GoogleWalletProvider(payment=None, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
-        token = provider.get_token_from_response(self.request)
+        token = provider.get_token_from_request(self.request)
         self.assertEqual(token, PAYMENT_TOKEN)
