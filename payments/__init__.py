@@ -59,29 +59,40 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
+    def get_token_from_response(self, request):
+        '''
+        Return payment token from provider response.
+        '''
+        raise NotImplementedError()
+
     def get_return_url(self):
         payment_link = self.payment.get_process_url()
         return urljoin(settings.PAYMENT_BASE_URL, payment_link)
+
+
+def provider_factory(variant, payment=None):
+    "Return the provider instance based on variant"
+    variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
+    handler, config = variants.get(variant, (None, None))
+    if not handler:
+        raise ValueError('Payment variant does not exist: %s' %
+                         (variant,))
+    path = handler.split('.')
+    if len(path) < 2:
+        raise ValueError('Payment variant uses an invalid payment module: %s' %
+                         (variant,))
+    module_path = '.'.join(path[:-1])
+    klass_name = path[-1]
+    module = __import__(module_path, globals(), locals(), [klass_name])
+    klass = getattr(module, klass_name)
+    return klass(payment, **config)
 
 
 def factory(payment):
     '''
     Takes the payment object and returns an appropriate provider instance.
     '''
-    variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
-    handler, config = variants.get(payment.variant, (None, None))
-    if not handler:
-        raise ValueError('Payment variant does not exist: %s' %
-                         (payment.variant,))
-    path = handler.split('.')
-    if len(path) < 2:
-        raise ValueError('Payment variant uses an invalid payment module: %s' %
-                         (payment.variant,))
-    module_path = '.'.join(path[:-1])
-    klass_name = path[-1]
-    module = __import__(module_path, globals(), locals(), [klass_name])
-    klass = getattr(module, klass_name)
-    return klass(payment, **config)
+    return provider_factory(payment.variant, payment)
 
 
 def get_payment_model():

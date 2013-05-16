@@ -41,9 +41,17 @@ class GoogleWalletProvider(BasicProvider):
     def get_form(self, data=None):
         return PaymentForm(data=data, payment=self.payment, provider=self, action='', hidden_inputs=False)
 
-    def process_data(self, request):
-        form = ProcessPaymentForm(payment=self.payment, provider=self,
+    def get_process_form(self, request):
+        return ProcessPaymentForm(payment=self.payment, provider=self,
                                   data=request.POST or None)
+
+    def get_token_from_response(self, request):
+        form = self.get_process_form(request)
+        if form.is_valid():
+            return form.token
+
+    def process_data(self, request):
+        form = self.get_process_form(request)
         if not form.is_valid():
             return HttpResponseForbidden('FAILED')
         form.save()

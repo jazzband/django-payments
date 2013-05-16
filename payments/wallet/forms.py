@@ -28,8 +28,9 @@ class ProcessPaymentForm(forms.Form):
         if jwt_data['iss'] != 'Google' or jwt_data['aud'] != self.provider.merchant_id:
             raise forms.ValidationError('Incorrect response')
 
-        payment_token = jwt_data['request']['sellerData']
-        if self.payment.token != payment_token:
+        self.token = jwt_data['request']['sellerData']
+
+        if self.payment and self.payment.token != self.token:
             raise forms.ValidationError('Incorrect payment token')
 
         self.order_id = jwt_data['response']['orderId']

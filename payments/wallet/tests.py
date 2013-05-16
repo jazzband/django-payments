@@ -54,22 +54,26 @@ class TestGoogleWalletProvider(TestCase):
 
     def setUp(self):
         self.payment = Payment()
+        self.request = MagicMock()
+        self.request.POST = {'jwt': jwt.encode(JWT_DATA, MERCHANT_SECRET)}
 
     def test_process_data(self):
         """GoogleWalletProvider.process_data() returns a correct HTTP response"""
-        request = MagicMock()
-        request.POST = {'jwt': jwt.encode(JWT_DATA, MERCHANT_SECRET)}
         provider = GoogleWalletProvider(self.payment, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
-        response = provider.process_data(request)
+        response = provider.process_data(self.request)
         self.assertEqual(type(response), HttpResponse)
         self.assertEqual(self.payment.status, 'confirmed')
 
     def test_uncorrect_process_data(self):
         """GoogleWalletProvider.process_data() checks POST data"""
-        request = MagicMock()
         data = JWT_DATA
         data['aud'] = 'wrong merchant id'
-        request.POST = {'jwt': jwt.encode(data, MERCHANT_SECRET)}
+        self.request.POST = {'jwt': jwt.encode(data, MERCHANT_SECRET)}
         provider = GoogleWalletProvider(self.payment, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
-        response = provider.process_data(request)
+        response = provider.process_data(self.request)
         self.assertEqual(type(response), HttpResponseForbidden)
+
+    def test_response_payment_token(self):
+        provider = GoogleWalletProvider(payment=None, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
+        token = provider.get_token_from_response(self.request)
+        self.assertEqual(token, PAYMENT_TOKEN)
