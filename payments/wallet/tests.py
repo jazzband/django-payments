@@ -10,12 +10,12 @@ VARIANT = 'wallet'
 
 PAYMENT_TOKEN = "5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6"
 
-MERCHANT_ID = 'abc123'
-MERCHANT_SECRET = '123abc'
+SELLER_ID = 'abc123'
+SELLER_SECRET = '123abc'
 
 JWT_DATA = {
     "iss": "Google",
-    "aud": MERCHANT_ID,
+    "aud": SELLER_ID,
     "typ": "google/payments/inapp/item/v1/postback/buy",
     "iat": "1309988959",
     "exp": "1409988959",
@@ -55,11 +55,11 @@ class TestGoogleWalletProvider(TestCase):
     def setUp(self):
         self.payment = Payment()
         self.request = MagicMock()
-        self.request.POST = {'jwt': jwt.encode(JWT_DATA, MERCHANT_SECRET)}
+        self.request.POST = {'jwt': jwt.encode(JWT_DATA, SELLER_SECRET)}
 
     def test_process_data(self):
         """GoogleWalletProvider.process_data() returns a correct HTTP response"""
-        provider = GoogleWalletProvider(self.payment, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
+        provider = GoogleWalletProvider(self.payment, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         response = provider.process_data(self.request)
         self.assertEqual(type(response), HttpResponse)
         self.assertEqual(self.payment.status, 'confirmed')
@@ -67,19 +67,19 @@ class TestGoogleWalletProvider(TestCase):
     def test_uncorrect_process_data(self):
         """GoogleWalletProvider.process_data() checks POST data"""
         data = JWT_DATA
-        data['aud'] = 'wrong merchant id'
-        self.request.POST = {'jwt': jwt.encode(data, MERCHANT_SECRET)}
-        provider = GoogleWalletProvider(self.payment, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
+        data['aud'] = 'wrong seller id'
+        self.request.POST = {'jwt': jwt.encode(data, SELLER_SECRET)}
+        provider = GoogleWalletProvider(self.payment, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         response = provider.process_data(self.request)
         self.assertEqual(type(response), HttpResponseForbidden)
 
     def test_provider_request_payment_token(self):
-        provider = GoogleWalletProvider(payment=None, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
+        provider = GoogleWalletProvider(payment=None, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         token = provider.get_token_from_request(self.request)
         self.assertEqual(token, PAYMENT_TOKEN)
 
     def test_provider_invalid_request(self):
         self.request.POST = {'jwt': 'wrong jwt data'}
-        provider = GoogleWalletProvider(payment=None, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
+        provider = GoogleWalletProvider(payment=None, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         token = provider.get_token_from_request(self.request)
         self.assertFalse(token)
