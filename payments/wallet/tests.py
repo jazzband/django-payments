@@ -77,3 +77,9 @@ class TestGoogleWalletProvider(TestCase):
         provider = GoogleWalletProvider(payment=None, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
         token = provider.get_token_from_request(self.request)
         self.assertEqual(token, PAYMENT_TOKEN)
+
+    def test_provider_invalid_request(self):
+        self.request.POST = {'jwt': 'wrong jwt data'}
+        provider = GoogleWalletProvider(payment=None, merchant_id=MERCHANT_ID, merchant_secret=MERCHANT_SECRET)
+        token = provider.get_token_from_request(self.request)
+        self.assertFalse(token)

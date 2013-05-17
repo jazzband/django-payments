@@ -2,7 +2,7 @@ from django import forms
 import jwt
 
 from ..forms import PaymentForm as BasePaymentForm
-from ..widgets import WalletWidget
+from .widgets import WalletWidget
 
 
 class PaymentForm(BasePaymentForm):
@@ -24,7 +24,11 @@ class ProcessPaymentForm(forms.Form):
     def clean_jwt(self):
         cleaned_jwt = super(ProcessPaymentForm, self).clean().get('jwt')
 
-        jwt_data = jwt.decode(str(cleaned_jwt), self.provider.merchant_secret)
+        try:
+            jwt_data = jwt.decode(str(cleaned_jwt), self.provider.merchant_secret)
+        except jwt.DecodeError:
+            raise forms.ValidationError('Incorrect response')
+
         if jwt_data['iss'] != 'Google' or jwt_data['aud'] != self.provider.merchant_id:
             raise forms.ValidationError('Incorrect response')
 
