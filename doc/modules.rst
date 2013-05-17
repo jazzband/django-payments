@@ -91,6 +91,10 @@ This backend requires js files that should be added to the template using ``{{ f
       </form>
       {{ form.media }}
 
+To specify the `postback URL` at the Merchant Settings page use direct url to `process payment view` in conjunction with your `variant name`:
+
+E.g: ``https://example.com/payments/process/wallet``
+
 Paypal
 ------
 
