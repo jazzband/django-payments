@@ -32,9 +32,7 @@ class GoogleWalletProvider(BasicProvider):
                 "currencyCode": self.payment.currency,
                 "price": str(self.payment.total),
                 'name': self.payment.description or u"Total payment",
-                'sellerData': self.payment.token,
-            }
-        }
+                'sellerData': self.payment.token}}
 
         return jwt.encode(jwt_info, self.seller_secret)
 

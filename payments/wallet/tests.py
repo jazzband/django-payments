@@ -64,7 +64,7 @@ class TestGoogleWalletProvider(TestCase):
         self.assertEqual(type(response), HttpResponse)
         self.assertEqual(self.payment.status, 'confirmed')
 
-    def test_uncorrect_process_data(self):
+    def test_incorrect_process_data(self):
         """GoogleWalletProvider.process_data() checks POST data"""
         data = JWT_DATA
         data['aud'] = 'wrong seller id'

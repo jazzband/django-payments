@@ -9,7 +9,8 @@ class PaymentForm(BasePaymentForm):
 
     def __init__(self, *args, **kwargs):
         super(PaymentForm, self).__init__(*args, **kwargs)
-        self.fields['payment'] = forms.CharField(widget=WalletWidget(provider=self.provider), required=False)
+        widget = WalletWidget(provider=self.provider)
+        self.fields['payment'] = forms.CharField(widget=widget, required=False)
 
 
 class ProcessPaymentForm(forms.Form):
