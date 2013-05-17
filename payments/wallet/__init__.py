@@ -55,4 +55,4 @@ class GoogleWalletProvider(BasicProvider):
         if not form.is_valid():
             return HttpResponseForbidden('FAILED')
         form.save()
-        return HttpResponse('OK')
+        return HttpResponse(form.order_id)

@@ -2,15 +2,17 @@
 This module is responsible for automatic processing of provider callback
 data (asynchronous transaction updates).
 '''
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
 from . import factory, get_payment_model, provider_factory
 
 Payment = get_payment_model()
 
 
+@csrf_exempt
 def process_data(request, token, provider=None):
     '''
     Calls process_data of an appropriate provider.
@@ -28,6 +30,7 @@ def process_data(request, token, provider=None):
     return provider.process_data(request)
 
 
+@csrf_exempt
 def static_callback(request, variant):
 
     try:
