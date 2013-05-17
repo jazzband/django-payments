@@ -75,7 +75,7 @@ class TestDotpayProvider(TestCase):
         response = provider.process_data(request)
         self.assertEqual(type(response), HttpResponse)
 
-    def test_uncorrect_process_data(self):
+    def test_incorrect_process_data(self):
         """DotpayProvider.process_data() checks POST signature"""
         request = MagicMock()
         request.POST = PROCESS_POST
