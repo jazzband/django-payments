@@ -14,7 +14,9 @@ class GoogleWalletProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.seller_id = kwargs.pop('seller_id')
         self.seller_secret = kwargs.pop('seller_secret')
-        self.library = kwargs.pop('library', 'https://sandbox.google.com/checkout/inapp/lib/buy.js')
+        self.library = kwargs.pop(
+            'library',
+            'https://sandbox.google.com/checkout/inapp/lib/buy.js')
         super(GoogleWalletProvider, self).__init__(*args, **kwargs)
 
     def get_jwt_data(self):
@@ -37,7 +39,13 @@ class GoogleWalletProvider(BasicProvider):
         return jwt.encode(jwt_info, self.seller_secret)
 
     def get_form(self, data=None):
-        return PaymentForm(data=data, payment=self.payment, provider=self, action='', hidden_inputs=False)
+        kwargs = {
+            'data': data,
+            'payment': self.payment,
+            'provider': self,
+            'action': '',
+            'hidden_inputs': False}
+        return PaymentForm(**kwargs)
 
     def get_process_form(self, request):
         return ProcessPaymentForm(payment=self.payment, provider=self,

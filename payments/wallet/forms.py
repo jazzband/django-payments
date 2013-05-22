@@ -26,11 +26,13 @@ class ProcessPaymentForm(forms.Form):
         cleaned_jwt = super(ProcessPaymentForm, self).clean().get('jwt')
 
         try:
-            jwt_data = jwt.decode(str(cleaned_jwt), self.provider.seller_secret)
+            jwt_data = jwt.decode(str(cleaned_jwt),
+                                  self.provider.seller_secret)
         except jwt.DecodeError:
             raise forms.ValidationError('Incorrect response')
 
-        if jwt_data['iss'] != 'Google' or jwt_data['aud'] != self.provider.seller_id:
+        if jwt_data['iss'] != 'Google' \
+                or jwt_data['aud'] != self.provider.seller_id:
             raise forms.ValidationError('Incorrect response')
 
         self.token = jwt_data['request']['sellerData']
