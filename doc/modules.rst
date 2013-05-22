@@ -16,7 +16,7 @@ Example::
 
 
 Authorize.Net
---------
+-------------
 
 .. class:: payments.authorizenet.AuthorizeNetProvider(login_id, transaction_key[, endpoint='https://secure.authorize.net/gateway/transact.dll'])
 
@@ -34,6 +34,7 @@ Example::
            'login_id': '1234login',
            'transaction_key': '1234567890abcdef',
            'endpoint': 'https://test.authorize.net/gateway/transact.dll'})}
+
 
 Dotpay
 ------
@@ -60,8 +61,9 @@ Example::
            'pin': '0000',
            'lock': True})}
 
+
 Google Wallet
---------
+-------------
 
 .. class:: payments.wallet.GoogleWalletProvider(seller_id, seller_secret[, library='https://wallet.google.com/inapp/lib/buy.js'])
 
@@ -94,6 +96,7 @@ This backend requires js files that should be added to the template using ``{{ f
 To specify the `postback URL` at the Merchant Settings page use direct url to `process payment view` in conjunction with your `variant name`:
 
 E.g: ``https://example.com/payments/process/wallet``
+
 
 Paypal
 ------
