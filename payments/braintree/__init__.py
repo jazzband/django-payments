@@ -1,10 +1,9 @@
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseForbidden, HttpResponse
-
-from .. import get_payment_model, BasicProvider, RedirectNeeded
 from django.shortcuts import redirect
 import braintree
+
 from .forms import BraintreePaymentForm
+from .. import get_payment_model, BasicProvider, RedirectNeeded
+
 
 Payment = get_payment_model()
 
