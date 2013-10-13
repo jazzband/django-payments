@@ -18,6 +18,6 @@ setup(
         'Programming Language :: Python',
         'Framework :: Django',
     ],
-    install_requires=['requests>=1.2.0', 'pycrypto', 'PyJWT'],
+    install_requires=['requests>=1.2.0', 'pycrypto', 'PyJWT', 'stripe'],
     include_package_data=True,
     zip_safe=False)
