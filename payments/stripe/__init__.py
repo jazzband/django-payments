@@ -23,7 +23,6 @@ class StripeProvider(BasicProvider):
         form = PaymentForm(**kwargs)
 
         if form.is_valid():
-            form.save()
             raise RedirectNeeded(self.payment.get_success_url())
         else:
             self.payment.change_status('input')
