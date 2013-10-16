@@ -1,4 +1,5 @@
 from django.forms.widgets import HiddenInput
+from django.utils.translation import ugettext_lazy as _
 
 
 class StripeWidget(HiddenInput):
@@ -8,7 +9,7 @@ class StripeWidget(HiddenInput):
         kwargs['attrs'] = {
             'id': 'stripe-id',
             'data-key': provider.public_key,
-            'data-description': payment.description or u"Total payment",
+            'data-description': payment.description or _("Total payment"),
             'data-amount': payment.total * 100,
             'data-currency': payment.currency,
         }

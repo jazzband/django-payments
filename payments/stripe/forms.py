@@ -19,7 +19,8 @@ class PaymentForm(BasePaymentForm):
         if not self.errors and not self.payment.transaction_id:
             stripe.api_key = self.provider.secret_key
             try:
-                charge = stripe.Charge.create(
+                self.charge = stripe.Charge.create(
+                    capture=False,
                     amount=self.payment.total * 100,
                     currency=self.payment.currency,
                     card=data['stripe_token'],
@@ -28,10 +29,12 @@ class PaymentForm(BasePaymentForm):
                 )
             except stripe.CardError, e:
                 # The card has been declined
-                self._errors['__all__'] = self.error_class([e])
+                self._errors['__all__'] = self.error_class([e.message])
                 self.payment.change_status('error')
-            else:
-                self.payment.transaction_id = charge.id
-                self.payment.change_status('confirmed')
 
         return data
+
+    def save(self):
+        self.charge.capture()
+        self.payment.transaction_id = self.charge.id
+        self.payment.change_status('confirmed')
