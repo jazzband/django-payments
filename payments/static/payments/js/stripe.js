@@ -25,8 +25,8 @@
     $ = this.jQuery || this.Zepto || this.ender || this.$;
 
     if($) {
-        $(purchase)
+        $(purchase);
     } else {
-        window.onload = purchase
+        window.onload = purchase;
     }
-})()
+})();
