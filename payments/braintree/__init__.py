@@ -31,15 +31,10 @@ class BraintreeProvider(BasicProvider):
         }
         form = BraintreePaymentForm(**kwargs)
         if form.is_valid():
-            form.save()
             raise RedirectNeeded(self.payment.get_success_url())
         else:
             self.payment.change_status('input')
         return form
-
-    def get_process_form(self, request):
-        return BraintreePaymentForm(payment=self.payment, provider=self,
-                                    data=request.POST or None)
 
     def process_data(self, request):
         if self.payment.status == 'confirmed':
