@@ -113,9 +113,9 @@ class CreditCardExpiryWidget(forms.MultiWidget):
 # From https://github.com/zen4ever/django-authorizenet
 class CreditCardExpiryField(forms.MultiValueField):
 
-    EXP_MONTH = [(x, "%02d" % x) for x in xrange(1, 13)]
-    EXP_YEAR = [(x, x) for x in xrange(date.today().year,
-                                       date.today().year + 15)]
+    EXP_MONTH = [(x, "%02d" % x) for x in range(1, 13)]
+    EXP_YEAR = [(x, x) for x in range(date.today().year,
+                                      date.today().year + 15)]
 
     default_error_messages = {
         'invalid_month': 'Enter a valid month.',
