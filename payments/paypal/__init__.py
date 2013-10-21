@@ -1,5 +1,6 @@
-from functools import wraps
+from __future__ import unicode_literals
 from datetime import timedelta
+from functools import wraps
 import requests
 
 from django.http import HttpResponseForbidden
@@ -57,8 +58,8 @@ class PaypalProvider(BasicProvider):
         if ('access_token' in extra_data and
                 'expires_in' in extra_data and
                 (created + timedelta(seconds=extra_data['expires_in'])) > now):
-            return u'%s %s' % (extra_data['token_type'],
-                               extra_data['access_token'])
+            return '%s %s' % (extra_data['token_type'],
+                              extra_data['access_token'])
         else:
             headers = {'Accept': 'application/json',
                        'Accept-Language': 'en_US'}
@@ -70,7 +71,7 @@ class PaypalProvider(BasicProvider):
             data = response.json()
             extra_data.update(data)
             self.payment.extra_data = simplejson.dumps(extra_data)
-            return u'%s %s' % (data['token_type'], data['access_token'])
+            return '%s %s' % (data['token_type'], data['access_token'])
 
     def get_link(self, name, data):
         try:

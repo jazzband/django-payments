@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from datetime import date
 from calendar import monthrange
 import re
@@ -42,8 +43,8 @@ class CreditCardNumberField(forms.CharField):
 
     widget = widgets.CreditCardNumberWidget
     default_error_messages = {
-        'invalid': _(u'Please enter a valid card number'),
-        'invalid_type': _(u'We accept only %(valid_types)s')}
+        'invalid': _('Please enter a valid card number'),
+        'invalid_type': _('We accept only %(valid_types)s')}
 
     def __init__(self, valid_types=None, *args, **kwargs):
         self.valid_types = valid_types
@@ -105,8 +106,8 @@ class CreditCardExpiryWidget(forms.MultiWidget):
             return [None, None]
 
     def format_output(self, rendered_widgets):
-        html = u' / '.join(rendered_widgets)
-        return u'<span style="white-space: nowrap">%s</span>' % html
+        html = ' / '.join(rendered_widgets)
+        return '<span style="white-space: nowrap">%s</span>' % (html,)
 
 
 # From https://github.com/zen4ever/django-authorizenet
@@ -117,8 +118,8 @@ class CreditCardExpiryField(forms.MultiValueField):
                                        date.today().year + 15)]
 
     default_error_messages = {
-        'invalid_month': u'Enter a valid month.',
-        'invalid_year': u'Enter a valid year.'}
+        'invalid_month': 'Enter a valid month.',
+        'invalid_year': 'Enter a valid year.'}
 
     def __init__(self, *args, **kwargs):
         errors = self.default_error_messages.copy()
@@ -164,7 +165,7 @@ class CreditCardExpiryField(forms.MultiValueField):
 class CreditCardVerificationField(forms.CharField):
 
     default_error_messages = {
-        'invalid': _(u'Enter a valid security number.')}
+        'invalid': _('Enter a valid security number.')}
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = kwargs.pop('max_length', 4)
