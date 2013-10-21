@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import binascii
 
 from Crypto.Cipher import AES
@@ -71,7 +72,7 @@ class SagepayProvider(BasicProvider):
             'DeliveryCity': self.payment.billing_city,
             'DeliveryPostCode': self.payment.billing_postcode,
             'DeliveryCountry': self.payment.billing_country_code}
-        udata = u"&".join(u"%s=%s" % kv for kv in data.items())
+        udata = "&".join("%s=%s" % kv for kv in data.items())
         crypt = self.aes_enc(udata)
         return {'VPSProtocol': self._version, 'TxType': 'PAYMENT',
                 'Vendor': self._vendor, 'Crypt': crypt}
