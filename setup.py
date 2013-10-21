@@ -6,11 +6,10 @@ setup(
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
-    version='0.3.2',
+    version='0.3.3',
     url='http://github.com/mirumee/django-payments',
     packages=find_packages(),
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
