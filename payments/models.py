@@ -59,7 +59,7 @@ class BasePayment(models.Model):
         '''
         Updates the Payment status and sends the status_changed signal.
         '''
-        from signals import status_changed
+        from .signals import status_changed
         self.status = status
         self.save()
         status_changed.send(sender=type(self), instance=self)
