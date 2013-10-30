@@ -1,5 +1,8 @@
 from collections import namedtuple
-from urlparse import urljoin
+try:
+    from urllib.parse import urljoin
+except ImportError:
+    from urlparse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured

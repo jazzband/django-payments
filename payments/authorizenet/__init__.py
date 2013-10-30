@@ -1,6 +1,7 @@
-import requests
+from __future__ import unicode_literals
 
 from django.http import HttpResponseForbidden
+import requests
 
 from .forms import PaymentForm
 from .. import get_payment_model, BasicProvider
@@ -24,8 +25,8 @@ class AuthorizeNetProvider(BasicProvider):
             'x_description': self.payment.description,
             'x_first_name': self.payment.billing_first_name,
             'x_last_name': self.payment.billing_last_name,
-            'x_address': u"%s, %s" % (self.payment.billing_address_1,
-                                      self.payment.billing_address_2),
+            'x_address': "%s, %s" % (self.payment.billing_address_1,
+                                     self.payment.billing_address_2),
             'x_city': self.payment.billing_city,
             'x_zip': self.payment.billing_postcode,
             'x_country': self.payment.billing_country_area
