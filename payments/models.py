@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from uuid import uuid4
 
 from django.conf import settings
@@ -8,11 +9,11 @@ from django.utils.translation import ugettext_lazy as _
 from . import factory
 
 DEFAULT_PAYMENT_STATUS_CHOICES = (
-    ('waiting', _(u'Waiting for confirmation')),
-    ('confirmed', _(u'Confirmed')),
-    ('rejected', _(u'Rejected')),
-    ('error', _(u'Error')),
-    ('input', _(u'Input'))
+    ('waiting', _('Waiting for confirmation')),
+    ('confirmed', _('Confirmed')),
+    ('rejected', _('Rejected')),
+    ('error', _('Error')),
+    ('input', _('Input'))
 )
 PAYMENT_STATUS_CHOICES = getattr(settings, 'PAYMENT_STATUS_CHOICES',
                                  DEFAULT_PAYMENT_STATUS_CHOICES)
@@ -58,14 +59,14 @@ class BasePayment(models.Model):
         '''
         Updates the Payment status and sends the status_changed signal.
         '''
-        from signals import status_changed
+        from .signals import status_changed
         self.status = status
         self.save()
         status_changed.send(sender=type(self), instance=self)
 
     def save(self, *args, **kwargs):
         if not self.token:
-            for _i in xrange(100):
+            for _i in range(100):
                 token = str(uuid4())
                 if not type(self).objects.filter(token=token).exists():
                     self.token = token
