@@ -22,6 +22,6 @@ setup(
         'Framework :: Django',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],
-    install_requires=['requests>=1.2.0', 'pycrypto', 'PyJWT'],
+    install_requires=['requests>=1.2.0', 'pycrypto', 'PyJWT', 'braintree'],
     include_package_data=True,
     zip_safe=False)
