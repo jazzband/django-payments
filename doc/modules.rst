@@ -118,7 +118,7 @@ Example::
            'secret': 'iseedeadpeople',
            'endpoint': 'https://api.sandbox.paypal.com'})}
 
-.. class:: payments.paypal.PaypalCardProvider(client_id, secret, endpoint='https://api.paypal.com')
+.. class:: payments.paypal.PaypalCardProvider(client_id, secret[, endpoint='https://api.paypal.com'])
 
    This backend implements payments using `PayPal.com <https://www.paypal.com/>`_ but the credit card data is collected by your site.
 
