@@ -8,9 +8,7 @@ from django.shortcuts import redirect
 from django.utils import simplejson, timezone
 
 from .forms import PaymentForm
-from .. import BasicProvider, RedirectNeeded, get_payment_model
-
-Payment = get_payment_model()
+from .. import BasicProvider, RedirectNeeded
 
 
 class UnauthorizedRequest(Exception):
@@ -83,15 +81,16 @@ class PaypalProvider(BasicProvider):
     def get_transactions_data(self):
         items = list(self.payment.get_purchased_items())
         sub_total = self.payment.total - self.payment.delivery
-        data = {'intent': 'sale',
-                'transactions': [{
+        data = {
+            'intent': 'sale',
+            'transactions': [{
                 'amount': {
-                    'total': self.payment.total,
+                    'total': str(self.payment.total),
                     'currency': self.payment.currency,
                     'details': {
-                        'subtotal': sub_total,
-                        'tax': self.payment.tax,
-                        'shipping': self.payment.delivery}},
+                        'subtotal': str(sub_total),
+                        'tax': str(self.payment.tax),
+                        'shipping': str(self.payment.delivery)}},
                 'item_list': {'items': items},
                 'description': self.payment.description}]}
         return data

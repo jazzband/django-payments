@@ -2,9 +2,6 @@ import hashlib
 
 from django import forms
 
-from .. import get_payment_model
-
-Payment = get_payment_model()
 
 NO_MORE_CONFIRMATION = 0
 NEW = 1

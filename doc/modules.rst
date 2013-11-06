@@ -98,7 +98,7 @@ To specify the `postback URL` at the Merchant Settings page use direct url to `p
 E.g: ``https://example.com/payments/process/wallet``
 
 
-Paypal
+PayPal
 ------
 
 .. class:: payments.paypal.PaypalProvider(client_id, secret[, endpoint='https://api.paypal.com'])

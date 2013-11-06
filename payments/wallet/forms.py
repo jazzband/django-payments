@@ -23,10 +23,9 @@ class ProcessPaymentForm(forms.Form):
         self.payment = payment
 
     def clean_jwt(self):
-        cleaned_jwt = super(ProcessPaymentForm, self).clean().get('jwt')
-
+        payload = super(ProcessPaymentForm, self).clean().get('jwt')
         try:
-            jwt_data = jwt.decode(str(cleaned_jwt),
+            jwt_data = jwt.decode(payload.encode('utf-8'),
                                   self.provider.seller_secret)
         except jwt.DecodeError:
             raise forms.ValidationError('Incorrect response')
@@ -41,7 +40,7 @@ class ProcessPaymentForm(forms.Form):
             raise forms.ValidationError('Incorrect payment token')
 
         self.order_id = jwt_data['response']['orderId']
-        return cleaned_jwt
+        return payload
 
     def save(self):
         self.payment.transaction_id = self.order_id

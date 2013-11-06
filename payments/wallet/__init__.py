@@ -5,9 +5,7 @@ from django.http import HttpResponseForbidden, HttpResponse
 import jwt
 
 from .forms import PaymentForm, ProcessPaymentForm
-from .. import get_payment_model, BasicProvider
-
-Payment = get_payment_model()
+from .. import BasicProvider
 
 
 class GoogleWalletProvider(BasicProvider):
@@ -32,9 +30,9 @@ class GoogleWalletProvider(BasicProvider):
             'iat': current_time,
             'exp': exp_time,
             'request': {
-                "currencyCode": self.payment.currency,
-                "price": str(self.payment.total),
-                'name': self.payment.description or "Total payment",
+                'currencyCode': self.payment.currency,
+                'price': str(self.payment.total),
+                'name': self.payment.description or 'Total payment',
                 'sellerData': self.payment.token}}
 
         return jwt.encode(jwt_info, self.seller_secret)

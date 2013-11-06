@@ -1,8 +1,8 @@
-from mock import MagicMock
 import hashlib
+from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
-from django.test import TestCase
+from mock import MagicMock
 
 from .forms import ACCEPTED
 from . import DotpayProvider

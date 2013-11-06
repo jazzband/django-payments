@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')
 
 setup(
     name='django-payments',
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
-    version='0.3.4.4',
+    version='0.3.5',
     url='http://github.com/mirumee/django-payments',
     packages=find_packages(),
     classifiers=[
@@ -22,6 +25,7 @@ setup(
         'Framework :: Django',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],
-    install_requires=['requests>=1.2.0', 'pycrypto', 'PyJWT'],
+    install_requires=['Django>=1.5', 'requests>=1.2.0', 'pycrypto', 'PyJWT'],
     include_package_data=True,
+    test_suite='payments.tests',
     zip_safe=False)
