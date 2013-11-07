@@ -52,6 +52,9 @@ class Payment(object):
     def get_purchased_items(self):
         return []
 
+    def save(self):
+        return self
+
     def get_success_url(self):
         return 'http://success.com'
 
