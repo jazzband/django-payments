@@ -4,9 +4,7 @@ from django.http import HttpResponseForbidden
 import requests
 
 from .forms import PaymentForm
-from .. import get_payment_model, BasicProvider
-
-Payment = get_payment_model()
+from .. import BasicProvider
 
 
 class AuthorizeNetProvider(BasicProvider):
@@ -14,8 +12,8 @@ class AuthorizeNetProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.login_id = kwargs.pop('login_id')
         self.transaction_key = kwargs.pop('transaction_key')
-        self.endpoint = kwargs.pop('endpoint',
-                                   'https://test.authorize.net/gateway/transact.dll')
+        self.endpoint = kwargs.pop(
+            'endpoint', 'https://test.authorize.net/gateway/transact.dll')
         super(AuthorizeNetProvider, self).__init__(*args, **kwargs)
 
     def get_transactions_data(self):
@@ -54,7 +52,8 @@ class AuthorizeNetProvider(BasicProvider):
         return requests.post(self.endpoint, data=post)
 
     def get_form(self, data=None):
-        return PaymentForm(data=data, payment=self.payment, provider=self, action='')
+        return PaymentForm(data=data, payment=self.payment, provider=self,
+                           action='')
 
     def process_data(self, request):
         return HttpResponseForbidden('FAILED')

@@ -14,8 +14,6 @@ except ImportError:
 
 from . import factory, get_payment_model, provider_factory
 
-Payment = get_payment_model()
-
 
 @csrf_exempt
 @atomic
@@ -25,6 +23,7 @@ def process_data(request, token, provider=None):
 
     Raises Http404 if variant does not exist.
     '''
+    Payment = get_payment_model()
     payment = get_object_or_404(Payment, token=token)
     if provider:
         provider.payment = payment
@@ -51,7 +50,8 @@ def static_callback(request, variant):
     return process_data(request, token, provider)
 
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^process/(?P<token>[0-9a-z]{8}-[0-9a-z]{4}-'
         '[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})$', process_data,
         name='process_payment'),
