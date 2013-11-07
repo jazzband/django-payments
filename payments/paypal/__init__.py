@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.utils import simplejson, timezone
 
 from .forms import PaymentForm
-from .. import BasicProvider, RedirectNeeded
+from .. import BasicProvider, RedirectNeeded, get_credit_card_issuer
 
 
 class UnauthorizedRequest(Exception):
@@ -78,8 +78,17 @@ class PaypalProvider(BasicProvider):
             return None
         return links[0]['href']
 
+    def get_transactions_items(self):
+        for purchased_item in self.payment.get_purchased_items():
+            item = {'name': purchased_item.name,
+                    'quantity': str(purchased_item.quantity),
+                    'price': str(purchased_item.price),
+                    'currency': purchased_item.currency,
+                    'sku': purchased_item.sku}
+            yield item
+
     def get_transactions_data(self):
-        items = list(self.payment.get_purchased_items())
+        items = list(self.get_transactions_items())
         sub_total = self.payment.total - self.payment.delivery
         data = {
             'intent': 'sale',
@@ -179,8 +188,10 @@ class PaypalCardProvider(PaypalProvider):
         data = self.get_transactions_data()
         year = extra_data['expiration'].year
         month = extra_data['expiration'].month
-        credit_card = {'number': extra_data['number'],
-                       'type': extra_data['type'],
+        number = extra_data['number']
+        card_type, _card_issuer = get_credit_card_issuer(number)
+        credit_card = {'number': number,
+                       'type': card_type,
                        'expire_month': month,
                        'expire_year': year}
         if 'cvv2' in extra_data and extra_data['cvv2']:

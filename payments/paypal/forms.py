@@ -2,6 +2,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 
 from ..forms import CreditCardPaymentForm
+from .. import get_credit_card_issuer
 
 
 class PaymentForm(CreditCardPaymentForm):
@@ -20,7 +21,9 @@ class PaymentForm(CreditCardPaymentForm):
 
         if not self.errors:
             if not self.payment.transaction_id:
-                request_data = {'type': cleaned_data.get('number').card_type}
+                number = cleaned_data.get('number')
+                card_type, _card_issuer = get_credit_card_issuer(number)
+                request_data = {'type': card_type}
                 request_data.update(cleaned_data)
                 response = self.provider.get_payment_response(cleaned_data)
                 data = response.json()
