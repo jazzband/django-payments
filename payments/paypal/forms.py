@@ -10,6 +10,11 @@ class PaymentForm(CreditCardPaymentForm):
 
     name = forms.CharField(label=_('Name on Credit Card'), max_length=128)
 
+    def __init__(self, *args, **kwargs):
+        super(PaymentForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder.remove('name')
+        self.fields.keyOrder.insert(0, 'name')
+
     def clean(self):
         cleaned_data = super(PaymentForm, self).clean()
 

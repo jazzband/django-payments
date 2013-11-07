@@ -7,7 +7,7 @@ from django import forms
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 
-from . import widgets
+from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
 
 CARD_TYPES = {
     'visa': ('^4[0-9]{12}(?:[0-9]{3})?$', 'VISA'),
@@ -22,7 +22,8 @@ class CreditCard(object):
 
     def __init__(self, number):
         self.number = number
-        self.card_type, self.card_type_fullname = self.get_credit_card_type(number)
+        credit_card_type = self.get_credit_card_type(number)
+        self.card_type, self.card_type_fullname = credit_card_type
 
     def __repr__(self):
         return 'CreditCard(number=%s, card_type=%s, card_type_fullname=%s)' % \
@@ -41,7 +42,7 @@ class CreditCard(object):
 
 class CreditCardNumberField(forms.CharField):
 
-    widget = widgets.CreditCardNumberWidget
+    widget = CreditCardNumberWidget
     default_error_messages = {
         'invalid': _('Please enter a valid card number'),
         'invalid_type': _('We accept only %(valid_types)s')}
@@ -63,11 +64,13 @@ class CreditCardNumberField(forms.CharField):
             raise forms.ValidationError(self.error_messages['required'])
         if value and not self.cart_number_checksum_validation(value):
             raise forms.ValidationError(self.error_messages['invalid'])
-        if value and not self.valid_types is None \
-                and not card.card_type in self.valid_types:
-            raise forms.ValidationError(self.error_messages['invalid_type'] %
-                                        {'valid_types': ', '.join(map(self.get_card_type_fullname,
-                                                                      self.valid_types))})
+        if (value and not self.valid_types is None
+                and not card.card_type in self.valid_types):
+            valid_types = map(self.get_card_type_fullname, self.valid_types)
+            error_message = self.error_messages['invalid_type'] % {
+                'valid_types': ', '.join(valid_types)
+            }
+            raise forms.ValidationError(error_message)
 
     def run_validators(self, card):
         super(CreditCardNumberField, self).run_validators(card.number)
@@ -95,21 +98,6 @@ class CreditCardNumberField(forms.CharField):
         return sum(digits) % 10 == 0 if digits else False
 
 
-# Credit Card Expiry Fields from:
-# http://www.djangosnippets.org/snippets/907/
-class CreditCardExpiryWidget(forms.MultiWidget):
-    """MultiWidget for representing credit card expiry date."""
-    def decompress(self, value):
-        if value:
-            return [value.month, value.year]
-        else:
-            return [None, None]
-
-    def format_output(self, rendered_widgets):
-        html = ' / '.join(rendered_widgets)
-        return '<span style="white-space: nowrap">%s</span>' % (html,)
-
-
 # From https://github.com/zen4ever/django-authorizenet
 class CreditCardExpiryField(forms.MultiValueField):
 
@@ -128,10 +116,10 @@ class CreditCardExpiryField(forms.MultiValueField):
 
         fields = (
             forms.ChoiceField(
-                choices=self.EXP_MONTH,
+                choices=[('', _('Month'))] + self.EXP_MONTH,
                 error_messages={'invalid': errors['invalid_month']}),
             forms.ChoiceField(
-                choices=self.EXP_YEAR,
+                choices=[('', _('Year'))] + self.EXP_YEAR,
                 error_messages={'invalid': errors['invalid_year']}),
         )
 
