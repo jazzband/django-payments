@@ -1,3 +1,4 @@
+import re
 from collections import namedtuple
 try:
     from urllib.parse import urljoin
@@ -112,3 +113,19 @@ def get_payment_model():
             settings.PAYMENT_MODEL)
         raise ImproperlyConfigured(msg)
     return payment_model
+
+
+CARD_TYPES = [
+    ('^4[0-9]{12}(?:[0-9]{3})?$', 'visa', 'VISA'),
+    ('^5[1-5][0-9]{14}$', 'mastercard', 'MasterCard'),
+    ('^6(?:011|5[0-9]{2})[0-9]{12}$', 'discover', 'Discover'),
+    ('^3[47][0-9]{13}$', 'amex', 'American Express'),
+    ('^(?:(?:2131|1800|35\d{3})\d{11})$', 'jcb', 'JCB'),
+    ('^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'diners', 'Diners Club')]
+
+
+def get_credit_card_issuer(number):
+    for regexp, card_type, name in CARD_TYPES:
+        if re.match(regexp, number):
+            return card_type, name
+    return None, None

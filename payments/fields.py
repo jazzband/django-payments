@@ -1,43 +1,14 @@
 from __future__ import unicode_literals
+import re
 from datetime import date
 from calendar import monthrange
-import re
 
 from django import forms
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 
 from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
-
-CARD_TYPES = {
-    'visa': ('^4[0-9]{12}(?:[0-9]{3})?$', 'VISA'),
-    'mastercard': ('^5[1-5][0-9]{14}$', 'MasterCard'),
-    'discover': ('^6(?:011|5[0-9]{2})[0-9]{12}$', 'Discover'),
-    'amex': ('^3[47][0-9]{13}$', 'American Express'),
-    'jcb': ('^(?:(?:2131|1800|35\d{3})\d{11})$', 'JCB'),
-    'diners': ('^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'Diners Club')}
-
-
-class CreditCard(object):
-
-    def __init__(self, number):
-        self.number = number
-        credit_card_type = self.get_credit_card_type(number)
-        self.card_type, self.card_type_fullname = credit_card_type
-
-    def __repr__(self):
-        return 'CreditCard(number=%s, card_type=%s, card_type_fullname=%s)' % \
-               (self.number, self.card_type, self.card_type_fullname)
-
-    def __unicode__(self):
-        return self.number
-
-    def get_credit_card_type(self, number):
-        for card_type, details in CARD_TYPES.items():
-            regexp, name = details
-            if re.match(regexp, number):
-                return card_type, name
-        return None, None
+from . import get_credit_card_issuer
 
 
 class CreditCardNumberField(forms.CharField):
@@ -52,37 +23,22 @@ class CreditCardNumberField(forms.CharField):
         kwargs['max_length'] = kwargs.pop('max_length', 32)
         super(CreditCardNumberField, self).__init__(*args, **kwargs)
 
-    def to_python(self, value):
-        cleaned = re.sub('[\s-]', '', value)
-        if value and not cleaned:
-            raise forms.ValidationError(self.error_messages['invalid'])
-        return CreditCard(number=cleaned)
-
-    def validate(self, card):
-        value = card.number
+    def validate(self, value):
+        card_type, issuer_name = get_credit_card_issuer(value)
         if value in validators.EMPTY_VALUES and self.required:
             raise forms.ValidationError(self.error_messages['required'])
-        if value and not self.cart_number_checksum_validation(value):
+        if value and not self.cart_number_checksum_validation(self, value):
             raise forms.ValidationError(self.error_messages['invalid'])
         if (value and not self.valid_types is None
-                and not card.card_type in self.valid_types):
-            valid_types = map(self.get_card_type_fullname, self.valid_types)
+                and not card_type in self.valid_types):
+            valid_types = map(issuer_name, self.valid_types)
             error_message = self.error_messages['invalid_type'] % {
                 'valid_types': ', '.join(valid_types)
             }
             raise forms.ValidationError(error_message)
 
-    def run_validators(self, card):
-        super(CreditCardNumberField, self).run_validators(card.number)
-
-    def get_card_type_fullname(self, card_type):
-            fullname = ''
-            type_detail = CARD_TYPES.get(card_type)
-            if type_detail:
-                _, fullname = type_detail
-            return fullname
-
-    def cart_number_checksum_validation(self, number):
+    @staticmethod
+    def cart_number_checksum_validation(cls, number):
         digits = []
         even = False
         if not number.isdigit():
