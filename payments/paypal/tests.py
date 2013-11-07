@@ -4,6 +4,7 @@ from unittest import TestCase
 from django.utils import simplejson
 
 from . import PaypalProvider
+from .. import PurchasedItem
 
 
 CLIENT_ID = 'abc123'
@@ -34,7 +35,10 @@ class Payment(object):
         return 'http://example.com'
 
     def get_purchased_items(self):
-        return []
+        return [
+            PurchasedItem(
+                name='foo', quantity=Decimal('10'), price=Decimal('20'),
+                currency='USD', sku='bar')]
 
     def get_success_url(self):
         return 'http://success.com'
