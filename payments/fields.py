@@ -1,14 +1,14 @@
 from __future__ import unicode_literals
-import re
-from datetime import date
 from calendar import monthrange
+from datetime import date
+import re
 
 from django import forms
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 
-from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
 from . import get_credit_card_issuer
+from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
 
 
 class CreditCardNumberField(forms.CharField):
@@ -46,20 +46,19 @@ class CreditCardNumberField(forms.CharField):
         for digit in reversed(number):
             digit = ord(digit) - ord('0')
             if even:
-                digit = digit * 2
+                digit *= 2
                 if digit >= 10:
-                    digit = digit % 10 + digit / 10
+                    digit = digit % 10 + digit // 10
             digits.append(digit)
             even = not even
         return sum(digits) % 10 == 0 if digits else False
 
 
-# From https://github.com/zen4ever/django-authorizenet
 class CreditCardExpiryField(forms.MultiValueField):
 
-    EXP_MONTH = [(x, "%02d" % x) for x in range(1, 13)]
-    EXP_YEAR = [(x, x) for x in range(date.today().year,
-                                      date.today().year + 15)]
+    EXP_MONTH = [(str(x), '%02d' % (x,)) for x in range(1, 13)]
+    EXP_YEAR = [(str(x), str(x)) for x in range(date.today().year,
+                                                date.today().year + 15)]
 
     default_error_messages = {
         'invalid_month': 'Enter a valid month.',
