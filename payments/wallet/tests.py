@@ -28,12 +28,14 @@ JWT_DATA = {
         'orderId': '1234567890'}}
 
 
-class Payment(MagicMock):
+class Payment(object):
 
     id = 1
-    currency = 'USD'
     description = 'payment'
+    currency = 'USD'
+    delivery = Decimal(10)
     status = 'waiting'
+    tax = Decimal(10)
     token = PAYMENT_TOKEN
     total = Decimal(100)
     variant = VARIANT
@@ -43,6 +45,12 @@ class Payment(MagicMock):
 
     def get_failure_url(self):
         return 'http://cancel.com'
+
+    def get_process_url(self):
+        return 'http://example.com'
+
+    def get_purchased_items(self):
+        return []
 
     def get_success_url(self):
         return 'http://success.com'

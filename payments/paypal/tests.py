@@ -2,7 +2,6 @@ from decimal import Decimal
 from unittest import TestCase
 
 from django.utils import simplejson
-from mock import MagicMock
 
 from . import PaypalProvider
 
@@ -13,7 +12,7 @@ SECRET = '123abc'
 VARIANT = 'wallet'
 
 
-class Payment(MagicMock):
+class Payment(object):
 
     id = 1
     description = 'payment'
@@ -30,6 +29,12 @@ class Payment(MagicMock):
 
     def get_failure_url(self):
         return 'http://cancel.com'
+
+    def get_process_url(self):
+        return 'http://example.com'
+
+    def get_purchased_items(self):
+        return []
 
     def get_success_url(self):
         return 'http://success.com'
