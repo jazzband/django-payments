@@ -6,6 +6,11 @@ from django.conf.urls import patterns, url
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+try:
+    from django.db.transaction import atomic
+except ImportError:
+    def atomic(func):
+        return func
 
 from . import factory, get_payment_model, provider_factory
 
@@ -13,6 +18,7 @@ Payment = get_payment_model()
 
 
 @csrf_exempt
+@atomic
 def process_data(request, token, provider=None):
     '''
     Calls process_data of an appropriate provider.
@@ -31,6 +37,7 @@ def process_data(request, token, provider=None):
 
 
 @csrf_exempt
+@atomic
 def static_callback(request, variant):
 
     try:
