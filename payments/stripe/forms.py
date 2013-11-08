@@ -4,14 +4,20 @@ import stripe
 
 from ..forms import PaymentForm as BasePaymentForm
 from .widgets import StripeWidget
+from . import RedirectNeeded
 
 
 class PaymentForm(BasePaymentForm):
+
+    charge = None
 
     def __init__(self, *args, **kwargs):
         super(PaymentForm, self).__init__(*args, **kwargs)
         widget = StripeWidget(provider=self.provider, payment=self.payment)
         self.fields['stripe_token'] = forms.CharField(widget=widget)
+        if self.is_bound and not self.data.get('stripe_token'):
+            self.payment.change_status('rejected')
+            raise RedirectNeeded(self.payment.get_failure_url())
 
     def clean(self):
         data = self.cleaned_data
@@ -24,7 +30,7 @@ class PaymentForm(BasePaymentForm):
                     amount=self.payment.total * 100,
                     currency=self.payment.currency,
                     card=data['stripe_token'],
-                    description=u"%s %s" % (self.payment.billing_last_name,
+                    description=u'%s %s' % (self.payment.billing_last_name,
                                             self.payment.billing_first_name)
                 )
             except stripe.CardError, e:
