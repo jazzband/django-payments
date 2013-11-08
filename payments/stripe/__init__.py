@@ -1,9 +1,7 @@
 from django.shortcuts import redirect
 
-from .. import get_payment_model, BasicProvider, RedirectNeeded
+from .. import BasicProvider, RedirectNeeded
 from .forms import PaymentForm
-
-Payment = get_payment_model()
 
 
 class StripeProvider(BasicProvider):
