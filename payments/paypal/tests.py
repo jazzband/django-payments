@@ -1,7 +1,6 @@
 from decimal import Decimal
+import json
 from unittest import TestCase
-
-from django.utils import simplejson
 
 from . import PaypalProvider
 from .. import PurchasedItem
@@ -49,4 +48,4 @@ class TestPaypalProvider(TestCase):
     def test_payload_serializable(self):
         payment = Payment()
         provider = PaypalProvider(payment, secret=SECRET, client_id=CLIENT_ID)
-        simplejson.dumps(provider.get_product_data())
+        json.dumps(provider.get_product_data())

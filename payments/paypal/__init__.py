@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
 from datetime import timedelta
 from functools import wraps
+import json
 import requests
 
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
-from django.utils import simplejson, timezone
+from django.utils import timezone
 
 from .forms import PaymentForm
 from .. import BasicProvider, RedirectNeeded, get_credit_card_issuer
@@ -22,11 +23,11 @@ def authorize(fun):
         self.access_token = self.get_access_token()
         response = fun(*args, **kwargs)
         if response.status_code == 401:
-            extra_data = (simplejson.loads(self.payment.extra_data)
+            extra_data = (json.loads(self.payment.extra_data)
                           if self.payment.extra_data else {})
             if 'access_token' in extra_data:
                 del extra_data['access_token']
-                self.payment.extra_data = simplejson.dumps(extra_data)
+                self.payment.extra_data = json.dumps(extra_data)
             self.access_token = self.get_access_token()
             response = fun(*args, **kwargs)
         return response
@@ -49,7 +50,7 @@ class PaypalProvider(BasicProvider):
         super(PaypalProvider, self).__init__(*args, **kwargs)
 
     def get_access_token(self):
-        extra_data = (simplejson.loads(self.payment.extra_data)
+        extra_data = (json.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         created = self.payment.created
         now = timezone.now()
@@ -68,7 +69,7 @@ class PaypalProvider(BasicProvider):
             response.raise_for_status()
             data = response.json()
             extra_data.update(data)
-            self.payment.extra_data = simplejson.dumps(extra_data)
+            self.payment.extra_data = json.dumps(extra_data)
             return '%s %s' % (data['token_type'], data['access_token'])
 
     def get_link(self, name, data):
@@ -116,7 +117,7 @@ class PaypalProvider(BasicProvider):
     def get_payment_response(self, extra_data=None):
         headers = {'Content-Type': 'application/json',
                    'Authorization': self.access_token}
-        post = simplejson.dumps(
+        post = json.dumps(
             self.get_product_data(extra_data))
         return requests.post(self.payments_url, data=post, headers=headers)
 
@@ -127,13 +128,13 @@ class PaypalProvider(BasicProvider):
         post = {'payer_id': payer_id}
         transaction_id = self.payment.transaction_id
         execute_url = self.payment_execute_url % {'id': transaction_id}
-        return requests.post(execute_url, data=simplejson.dumps(post),
+        return requests.post(execute_url, data=json.dumps(post),
                              headers=headers)
 
     def get_form(self, data=None):
         if not self.payment.id:
             self.payment.save()
-        extra_data = (simplejson.loads(self.payment.extra_data)
+        extra_data = (json.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         redirect_to = self.get_link('approval_url', extra_data)
         if not redirect_to:
@@ -144,13 +145,13 @@ class PaypalProvider(BasicProvider):
             self.payment.transaction_id = response_data['id']
             extra_data['links'] = response_data['links']
             if extra_data:
-                self.payment.extra_data = simplejson.dumps(extra_data)
+                self.payment.extra_data = json.dumps(extra_data)
         self.payment.change_status('waiting')
         self.payment.save()
         raise RedirectNeeded(redirect_to)
 
     def process_data(self, request):
-        extra_data = (simplejson.loads(self.payment.extra_data)
+        extra_data = (json.loads(self.payment.extra_data)
                       if self.payment.extra_data else {})
         success_url = self.payment.get_success_url()
         if not 'token' in request.GET:
@@ -166,7 +167,7 @@ class PaypalProvider(BasicProvider):
         response = self.get_payment_execute_response(payer_id)
         response.raise_for_status()
         extra_data['payer_id'] = payer_id
-        self.payment.extra_data = simplejson.dumps(extra_data)
+        self.payment.extra_data = json.dumps(extra_data)
         self.payment.change_status('confirmed')
         self.payment.save()
         return redirect(success_url)
