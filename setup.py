@@ -25,7 +25,12 @@ setup(
         'Framework :: Django',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],
-    install_requires=['Django>=1.5', 'requests>=1.2.0', 'pycrypto', 'PyJWT'],
+    install_requires=[
+        'Django>=1.5',
+        'pycrypto',
+        'PyJWT',
+        'requests>=1.2.0',
+        'stripe>=1.9.8'],
     include_package_data=True,
     test_suite='payments.tests',
     zip_safe=False)
