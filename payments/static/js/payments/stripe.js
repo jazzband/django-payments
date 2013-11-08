@@ -2,11 +2,7 @@
 
     function purchase() {
         var stripe_input = document.getElementById('stripe-id');
-
-        var token = function(result){
-            stripe_input.value = result.id;
-            stripe_input.form.submit();
-        };
+        stripe_input.value = '';
 
         StripeCheckout.open({
             key: stripe_input.getAttribute('data-key'),
@@ -16,10 +12,13 @@
             name: stripe_input.getAttribute('data-name'),
             description: stripe_input.getAttribute('data-description'),
             panelLabel: 'Checkout',
-            token: token
+            token: function(result) {
+                stripe_input.value = result.id;
+            },
+            closed: function() {
+                stripe_input.form.submit();
+            }
         });
-
-        return false;
     }
 
     $ = this.jQuery || this.Zepto || this.ender || this.$;
