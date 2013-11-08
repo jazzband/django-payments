@@ -26,12 +26,12 @@ setup(
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],
     install_requires=[
+        'braintree>=2.24.1',
         'Django>=1.5',
-        'pycrypto',
+        'pycrypto>=2.6',
         'PyJWT',
         'requests>=1.2.0',
-        'stripe>=1.9.8',
-		'braintree'],
+        'stripe>=1.9.8'],
     include_package_data=True,
     test_suite='payments.tests',
     zip_safe=False)
