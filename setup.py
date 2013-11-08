@@ -30,7 +30,8 @@ setup(
         'pycrypto',
         'PyJWT',
         'requests>=1.2.0',
-        'stripe>=1.9.8'],
+        'stripe>=1.9.8',
+		'braintree'],
     include_package_data=True,
     test_suite='payments.tests',
     zip_safe=False)
