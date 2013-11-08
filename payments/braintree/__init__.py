@@ -2,10 +2,7 @@ from django.shortcuts import redirect
 import braintree
 
 from .forms import BraintreePaymentForm
-from .. import get_payment_model, BasicProvider, RedirectNeeded
-
-
-Payment = get_payment_model()
+from .. import BasicProvider, RedirectNeeded
 
 
 class BraintreeProvider(BasicProvider):
