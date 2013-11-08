@@ -47,3 +47,13 @@ class CreditCardPaymentForm(PaymentForm):
             hidden_inputs=False, *args,  **kwargs)
         if hasattr(self, 'VALID_TYPES'):
             self.fields['number'].valid_types = self.VALID_TYPES
+
+
+class CreditCardPaymentFormWithName(CreditCardPaymentForm):
+
+    name = forms.CharField(label=_('Name on Credit Card'), max_length=128)
+
+    def __init__(self, *args, **kwargs):
+        super(CreditCardPaymentFormWithName, self).__init__(*args, **kwargs)
+        self.fields.keyOrder.remove('name')
+        self.fields.keyOrder.insert(0, 'name')

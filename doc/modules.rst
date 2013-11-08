@@ -36,6 +36,26 @@ Example::
            'endpoint': 'https://test.authorize.net/gateway/transact.dll'})}
 
 
+Braintree
+-------------
+
+.. class:: payments.braintree.BraintreeProvider(merchant_id, public_key, private_key)
+
+   This backend implements payments using `Braintree <https://www.braintreepayments.com/>`_.
+
+   :param merchant_id: Merchant ID assigned by Braintree
+   :param public_key: Public key assigned by Braintree
+   :param private_key: Private key assigned by Braintree
+
+Example::
+
+   # use sandbox
+   PAYMENT_VARIANTS = {
+       'braintree': ('payments.braintree.BraintreeProvider', {
+           'merchant_id': '112233445566',
+           'public_key': '1234567890abcdef',
+           'private_key': 'abcdef123456'})}
+
 Dotpay
 ------
 
