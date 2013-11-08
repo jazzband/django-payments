@@ -154,3 +154,32 @@ Example::
            'encryption_key': '1234567890abcdef',
            'endpoint': 'https://test.sagepay.com/Simulator/VSPFormGateway.asp'})}
 
+
+Stripe
+-------------
+
+.. class:: payments.stripe.StripeProvider(secret_key, public_key)
+
+   This backend implements payments using `Stripe <https://stripe.com/>`_.
+
+   :param secret_key: Secret key assigned by Stripe.
+   :param public_key: Public key assigned by Stripe.
+
+Example::
+
+   # use sandbox
+   PAYMENT_VARIANTS = {
+       'stripe': ('payments.stripe.StripeProvider', {
+           'secret_key': 'sk_test_123456',
+           'public_key': 'pk_test_123456'})}
+
+This backend requires js files that should be added to the template using ``{{ form.media }}`` e.g:
+
+.. code-block:: html
+
+      <!-- templates/payment.html -->
+      <form action="{{ form.action }}" method="{{ form.method }}">
+          {{ form.as_p }}
+          <p><input type="submit" value="Proceed" /></p>
+      </form>
+      {{ form.media }}
