@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import hashlib
 from unittest import TestCase
 
@@ -37,7 +38,7 @@ def get_post_with_md5(post):
         post['t_status'])
     key = ':'.join(key_vars)
     md5 = hashlib.md5()
-    md5.update(key)
+    md5.update(key.encode('utf-8'))
     key_hash = md5.hexdigest()
     post['md5'] = key_hash
     return post
@@ -49,6 +50,9 @@ class Payment(MagicMock):
     variant = VARIANT
     currency = 'USD'
     total = 100
+
+    def get_process_url(self):
+        return 'http://example.com'
 
     def get_failure_url(self):
         return 'http://cancel.com'

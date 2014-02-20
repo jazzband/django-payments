@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from decimal import Decimal
 import json
 from unittest import TestCase

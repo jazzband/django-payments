@@ -48,5 +48,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],
     install_requires=REQUIREMENTS,
+    tests_require=['mock'],
     test_suite='payments.tests',
     zip_safe=False)

@@ -1,5 +1,6 @@
-from django import forms
+from __future__ import unicode_literals
 
+from django import forms
 import stripe
 
 from ..forms import PaymentForm as BasePaymentForm
@@ -30,8 +31,8 @@ class PaymentForm(BasePaymentForm):
                     amount=self.payment.total * 100,
                     currency=self.payment.currency,
                     card=data['stripe_token'],
-                    description=u'%s %s' % (self.payment.billing_last_name,
-                                            self.payment.billing_first_name)
+                    description='%s %s' % (self.payment.billing_last_name,
+                                           self.payment.billing_first_name)
                 )
             except stripe.CardError as e:
                 # The card has been declined

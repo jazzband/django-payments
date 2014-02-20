@@ -1,5 +1,7 @@
-from django.shortcuts import redirect
+from __future__ import unicode_literals
+
 import braintree
+from django.shortcuts import redirect
 
 from .forms import BraintreePaymentForm
 from .. import BasicProvider, RedirectNeeded

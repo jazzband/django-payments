@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import hashlib
 
 from django import forms
@@ -52,7 +53,7 @@ class ProcessPaymentForm(forms.Form):
                 str(cleaned_data['t_status']))
             key = ':'.join(key_vars)
             md5 = hashlib.md5()
-            md5.update(key)
+            md5.update(key.encode('utf-8'))
             key_hash = md5.hexdigest()
             if key_hash != self.cleaned_data['md5']:
                 self._errors['md5'] = self.error_class(['Bad hash'])

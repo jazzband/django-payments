@@ -6,7 +6,7 @@ from django.forms.widgets import TextInput, MultiWidget
 
 class CreditCardNumberWidget(TextInput):
 
-    def render(self, name, value, attrs):
+    def render(self, name, value, attrs=None):
         if value:
             value = re.sub('[\s-]', '', value)
             value = ' '.join([value[i: i + 4]

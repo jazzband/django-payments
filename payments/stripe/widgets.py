@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.forms.widgets import HiddenInput
 from django.utils.translation import ugettext_lazy as _
 

@@ -2,6 +2,8 @@
 This module is responsible for automatic processing of provider callback
 data (asynchronous transaction updates).
 '''
+from __future__ import unicode_literals
+
 from django.conf.urls import patterns, url
 from django.http import Http404
 from django.shortcuts import get_object_or_404
