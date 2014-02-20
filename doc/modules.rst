@@ -36,8 +36,8 @@ Example::
            'endpoint': 'https://test.authorize.net/gateway/transact.dll'})}
 
 
-Braintree
--------------
+Braintree (Python 2 only)
+-------------------------
 
 .. class:: payments.braintree.BraintreeProvider(merchant_id, public_key, private_key)
 
@@ -176,7 +176,7 @@ Example::
 
 
 Stripe
--------------
+------
 
 .. class:: payments.stripe.StripeProvider(secret_key, public_key)
 

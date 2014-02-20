@@ -1,17 +1,39 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from setuptools import setup
 import os
+import sys
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')
+
+PACKAGES = [
+    'payments',
+    'payments.authorizenet',
+    'payments.dummy',
+    'payments.dotpay',
+    'payments.paypal',
+    'payments.sagepay',
+    'payments.stripe',
+    'payments.wallet']
+
+REQUIREMENTS = [
+    'Django>=1.5',
+    'pycrypto>=2.6',
+    'PyJWT',
+    'requests>=1.2.0',
+    'stripe>=1.9.8']
+
+if sys.version_info < (3,):
+    PACKAGES += ['payments.braintree']
+    REQUIREMENTS += ['braintree>=2.24.1']
 
 setup(
     name='django-payments',
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
-    version='0.4.1',
+    version='0.4.2',
     url='http://github.com/mirumee/django-payments',
-    packages=find_packages(),
+    packages=PACKAGES,
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
@@ -25,13 +47,6 @@ setup(
         'Framework :: Django',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],
-    install_requires=[
-        'braintree>=2.24.1',
-        'Django>=1.5',
-        'pycrypto>=2.6',
-        'PyJWT',
-        'requests>=1.2.0',
-        'stripe>=1.9.8'],
-    include_package_data=True,
+    install_requires=REQUIREMENTS,
     test_suite='payments.tests',
     zip_safe=False)
