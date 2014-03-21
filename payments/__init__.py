@@ -11,8 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import get_model
 
 PAYMENT_VARIANTS = {
-    'default': ('payments.dummy.DummyProvider', {
-        'url': 'http://google.pl/'})}
+    'default': ('payments.dummy.DummyProvider', {})}
 
 if not hasattr(settings, 'PAYMENT_BASE_URL'):
     raise ImproperlyConfigured('The PAYMENT_BASE_URL setting '
@@ -54,7 +53,7 @@ class BasicProvider(object):
         '''
         Converts *payment* into a form suitable for Django templates.
         '''
-        from forms import PaymentForm
+        from .forms import PaymentForm
         return PaymentForm(self.get_hidden_fields(),
                            self._action, self._method)
 
@@ -76,7 +75,9 @@ class BasicProvider(object):
 
 
 def provider_factory(variant, payment=None):
-    "Return the provider instance based on variant"
+    '''
+    Return the provider instance based on variant
+    '''
     variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
     handler, config = variants.get(variant, (None, None))
     if not handler:
@@ -86,8 +87,8 @@ def provider_factory(variant, payment=None):
     if len(path) < 2:
         raise ValueError('Payment variant uses an invalid payment module: %s' %
                          (variant,))
-    module_path = '.'.join(path[:-1])
-    klass_name = path[-1]
+    module_path = str('.'.join(path[:-1]))
+    klass_name = str(path[-1])
     module = __import__(module_path, globals(), locals(), [klass_name])
     klass = getattr(module, klass_name)
     return klass(payment, **config)
@@ -101,7 +102,9 @@ def factory(payment):
 
 
 def get_payment_model():
-    "Return the Payment model that is active in this project"
+    '''
+    Return the Payment model that is active in this project
+    '''
     try:
         app_label, model_name = settings.PAYMENT_MODEL.split('.')
     except (ValueError, AttributeError):
