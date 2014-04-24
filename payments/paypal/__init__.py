@@ -90,7 +90,7 @@ class PaypalProvider(BasicProvider):
 
     def get_transactions_data(self):
         items = list(self.get_transactions_items())
-        sub_total = self.payment.total - self.payment.delivery
+        sub_total = self.payment.total - self.payment.delivery - self.payment.tax
         data = {
             'intent': 'sale',
             'transactions': [{
