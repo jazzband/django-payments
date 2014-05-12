@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from collections import OrderedDict
 
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -23,7 +24,7 @@ class PaymentForm(forms.Form):
                  payment=None, hidden_inputs=True):
         if hidden_inputs:
             super(PaymentForm, self).__init__(auto_id=False)
-            for key, val in data.items():
+            for key, val in data.items() if data else []:
                 widget = forms.widgets.HiddenInput()
                 self.fields[key] = forms.CharField(initial=val, widget=widget)
         else:
@@ -57,5 +58,7 @@ class CreditCardPaymentFormWithName(CreditCardPaymentForm):
 
     def __init__(self, *args, **kwargs):
         super(CreditCardPaymentFormWithName, self).__init__(*args, **kwargs)
-        self.fields.keyOrder.remove('name')
-        self.fields.keyOrder.insert(0, 'name')
+        name_field = self.fields.pop('name')
+        fields = OrderedDict({'name': name_field})
+        fields.update(self.fields)
+        self.fields = fields
