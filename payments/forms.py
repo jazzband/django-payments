@@ -26,9 +26,9 @@ class PaymentForm(forms.Form):
 
     def __init__(self, data=None, action=None, method='post', provider=None,
                  payment=None, hidden_inputs=True):
-        if hidden_inputs:
+        if hidden_inputs and data is not None:
             super(PaymentForm, self).__init__(auto_id=False)
-            for key, val in data.items() if data else []:
+            for key, val in data.items():
                 widget = forms.widgets.HiddenInput()
                 self.fields[key] = forms.CharField(initial=val, widget=widget)
         else:
