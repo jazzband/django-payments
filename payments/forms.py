@@ -1,5 +1,10 @@
 from __future__ import unicode_literals
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    from django.utils.datastructures import SortedDict as OrderedDict
+
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
@@ -21,7 +26,7 @@ class PaymentForm(forms.Form):
 
     def __init__(self, data=None, action=None, method='post', provider=None,
                  payment=None, hidden_inputs=True):
-        if hidden_inputs:
+        if hidden_inputs and data is not None:
             super(PaymentForm, self).__init__(auto_id=False)
             for key, val in data.items():
                 widget = forms.widgets.HiddenInput()
@@ -57,5 +62,7 @@ class CreditCardPaymentFormWithName(CreditCardPaymentForm):
 
     def __init__(self, *args, **kwargs):
         super(CreditCardPaymentFormWithName, self).__init__(*args, **kwargs)
-        self.fields.keyOrder.remove('name')
-        self.fields.keyOrder.insert(0, 'name')
+        name_field = self.fields.pop('name')
+        fields = OrderedDict({'name': name_field})
+        fields.update(self.fields)
+        self.fields = fields
