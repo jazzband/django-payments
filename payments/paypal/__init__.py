@@ -3,6 +3,7 @@ from datetime import timedelta
 from functools import wraps
 import json
 import requests
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
@@ -10,6 +11,8 @@ from django.utils import timezone
 
 from .forms import PaymentForm
 from .. import BasicProvider, RedirectNeeded, get_credit_card_issuer
+
+CENTS = Decimal('0.01')
 
 
 class UnauthorizedRequest(Exception):
@@ -90,17 +93,23 @@ class PaypalProvider(BasicProvider):
 
     def get_transactions_data(self):
         items = list(self.get_transactions_items())
-        sub_total = self.payment.total - self.payment.delivery - self.payment.tax
+        sub_total = (
+            self.payment.total - self.payment.delivery - self.payment.tax)
+        sub_total = sub_total.quantize(CENTS, rounding=ROUND_HALF_UP)
+        total = self.payment.total.quantize(CENTS, rounding=ROUND_HALF_UP)
+        tax = self.payment.tax.quantize(CENTS, rounding=ROUND_HALF_UP)
+        delivery = self.payment.delivery.quantize(
+            CENTS, rounding=ROUND_HALF_UP)
         data = {
             'intent': 'sale',
             'transactions': [{
                 'amount': {
-                    'total': str(self.payment.total),
+                    'total': str(total),
                     'currency': self.payment.currency,
                     'details': {
                         'subtotal': str(sub_total),
-                        'tax': str(self.payment.tax),
-                        'shipping': str(self.payment.delivery)}},
+                        'tax': str(tax),
+                        'shipping': str(delivery)}},
                 'item_list': {'items': items},
                 'description': self.payment.description}]}
         return data
