@@ -1,5 +1,10 @@
 from unittest import TestCase
 
+import django
+
+if hasattr(django, 'setup'):
+    django.setup()
+
 from . import provider_factory
 from .dotpay.tests import TestDotpayProvider
 from .paypal.tests import TestPaypalProvider
