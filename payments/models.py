@@ -13,6 +13,7 @@ DEFAULT_PAYMENT_STATUS_CHOICES = (
     ('preauth', _('Pre-authorized')),
     ('confirmed', _('Confirmed')),
     ('rejected', _('Rejected')),
+    ('refunded', _('Refunded')),
     ('error', _('Error')),
     ('input', _('Input'))
 )
