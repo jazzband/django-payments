@@ -25,6 +25,10 @@ class RedirectNeeded(Exception):
     pass
 
 
+class PaymentError(Exception):
+    pass
+
+
 class BasicProvider(object):
     '''
     This class defines the provider API. It should not be instantiated
@@ -98,10 +102,10 @@ def provider_factory(variant, payment=None):
         raise ValueError('Payment variant uses an invalid payment module: %s' %
                          (variant,))
     module_path = str('.'.join(path[:-1]))
-    klass_name = str(path[-1])
-    module = __import__(module_path, globals(), locals(), [klass_name])
-    klass = getattr(module, klass_name)
-    return klass(payment, **config)
+    class_name = str(path[-1])
+    module = __import__(module_path, globals(), locals(), [class_name])
+    class_ = getattr(module, class_name)
+    return class_(payment, **config)
 
 
 def factory(payment):
