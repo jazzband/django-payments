@@ -10,6 +10,7 @@ from . import factory
 
 DEFAULT_PAYMENT_STATUS_CHOICES = (
     ('waiting', _('Waiting for confirmation')),
+    ('preauth', _('Pre-authorized')),
     ('confirmed', _('Confirmed')),
     ('rejected', _('Rejected')),
     ('error', _('Error')),
@@ -91,3 +92,24 @@ class BasePayment(models.Model):
 
     def get_process_url(self):
         return reverse('process_payment', kwargs={'token': self.token})
+
+    def capture(self, amount=None):
+        if self.status != 'preauth':
+            raise ValueError(
+                'Only pre-authorized payments can be captured.')
+        provider = factory(self)
+        provider.capture(amount)
+
+    def release(self):
+        if self.status != 'preauth':
+            raise ValueError(
+                'Only pre-authorized payments can be released.')
+        provider = factory(self)
+        provider.release()
+
+    def refund(self):
+        if self.status != 'preauth':
+            raise ValueError(
+                'Only pre-authorized payments can be refund.')
+        provider = factory(self)
+        provider.refund()

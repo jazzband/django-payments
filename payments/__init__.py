@@ -36,7 +36,8 @@ class BasicProvider(object):
         return self.get_return_url()
     _action = property(_action)
 
-    def __init__(self, payment):
+    def __init__(self, payment, capture=True):
+        self._capture = capture
         self.payment = payment
 
     def get_hidden_fields(self):
@@ -72,6 +73,15 @@ class BasicProvider(object):
     def get_return_url(self):
         payment_link = self.payment.get_process_url()
         return urljoin(settings.PAYMENT_BASE_URL, payment_link)
+
+    def capture(self, amount=None):
+        raise NotImplementedError()
+
+    def release(self):
+        raise NotImplementedError()
+
+    def refund(self):
+        raise NotImplementedError()
 
 
 def provider_factory(variant, payment=None):
