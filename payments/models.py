@@ -102,8 +102,6 @@ class BasePayment(models.Model):
                 'Only pre-authorized payments can be captured.')
         provider = factory(self)
         status = provider.capture(amount)
-        self.captured_amount = amount
-        self.change_status(status)
 
     def release(self):
         if self.status != 'preauth':
