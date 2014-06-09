@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import braintree
+from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
 from .forms import BraintreePaymentForm
@@ -20,6 +21,9 @@ class BraintreeProvider(BasicProvider):
                                           private_key=self.private_key)
 
         super(BraintreeProvider, self).__init__(*args, **kwargs)
+        if not self._capture:
+            raise ImproperlyConfigured(
+                'Braintreet does not support pre-authorization.')
 
     def get_form(self, data=None):
         kwargs = {

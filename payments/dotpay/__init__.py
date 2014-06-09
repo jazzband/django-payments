@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseForbidden
 
 from .forms import ProcessPaymentForm
@@ -31,6 +32,9 @@ class DotpayProvider(BasicProvider):
         self._lang = kwargs.pop('lang', 'pl')
         self._lock = kwargs.pop('lock', False)
         super(DotpayProvider, self).__init__(*args, **kwargs)
+        if not self._capture:
+            raise ImproperlyConfigured(
+                'Dotpay does not support pre-authorization.')
 
     def get_hidden_fields(self):
         data = {

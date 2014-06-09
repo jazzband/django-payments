@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import binascii
 
 from Crypto.Cipher import AES
+from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
 from .. import BasicProvider
@@ -25,7 +26,10 @@ class SagepayProvider(BasicProvider):
         self._vendor = kwargs.pop('vendor')
         self._enckey = kwargs.pop('encryption_key')
         self._action = kwargs.pop('endpoint', self._action)
-        return super(SagepayProvider, self).__init__(*args, **kwargs)
+        super(SagepayProvider, self).__init__(*args, **kwargs)
+        if not self._capture:
+            raise ImproperlyConfigured(
+                'Sagepay does not support pre-authorization.')
 
     def _aes_pad(self, crypt):
         padding = ""

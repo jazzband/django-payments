@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponseForbidden
 import requests
 
@@ -15,6 +16,9 @@ class AuthorizeNetProvider(BasicProvider):
         self.endpoint = kwargs.pop(
             'endpoint', 'https://test.authorize.net/gateway/transact.dll')
         super(AuthorizeNetProvider, self).__init__(*args, **kwargs)
+        if not self._capture:
+            raise ImproperlyConfigured(
+                'Authorize.Net does not support pre-authorization.')
 
     def get_transactions_data(self):
         data = {
