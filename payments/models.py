@@ -27,8 +27,8 @@ class BasePayment(models.Model):
     '''
     variant = models.CharField(max_length=255)
     #: Transaction status
-    status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES,
-                              default='waiting')
+    status = models.CharField(
+        max_length=10, choices=PAYMENT_STATUS_CHOICES, default='waiting')
     #: Creation date and time
     created = models.DateTimeField(auto_now_add=True)
     #: Date and time of last modification
@@ -39,8 +39,8 @@ class BasePayment(models.Model):
     currency = models.CharField(max_length=10)
     #: Total amount (gross)
     total = models.DecimalField(max_digits=9, decimal_places=2, default='0.0')
-    delivery = models.DecimalField(max_digits=9, decimal_places=2,
-                                   default='0.0')
+    delivery = models.DecimalField(
+        max_digits=9, decimal_places=2, default='0.0')
     tax = models.DecimalField(max_digits=9, decimal_places=2, default='0.0')
     description = models.TextField(blank=True, default='')
     billing_first_name = models.CharField(max_length=256, blank=True)
@@ -51,10 +51,10 @@ class BasePayment(models.Model):
     billing_postcode = models.CharField(max_length=256, blank=True)
     billing_country_code = models.CharField(max_length=2, blank=True)
     billing_country_area = models.CharField(max_length=256, blank=True)
-    billing_email = models.CharField(max_length=256, blank=True)
-    customer_ip_address = models.IPAddressField(blank=True)
     extra_data = models.TextField(blank=True, default='')
     token = models.CharField(max_length=36, blank=True, default='')
+    captured_amount = models.DecimalField(
+        max_digits=9, decimal_places=2, default='0.0')
 
     class Meta:
         abstract = True
@@ -101,7 +101,9 @@ class BasePayment(models.Model):
             raise ValueError(
                 'Only pre-authorized payments can be captured.')
         provider = factory(self)
-        provider.capture(amount)
+        status = provider.capture(amount)
+        self.captured_amount = amount
+        self.change_status(status)
 
     def release(self):
         if self.status != 'preauth':
@@ -110,9 +112,12 @@ class BasePayment(models.Model):
         provider = factory(self)
         provider.release()
 
-    def refund(self):
-        if self.status != 'preauth':
+    def refund(self, amount=None):
+        if self.status != 'confirmed':
             raise ValueError(
-                'Only pre-authorized payments can be refund.')
+                'Only charged payments can be refunded.')
+        if amount > self.captured_amount:
+            raise ValueError(
+                'Refund amount can not be greater then captured amount')
         provider = factory(self)
-        provider.refund()
+        provider.refund(amount)
