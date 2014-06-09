@@ -1,16 +1,23 @@
 from __future__ import unicode_literals
+
+import logging
 from datetime import timedelta
 from functools import wraps
 import json
-import requests
 from decimal import Decimal, ROUND_HALF_UP
+from requests.exceptions import HTTPError
 
+import requests
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import timezone
 
 from .forms import PaymentForm
-from .. import BasicProvider, RedirectNeeded, get_credit_card_issuer
+from .. import (
+    BasicProvider, get_credit_card_issuer, PaymentError, RedirectNeeded)
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 CENTS = Decimal('0.01')
 
@@ -24,15 +31,17 @@ def authorize(fun):
     def wrapper(*args, **kwargs):
         self = args[0]
         self.access_token = self.get_access_token()
-        response = fun(*args, **kwargs)
-        if response.status_code == 401:
-            extra_data = (json.loads(self.payment.extra_data)
-                          if self.payment.extra_data else {})
-            if 'access_token' in extra_data:
-                del extra_data['access_token']
-                self.payment.extra_data = json.dumps(extra_data)
-            self.access_token = self.get_access_token()
+        try:
             response = fun(*args, **kwargs)
+        except HTTPError as e:
+            if e.response.status_code == 401:
+                last_auth_response = self.get_last_response(is_auth=True)
+                if 'access_token' in last_auth_response:
+                    del last_auth_response['access_token']
+                    self.set_response_data(last_auth_response, is_auth=True)
+                self.access_token = self.get_access_token()
+                response = fun(*args, **kwargs)
+            raise
         return response
 
     return wrapper
@@ -42,6 +51,59 @@ class PaypalProvider(BasicProvider):
     '''
     paypal.com payment provider
     '''
+    def set_response_data(self, response, is_auth=False):
+        extra_data = json.loads(self.payment.extra_data or '{}')
+        if is_auth:
+            extra_data['auth_response'] = response
+        else:
+            extra_data['response'] = response
+            if 'links' in response:
+                extra_data['links'] = dict(
+                    (link['rel'], link) for link in response['links'])
+        self.payment.extra_data = json.dumps(extra_data)
+
+    def set_response_links(self, links):
+        extra_data = json.loads(self.payment.extra_data or '{}')
+        extra_data['links'] = dict((link['rel'], link) for link in links)
+        self.payment.extra_data = json.dumps(extra_data)
+
+    def set_error_data(self, error):
+        extra_data = json.loads(self.payment.extra_data or '{}')
+        extra_data['error'] = error
+        self.payment.extra_data = json.dumps(extra_data)
+
+    @property
+    def links(self):
+        extra_data = json.loads(self.payment.extra_data or '{}')
+        links = extra_data.get('links', {})
+        return links
+
+    @authorize
+    def post(self, *args, **kwargs):
+        kwargs['headers'] = {
+            'Content-Type': 'application/json',
+            'Authorization': self.access_token}
+        if 'data' in kwargs:
+            kwargs['data'] = json.dumps(kwargs['data'])
+        response = requests.post(*args, **kwargs)
+        try:
+            data = response.json()
+        except ValueError:
+            data = {}
+        if 400 <= response.status_code < 500:
+            self.set_error_data(data)
+            logger.debug(data)
+        else:
+            self.set_response_data(data)
+        response.raise_for_status()
+        return data
+
+    def get_last_response(self, is_auth=False):
+        extra_data = json.loads(self.payment.extra_data or '{}')
+        if is_auth:
+            return extra_data.get('auth_response', {})
+        return extra_data.get('response', {})
+
     def __init__(self, *args, **kwargs):
         self.secret = kwargs.pop('secret')
         self.client_id = kwargs.pop('client_id')
@@ -50,18 +112,20 @@ class PaypalProvider(BasicProvider):
         self.oauth2_url = self.endpoint + '/v1/oauth2/token'
         self.payments_url = self.endpoint + '/v1/payments/payment'
         self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
+        self.payment_refund_url = (
+            self.endpoint + '/v1/payments/capture/{captureId}/refund')
         super(PaypalProvider, self).__init__(*args, **kwargs)
 
     def get_access_token(self):
-        extra_data = (json.loads(self.payment.extra_data)
-                      if self.payment.extra_data else {})
+        last_auth_response = self.get_last_response(is_auth=True)
         created = self.payment.created
         now = timezone.now()
-        if ('access_token' in extra_data and
-                'expires_in' in extra_data and
-                (created + timedelta(seconds=extra_data['expires_in'])) > now):
-            return '%s %s' % (extra_data['token_type'],
-                              extra_data['access_token'])
+        if ('access_token' in last_auth_response and
+                'expires_in' in last_auth_response and
+                (created + timedelta(
+                    seconds=last_auth_response['expires_in'])) > now):
+            return '%s %s' % (last_auth_response['token_type'],
+                              last_auth_response['access_token'])
         else:
             headers = {'Accept': 'application/json',
                        'Accept-Language': 'en_US'}
@@ -71,16 +135,9 @@ class PaypalProvider(BasicProvider):
                                      auth=(self.client_id, self.secret))
             response.raise_for_status()
             data = response.json()
-            extra_data.update(data)
-            self.payment.extra_data = json.dumps(extra_data)
+            last_auth_response.update(data)
+            self.set_response_data(last_auth_response, is_auth=True)
             return '%s %s' % (data['token_type'], data['access_token'])
-
-    def get_link(self, name, data):
-        try:
-            links = filter(lambda url: url['rel'] == name, data['links'])
-        except KeyError:
-            return None
-        return links[0]['href']
 
     def get_transactions_items(self):
         for purchased_item in self.payment.get_purchased_items():
@@ -101,15 +158,14 @@ class PaypalProvider(BasicProvider):
         delivery = self.payment.delivery.quantize(
             CENTS, rounding=ROUND_HALF_UP)
         data = {
-            'intent': 'sale',
-            'transactions': [{
-                'amount': {
-                    'total': str(total),
-                    'currency': self.payment.currency,
-                    'details': {
-                        'subtotal': str(sub_total),
-                        'tax': str(tax),
-                        'shipping': str(delivery)}},
+            'intent': 'sale' if self._capture else 'authorize',
+            'transactions': [{'amount': {
+                'total': str(total),
+                'currency': self.payment.currency,
+                'details': {
+                    'subtotal': str(sub_total),
+                    'tax': str(tax),
+                    'shipping': str(delivery)}},
                 'item_list': {'items': items},
                 'description': self.payment.description}]}
         return data
@@ -122,46 +178,18 @@ class PaypalProvider(BasicProvider):
         data['payer'] = {'payment_method': 'paypal'}
         return data
 
-    @authorize
-    def get_payment_response(self, extra_data=None):
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': self.access_token}
-        post = json.dumps(
-            self.get_product_data(extra_data))
-        return requests.post(self.payments_url, data=post, headers=headers)
-
-    @authorize
-    def get_payment_execute_response(self, payer_id):
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': self.access_token}
-        post = {'payer_id': payer_id}
-        transaction_id = self.payment.transaction_id
-        execute_url = self.payment_execute_url % {'id': transaction_id}
-        return requests.post(execute_url, data=json.dumps(post),
-                             headers=headers)
-
     def get_form(self, data=None):
         if not self.payment.id:
             self.payment.save()
-        extra_data = (json.loads(self.payment.extra_data)
-                      if self.payment.extra_data else {})
-        redirect_to = self.get_link('approval_url', extra_data)
+        redirect_to = self.links.get('approval_url')
         if not redirect_to:
-            response = self.get_payment_response()
-            response.raise_for_status()
-            response_data = response.json()
-            redirect_to = self.get_link('approval_url', response_data)
-            self.payment.transaction_id = response_data['id']
-            extra_data['links'] = response_data['links']
-            if extra_data:
-                self.payment.extra_data = json.dumps(extra_data)
+            payment = self.create_payment()
+            self.payment.transaction_id = payment['id']
+            redirect_to = self.links['approval_url']['href']
         self.payment.change_status('waiting')
-        self.payment.save()
         raise RedirectNeeded(redirect_to)
 
     def process_data(self, request):
-        extra_data = (json.loads(self.payment.extra_data)
-                      if self.payment.extra_data else {})
         success_url = self.payment.get_success_url()
         if not 'token' in request.GET:
             return HttpResponseForbidden('FAILED')
@@ -169,23 +197,87 @@ class PaypalProvider(BasicProvider):
         if not payer_id:
             if self.payment.status != 'confirmed':
                 self.payment.change_status('rejected')
-                self.payment.save()
                 return redirect(self.payment.get_failure_url())
             else:
                 return redirect(success_url)
-        response = self.get_payment_execute_response(payer_id)
-        response.raise_for_status()
-        extra_data['payer_id'] = payer_id
-        self.payment.extra_data = json.dumps(extra_data)
-        self.payment.change_status('confirmed')
-        self.payment.save()
+        payment = self.execute_payment(payer_id)
+        related_resources = payment['transactions'][0]['related_resources'][0]
+        authorization_links = related_resources['authorization']['links']
+        self.set_response_links(authorization_links)
+        if self._capture:
+            self.payment.captured_amount = self.payment.total
+            self.payment.change_status('confirmed')
+        else:
+            self.payment.change_status('preauth')
         return redirect(success_url)
+
+    def create_payment(self, extra_data=None):
+        product_data = self.get_product_data(extra_data)
+        payment = self.post(self.payments_url, data=product_data)
+        return payment
+
+    def execute_payment(self, payer_id):
+        post = {'payer_id': payer_id}
+        execute_url = self.links['execute']['href']
+        return self.post(execute_url, data=post)
+
+    def get_amount_data(self, amount=None):
+        return {
+            'currency': self.payment.currency,
+            'total': str(amount.quantize(
+                CENTS, rounding=ROUND_HALF_UP))}
+
+    def capture(self, amount=None):
+        if amount is None:
+            amount = self.payment.total
+        amount_data = self.get_amount_data(amount)
+        capture_data = {
+            'amount': amount_data,
+            'is_final_capture': True
+        }
+        url = self.links['capture']['href']
+        try:
+            capture = self.post(url, data=capture_data)
+        except HTTPError as e:
+            try:
+                error = e.response.json()
+            except ValueError:
+                error = {}
+            if error.get('name') != 'AUTHORIZATION_ALREADY_COMPLETED':
+                raise e
+            capture = {'state': 'completed'}
+        else:
+            state = capture['state']
+            if state in [
+                    'completed', 'partially_captured', 'partially_refunded']:
+                self.payment.captured_amount = amount
+                self.payment.change_status('confirmed')
+            elif state == 'pending':
+                self.payment.change_status('waiting')
+            elif state == 'refunded':
+                self.payment.change_status('refunded')
+                raise PaymentError('Payment already refunded')
+
+    def release(self):
+        url = self.links['void']['href']
+        self.post(url)
+        self.payment.change_status('refunded')
+
+    def refund(self, amount=None):
+        if amount is None:
+            amount = self.payment.captured_amount
+        amount = self.get_amount_data(amount)
+        refund_data = {'amount': amount}
+        url = self.links['refund']['href']
+        self.post(url, data=refund_data)
+        self.payment.change_status('refunded')
 
 
 class PaypalCardProvider(PaypalProvider):
     '''
     paypal.com credit card payment provider
     '''
+
     def get_form(self, data=None):
         if self.payment.status == 'waiting':
             self.payment.change_status('input')
