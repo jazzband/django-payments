@@ -134,12 +134,13 @@ def get_payment_model():
 
 
 CARD_TYPES = [
-    ('^4[0-9]{12}(?:[0-9]{3})?$', 'visa', 'VISA'),
-    ('^5[1-5][0-9]{14}$', 'mastercard', 'MasterCard'),
-    ('^6(?:011|5[0-9]{2})[0-9]{12}$', 'discover', 'Discover'),
-    ('^3[47][0-9]{13}$', 'amex', 'American Express'),
-    ('^(?:(?:2131|1800|35\d{3})\d{11})$', 'jcb', 'JCB'),
-    ('^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'diners', 'Diners Club')]
+    (r'^4[0-9]{12}(?:[0-9]{3})?$', 'visa', 'VISA'),
+    (r'^5[1-5][0-9]{14}$', 'mastercard', 'MasterCard'),
+    (r'^6(?:011|5[0-9]{2})[0-9]{12}$', 'discover', 'Discover'),
+    (r'^3[47][0-9]{13}$', 'amex', 'American Express'),
+    (r'^(?:(?:2131|1800|35\d{3})\d{11})$', 'jcb', 'JCB'),
+    (r'^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'diners', 'Diners Club'),
+    (r'^(?:5[0678]\d\d|6304|6390|67\d\d)\d{8,15}$', 'maestro', 'Maestro')]
 
 
 def get_credit_card_issuer(number):

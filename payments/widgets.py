@@ -9,8 +9,13 @@ class CreditCardNumberWidget(TextInput):
     def render(self, name, value, attrs=None):
         if value:
             value = re.sub('[\s-]', '', value)
-            value = ' '.join([value[i: i + 4]
-                              for i in range(0, len(value), 4)])
+            if len(value) == 16:
+                value = ' '.join([value[0:4], value[4:8],
+                                  value[8:12], value[12:16]])
+            elif len(value) == 15:
+                value = ' '.join([value[0:4], value[4:10], value[10:15]])
+            elif len(value) == 14:
+                value = ' '.join([value[0:4], value[4:10], value[10:14]])
         return super(CreditCardNumberWidget, self).render(name, value, attrs)
 
 
