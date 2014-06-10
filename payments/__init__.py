@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
-import re
 from collections import namedtuple
+import re
 try:
-    from urllib.parse import urljoin
+    from urllib.parse import urljoin, urlencode
 except ImportError:
+    from urllib import urlencode
     from urlparse import urljoin
 
 from django.conf import settings
@@ -26,6 +27,10 @@ class RedirectNeeded(Exception):
 
 
 class PaymentError(Exception):
+    pass
+
+
+class ExternalPostNeeded(Exception):
     pass
 
 
@@ -74,9 +79,13 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_return_url(self):
+    def get_return_url(self, extra_data=None):
         payment_link = self.payment.get_process_url()
-        return urljoin(settings.PAYMENT_BASE_URL, payment_link)
+        url = urljoin(settings.PAYMENT_BASE_URL, payment_link)
+        if extra_data:
+            qs = urlencode(extra_data)
+            return url + '?' + qs
+        return url
 
     def capture(self, amount=None):
         raise NotImplementedError()

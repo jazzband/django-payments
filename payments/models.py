@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import json
 from uuid import uuid4
 
 from django.conf import settings
@@ -19,6 +20,27 @@ DEFAULT_PAYMENT_STATUS_CHOICES = (
 )
 PAYMENT_STATUS_CHOICES = getattr(settings, 'PAYMENT_STATUS_CHOICES',
                                  DEFAULT_PAYMENT_STATUS_CHOICES)
+
+
+class PaymentAttributeProxy(object):
+
+    def __init__(self, payment):
+        self._payment = payment
+        super(PaymentAttributeProxy, self).__init__()
+
+    def __getattr__(self, item):
+        data = json.loads(self._payment.extra_data)
+        return data[item]
+
+    def __setattr__(self, key, value):
+        if key == '_payment':
+            return super(PaymentAttributeProxy, self).__setattr__(key, value)
+        try:
+            data = json.loads(self._payment.extra_data)
+        except ValueError:
+            data = {}
+        data[key] = value
+        self._payment.extra_data = json.dumps(data)
 
 
 class BasePayment(models.Model):
@@ -54,6 +76,7 @@ class BasePayment(models.Model):
     billing_email = models.EmailField(blank=True)
     customer_ip_address = models.IPAddressField(blank=True)
     extra_data = models.TextField(blank=True, default='')
+    message = models.TextField(blank=True, default='')
     token = models.CharField(max_length=36, blank=True, default='')
     captured_amount = models.DecimalField(
         max_digits=9, decimal_places=2, default='0.0')
@@ -61,12 +84,13 @@ class BasePayment(models.Model):
     class Meta:
         abstract = True
 
-    def change_status(self, status):
+    def change_status(self, status, message=''):
         '''
         Updates the Payment status and sends the status_changed signal.
         '''
         from .signals import status_changed
         self.status = status
+        self.message = message
         self.save()
         status_changed.send(sender=type(self), instance=self)
 
@@ -121,3 +145,7 @@ class BasePayment(models.Model):
                 'Refund amount can not be greater then captured amount')
         provider = factory(self)
         provider.refund(amount)
+
+    @property
+    def attrs(self):
+        return PaymentAttributeProxy(self)
