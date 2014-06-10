@@ -23,8 +23,11 @@ class CreditCardNumberField(forms.CharField):
         kwargs['max_length'] = kwargs.pop('max_length', 32)
         super(CreditCardNumberField, self).__init__(*args, **kwargs)
 
-    def validate(self, value):
+    def to_python(self, value):
         value = re.sub('[\s-]+', '', value)
+        return super(CreditCardNumberField, self).to_python(value)
+
+    def validate(self, value):
         card_type, issuer_name = get_credit_card_issuer(value)
         if value in validators.EMPTY_VALUES and self.required:
             raise forms.ValidationError(self.error_messages['required'])
