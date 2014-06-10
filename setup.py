@@ -20,7 +20,8 @@ REQUIREMENTS = [
     'pycrypto>=2.6',
     'PyJWT',
     'requests>=1.2.0',
-    'stripe>=1.9.8']
+    'stripe>=1.9.8',
+    'suds-jurko>=0.6']
 
 if sys.version_info < (3,):
     PACKAGES += ['payments.braintree']
