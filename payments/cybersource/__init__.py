@@ -120,17 +120,14 @@ class CyberSourceProvider(BasicProvider):
                 raise PaymentError(response.reasonCode)
 
     def refund(self, amount=None):
-        if amount is not None and amount != self.payment.captured_amount:
-            raise NotImplementedError(
-                'CyberSource gateway does not allow partial refunds')
-        params = self._prepare_refund()
+        if amount is None:
+            amount = self.payment.captured_amount
+        params = self._prepare_refund(amount=amount)
         response = self._make_request(params)
-        if response.decision == 'ACCEPT':
-            self.payment.transaction_id = response.requestID
-            self.payment.change_status('refunded')
-        else:
-            self.payment.save()
+        self.payment.save()
+        if response.decision != 'ACCEPT':
             raise PaymentError(response.reasonCode)
+        return amount
 
     def _get_error_message(self, code):
         if code in [200, 221, 222, 400, 481, 520, 700, 701, 702, 703]:
@@ -251,14 +248,15 @@ class CyberSourceProvider(BasicProvider):
         params['purchaseTotals'] = self._prepare_totals()
         return params
 
-    def _prepare_refund(self):
-        service = self.client.factory.create('data:VoidService')
+    def _prepare_refund(self, amount=None):
+        service = self.client.factory.create('data:CCCreditService')
         service._run = 'true'
-        service.voidRequestID = self.payment.transaction_id
+        service.captureRequestID = self.payment.transaction_id
         params = {
             'merchantID': self.merchant_id,
             'merchantReferenceCode': self.payment.id,
-            'voidService': service}
+            'ccCreditService': service}
+        params['purchaseTotals'] = self._prepare_totals(amount=amount)
         return params
 
     def _prepare_card_type(self, card_number):

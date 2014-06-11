@@ -270,7 +270,7 @@ class PaypalProvider(BasicProvider):
         refund_data = {'amount': amount}
         url = self.links['refund']['href']
         self.post(url, data=refund_data)
-        self.payment.change_status('refunded')
+        return amount
 
 
 class PaypalCardProvider(PaypalProvider):

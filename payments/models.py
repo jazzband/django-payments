@@ -144,7 +144,10 @@ class BasePayment(models.Model):
             raise ValueError(
                 'Refund amount can not be greater then captured amount')
         provider = factory(self)
-        provider.refund(amount)
+        amount = provider.refund(amount)
+        self.captured_amount -= amount
+        if self.captured_amount == 0:
+            self.payment.change_status('refunded')
 
     @property
     def attrs(self):
