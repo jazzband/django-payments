@@ -246,17 +246,16 @@ class PaypalProvider(BasicProvider):
             if error.get('name') != 'AUTHORIZATION_ALREADY_COMPLETED':
                 raise e
             capture = {'state': 'completed'}
-        else:
-            state = capture['state']
-            if state in [
-                    'completed', 'partially_captured', 'partially_refunded']:
-                self.payment.captured_amount = amount
-                self.payment.change_status('confirmed')
-            elif state == 'pending':
-                self.payment.change_status('waiting')
-            elif state == 'refunded':
-                self.payment.change_status('refunded')
-                raise PaymentError('Payment already refunded')
+        state = capture['state']
+        if state in [
+                'completed', 'partially_captured', 'partially_refunded']:
+            self.payment.captured_amount = amount
+            self.payment.change_status('confirmed')
+        elif state == 'pending':
+            self.payment.change_status('waiting')
+        elif state == 'refunded':
+            self.payment.change_status('refunded')
+            raise PaymentError('Payment already refunded')
 
     def release(self):
         url = self.links['void']['href']
