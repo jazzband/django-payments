@@ -22,9 +22,13 @@ class PaymentForm(CreditCardPaymentFormWithName):
                 try:
                     data = self.provider.create_payment(cleaned_data)
                 except HTTPError as e:
-                    error_data = e.response.json()
-                    errors = [
-                        error['issue'] for error in error_data['details']]
+                    response = e.response
+                    if response.status_code == 400:
+                        error_data = e.response.json()
+                        errors = [
+                            error['issue'] for error in error_data['details']]
+                    else:
+                        errors = ['Internal PayPal error']
                     self._errors['__all__'] = self.error_class(errors)
                     self.payment.change_status('error')
                 else:

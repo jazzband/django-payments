@@ -185,9 +185,9 @@ class PaypalProvider(BasicProvider):
         if not redirect_to:
             payment = self.create_payment()
             self.payment.transaction_id = payment['id']
-            redirect_to = self.links['approval_url']['href']
+            redirect_to = self.links['approval_url']
         self.payment.change_status('waiting')
-        raise RedirectNeeded(redirect_to)
+        raise RedirectNeeded(redirect_to['href'])
 
     def process_data(self, request):
         success_url = self.payment.get_success_url()
