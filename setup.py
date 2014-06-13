@@ -8,6 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')
 PACKAGES = [
     'payments',
     'payments.authorizenet',
+    'payments.cybersource',
     'payments.dummy',
     'payments.dotpay',
     'payments.paypal',
