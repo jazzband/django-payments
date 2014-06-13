@@ -14,12 +14,27 @@ from django.db.models import get_model
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {})}
 
-if not hasattr(settings, 'PAYMENT_BASE_URL'):
-    raise ImproperlyConfigured('The PAYMENT_BASE_URL setting '
-                               'must not be empty.')
+PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
+PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', False)
+
+if not PAYMENT_HOST:
+    try:
+        from django.contrib.sites.models import Site
+    except ImportError:
+        raise ImproperlyConfigured('The PAYMENT_HOST setting without '
+                                   'the sites app must not be empty.')
 
 PurchasedItem = namedtuple('PurchasedItem',
                            'name, quantity, price, currency, sku')
+
+
+def get_base_url():
+    protocol = 'https' if PAYMENT_USES_SSL else 'http'
+    if not PAYMENT_HOST:
+        current_site = Site.objects.get_current()
+        domain = current_site.domain
+        return '%s://%s' % (protocol, domain)
+    return '%s://%s' % (protocol, PAYMENT_HOST)
 
 
 class RedirectNeeded(Exception):
@@ -81,7 +96,7 @@ class BasicProvider(object):
 
     def get_return_url(self, extra_data=None):
         payment_link = self.payment.get_process_url()
-        url = urljoin(settings.PAYMENT_BASE_URL, payment_link)
+        url = urljoin(get_base_url(), payment_link)
         if extra_data:
             qs = urlencode(extra_data)
             return url + '?' + qs
