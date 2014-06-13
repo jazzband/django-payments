@@ -36,6 +36,7 @@ setup(
     version='0.4.3',
     url='http://github.com/mirumee/django-payments',
     packages=PACKAGES,
+    include_package_data=True,
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
