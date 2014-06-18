@@ -95,29 +95,25 @@ class CyberSourceProvider(BasicProvider):
         response = self._make_request(params)
         if response.decision == 'ACCEPT':
             self.payment.transaction_id = response.requestID
-            self.payment.captured_amount = amount
-            self.payment.change_status('confirmed')
         else:
             if response.reasonCode == 238:
                 # already settled
                 self.payment.change_status('confirmed')
             else:
                 self.payment.save()
-                raise PaymentError(response.reasonCode)
+                error = self._get_error_message(response.reasonCode)
+                raise PaymentError(error)
+        return amount
 
     def release(self):
         params = self._prepare_release()
         response = self._make_request(params)
         if response.decision == 'ACCEPT':
             self.payment.transaction_id = response.requestID
-            self.payment.change_status('refunded')
-        else:
-            if response.reasonCode == 237:
-                # already refunded
-                self.payment.change_status('refunded')
-            else:
-                self.payment.save()
-                raise PaymentError(response.reasonCode)
+        elif response.reasonCode != 237:
+            self.payment.save()
+            error = self._get_error_message(response.reasonCode)
+            raise PaymentError(error)
 
     def refund(self, amount=None):
         if amount is None:
@@ -126,7 +122,8 @@ class CyberSourceProvider(BasicProvider):
         response = self._make_request(params)
         self.payment.save()
         if response.decision != 'ACCEPT':
-            raise PaymentError(response.reasonCode)
+            error = self._get_error_message(response.reasonCode)
+            raise PaymentError(error)
         return amount
 
     def _get_error_message(self, code):
@@ -342,6 +339,7 @@ class CyberSourceProvider(BasicProvider):
             cc_data, request.POST.get('PaRes'))
         response = self._make_request(params)
         if response.decision == 'ACCEPT':
+            self.payment.transaction_id = response.requestID
             self.payment.change_status('preauth')
             return redirect(self.payment.get_success_url())
         else:

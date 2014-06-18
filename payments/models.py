@@ -127,7 +127,10 @@ class BasePayment(models.Model):
             raise ValueError(
                 'Only pre-authorized payments can be captured.')
         provider = factory(self)
-        provider.capture(amount)
+        amount = provider.capture(amount)
+        if amount:
+            self.captured_amount = amount
+            self.change_status('confirmed')
 
     def release(self):
         if self.status != 'preauth':
@@ -135,6 +138,7 @@ class BasePayment(models.Model):
                 'Only pre-authorized payments can be released.')
         provider = factory(self)
         provider.release()
+        self.change_status('refunded')
 
     def refund(self, amount=None):
         if self.status != 'confirmed':
@@ -147,7 +151,8 @@ class BasePayment(models.Model):
         amount = provider.refund(amount)
         self.captured_amount -= amount
         if self.captured_amount == 0:
-            self.payment.change_status('refunded')
+            self.change_status('refunded')
+        self.save()
 
     @property
     def attrs(self):
