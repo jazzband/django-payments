@@ -90,12 +90,17 @@ class PaypalProvider(BasicProvider):
             data = response.json()
         except ValueError:
             data = {}
-        if 400 <= response.status_code < 500:
+        if 400 <= response.status_code <= 500:
             self.set_error_data(data)
             logger.debug(data)
+            message = 'Paypal error'
+            if response.status_code == 400:
+                error_data = response.json()
+                message = error_data.get('message', message)
+            self.payment.change_status('error', message)
+            raise PaymentError(message)
         else:
             self.set_response_data(data)
-        response.raise_for_status()
         return data
 
     def get_last_response(self, is_auth=False):
@@ -107,8 +112,8 @@ class PaypalProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.secret = kwargs.pop('secret')
         self.client_id = kwargs.pop('client_id')
-        self.endpoint = kwargs.pop('endpoint',
-                                   'https://api.sandbox.paypal.com')
+        self.endpoint = kwargs.pop(
+            'endpoint', 'https://api.sandbox.paypal.com')
         self.oauth2_url = self.endpoint + '/v1/oauth2/token'
         self.payments_url = self.endpoint + '/v1/payments/payment'
         self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
@@ -141,9 +146,11 @@ class PaypalProvider(BasicProvider):
 
     def get_transactions_items(self):
         for purchased_item in self.payment.get_purchased_items():
+            price = purchased_item.price.quantize(
+                CENTS, rounding=ROUND_HALF_UP)
             item = {'name': purchased_item.name,
                     'quantity': str(purchased_item.quantity),
-                    'price': str(purchased_item.price),
+                    'price': str(price),
                     'currency': purchased_item.currency,
                     'sku': purchased_item.sku}
             yield item
@@ -249,8 +256,7 @@ class PaypalProvider(BasicProvider):
         state = capture['state']
         if state in [
                 'completed', 'partially_captured', 'partially_refunded']:
-            self.payment.captured_amount = amount
-            self.payment.change_status('confirmed')
+            return amount
         elif state == 'pending':
             self.payment.change_status('waiting')
         elif state == 'refunded':
@@ -260,13 +266,12 @@ class PaypalProvider(BasicProvider):
     def release(self):
         url = self.links['void']['href']
         self.post(url)
-        self.payment.change_status('refunded')
 
     def refund(self, amount=None):
         if amount is None:
             amount = self.payment.captured_amount
-        amount = self.get_amount_data(amount)
-        refund_data = {'amount': amount}
+        amount_data = self.get_amount_data(amount)
+        refund_data = {'amount': amount_data}
         url = self.links['refund']['href']
         self.post(url, data=refund_data)
         return amount
