@@ -211,6 +211,7 @@ class PaypalProvider(BasicProvider):
         related_resources = payment['transactions'][0]['related_resources'][0]
         authorization_links = related_resources['authorization']['links']
         self.set_response_links(authorization_links)
+        self.payment.attrs.payer_info = payment['payer']['payer_info']
         if self._capture:
             self.payment.captured_amount = self.payment.total
             self.payment.change_status('confirmed')
