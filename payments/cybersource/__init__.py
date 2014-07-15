@@ -21,6 +21,8 @@ class CyberSourceProvider(BasicProvider):
     '''CyberSource payment provider
     '''
 
+    fingerprint_url = 'https://h.online-metrix.net/fp/'
+
     def __init__(self, *args, **kwargs):
         self.merchant_id = kwargs.pop('merchant_id')
         self.password = kwargs.pop('password')
@@ -30,6 +32,9 @@ class CyberSourceProvider(BasicProvider):
         self.client = suds.client.Client(
             'file://%s/CyberSourceTransaction_1.101.wsdl' % (
                 os.path.dirname(__file__),))
+        if 'fingerprint_url' in kwargs:
+            self.fingerprint_url = kwargs.pop('fingerprint_url')
+        self.org_id = kwargs.pop('org_id', None)
         security_header = suds.wsse.Security()
         security_token = suds.wsse.UsernameToken(
             username=self.merchant_id,
@@ -183,6 +188,12 @@ class CyberSourceProvider(BasicProvider):
             service = self.client.factory.create('data:CCAuthService')
             service._run = 'true'
             params['ccAuthService'] = service
+        try:
+            fingerprint_id = self.payment.attrs.fingerprint_session_id
+        except KeyError:
+            pass
+        else:
+            params['deviceFingerprintID'] = fingerprint_id
         params['billTo'] = self._prepare_billing_data()
         params['card'] = self._prepare_card_data(card_data)
         params['item'] = self._prepare_items()
@@ -200,6 +211,12 @@ class CyberSourceProvider(BasicProvider):
             'merchantReferenceCode': self.payment.id,
             'ccCreditService': service,
             'payerAuthEnrollService': check_service}
+        try:
+            fingerprint_id = self.payment.attrs.fingerprint_session_id
+        except KeyError:
+            pass
+        else:
+            params['deviceFingerprintID'] = fingerprint_id
         params['billTo'] = self._prepare_billing_data()
         params['card'] = self._prepare_card_data(card_data)
         params['item'] = self._prepare_items()
@@ -217,6 +234,12 @@ class CyberSourceProvider(BasicProvider):
             'merchantReferenceCode': self.payment.id,
             'ccAuthService': service,
             'payerAuthEnrollService': check_service}
+        try:
+            fingerprint_id = self.payment.attrs.fingerprint_session_id
+        except KeyError:
+            pass
+        else:
+            params['deviceFingerprintID'] = fingerprint_id
         params['billTo'] = self._prepare_billing_data()
         params['card'] = self._prepare_card_data(card_data)
         params['item'] = self._prepare_items()
