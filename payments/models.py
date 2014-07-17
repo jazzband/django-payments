@@ -29,7 +29,7 @@ class PaymentAttributeProxy(object):
         super(PaymentAttributeProxy, self).__init__()
 
     def __getattr__(self, item):
-        data = json.loads(self._payment.extra_data)
+        data = json.loads(self._payment.extra_data or '{}')
         return data[item]
 
     def __setattr__(self, key, value):

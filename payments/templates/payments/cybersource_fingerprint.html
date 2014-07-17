@@ -1,0 +1,12 @@
+<p style="background:url({{ fingerprint_url }}clear.png?org_id={{ org_id }}>&amp;session_id={{ merchant_id }}{{ session_id }}&amp;m=1)"></p>
+
+<img src="{{ fingerprint_url }}clear.png?org_id={{ org_id }}&amp;session_id={{ merchant_id }}{{ session_id }}&amp;m=2" alt="">
+
+<object type="application/x-shockwave-flash" data="{{ fingerprint_url }}fp.swf?org_id={{ org_id }}&amp;session_id={{ merchant_id }}{{ session_id }}" width="1" height="1" id="thm_fp">
+    <param name="movie" value="{{ fingerprint_url }}fp.swf?org_id={{ org_id }}&amp;session_id={{ merchant_id }}{{ session_id }}" />
+    <div></div>
+</object>
+
+<script src="{{ fingerprint_url }}check.js?org_id={{ org_id }}&amp;session_id={{ merchant_id }}{{ session_id }}" type="text/javascript"></script>
+
+<input name="{{ name }}" type="{{ type }}" value="{{ session_id }}">
