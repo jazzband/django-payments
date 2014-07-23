@@ -166,6 +166,22 @@ class CyberSourceProvider(BasicProvider):
             return _(
                 'We were unable to complete the transaction. Please try again later.')
 
+    def _get_params_for_new_payment(self):
+        params = {
+            'merchantID': self.merchant_id,
+            'merchantReferenceCode': self.payment.id,
+        }
+        try:
+            fingerprint_id = self.payment.attrs.fingerprint_session_id
+        except KeyError:
+            pass
+        else:
+            params['deviceFingerprintID'] = fingerprint_id
+        merchant_defined_data = self._prepare_merchant_defined_data()
+        if merchant_defined_data:
+            params['merchantDefinedData'] = merchant_defined_data
+        return params
+
     def _make_request(self, params):
         response = self.client.service.runTransaction(**params)
         self.payment.attrs.last_response = self._serialize_response(response)
@@ -176,10 +192,8 @@ class CyberSourceProvider(BasicProvider):
             'data:PayerAuthValidateService')
         check_service._run = 'true'
         check_service.signedPARes = pa_response
-        params = {
-            'merchantID': self.merchant_id,
-            'merchantReferenceCode': self.payment.id,
-            'payerAuthValidateService': check_service}
+        params = self._get_params_for_new_payment()
+        params['payerAuthValidateService'] = check_service
         if self.payment.attrs.capture:
             service = self.client.factory.create('data:CCCreditService')
             service._run = 'true'
@@ -188,12 +202,6 @@ class CyberSourceProvider(BasicProvider):
             service = self.client.factory.create('data:CCAuthService')
             service._run = 'true'
             params['ccAuthService'] = service
-        try:
-            fingerprint_id = self.payment.attrs.fingerprint_session_id
-        except KeyError:
-            pass
-        else:
-            params['deviceFingerprintID'] = fingerprint_id
         params['billTo'] = self._prepare_billing_data()
         params['card'] = self._prepare_card_data(card_data)
         params['item'] = self._prepare_items()
@@ -206,17 +214,9 @@ class CyberSourceProvider(BasicProvider):
         check_service = self.client.factory.create(
             'data:PayerAuthEnrollService')
         check_service._run = 'true'
-        params = {
-            'merchantID': self.merchant_id,
-            'merchantReferenceCode': self.payment.id,
-            'ccCreditService': service,
-            'payerAuthEnrollService': check_service}
-        try:
-            fingerprint_id = self.payment.attrs.fingerprint_session_id
-        except KeyError:
-            pass
-        else:
-            params['deviceFingerprintID'] = fingerprint_id
+        params = self._get_params_for_new_payment()
+        params['ccCreditService'] = service,
+        params['payerAuthEnrollService'] = check_service
         params['billTo'] = self._prepare_billing_data()
         params['card'] = self._prepare_card_data(card_data)
         params['item'] = self._prepare_items()
@@ -229,17 +229,9 @@ class CyberSourceProvider(BasicProvider):
         check_service = self.client.factory.create(
             'data:PayerAuthEnrollService')
         check_service._run = 'true'
-        params = {
-            'merchantID': self.merchant_id,
-            'merchantReferenceCode': self.payment.id,
-            'ccAuthService': service,
-            'payerAuthEnrollService': check_service}
-        try:
-            fingerprint_id = self.payment.attrs.fingerprint_session_id
-        except KeyError:
-            pass
-        else:
-            params['deviceFingerprintID'] = fingerprint_id
+        params = self._get_params_for_new_payment()
+        params['ccAuthService'] = service
+        params['payerAuthEnrollService'] = check_service
         params['billTo'] = self._prepare_billing_data()
         params['card'] = self._prepare_card_data(card_data)
         params['item'] = self._prepare_items()
@@ -327,6 +319,20 @@ class CyberSourceProvider(BasicProvider):
             purchased.productSKU = item.sku
             items.append(purchased)
         return items
+
+    def _prepare_merchant_defined_data(self):
+        try:
+            merchant_defined_data = self.payment.attrs.merchant_defined_data
+        except KeyError:
+            return
+        else:
+            data = self.client.factory.create('data:MerchantDefinedData')
+            for i, value in merchant_defined_data.iteritems():
+                field = self.client.factory.create('data:MDDField')
+                field._id = int(i)
+                field.value = str(value)
+                data.mddField.append(field)
+            return data
 
     def _prepare_totals(self, amount=None):
         totals = self.client.factory.create('data:PurchaseTotals')
