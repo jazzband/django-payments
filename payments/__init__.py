@@ -18,9 +18,7 @@ PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', False)
 
 if not PAYMENT_HOST:
-    try:
-        from django.contrib.sites.models import Site
-    except ImportError:
+    if not 'django.contrib.sites' in settings.INSTALLED_APPS:
         raise ImproperlyConfigured('The PAYMENT_HOST setting without '
                                    'the sites app must not be empty.')
 
