@@ -8,6 +8,7 @@ except ImportError:
     from urlparse import urljoin
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import get_model
 
