@@ -209,7 +209,8 @@ class PaypalProvider(BasicProvider):
                 return redirect(success_url)
         payment = self.execute_payment(payer_id)
         related_resources = payment['transactions'][0]['related_resources'][0]
-        authorization_links = related_resources['authorization']['links']
+        resource_key = 'sale' if self._capture else 'authorization'
+        authorization_links = related_resources[resource_key]['links']
         self.set_response_links(authorization_links)
         self.payment.attrs.payer_info = payment['payer']['payer_info']
         if self._capture:
