@@ -96,7 +96,13 @@ class PaypalProvider(BasicProvider):
             message = 'Paypal error'
             if response.status_code == 400:
                 error_data = response.json()
+                logger.warning(message, extra={
+                    'response': error_data,
+                    'status_code': response.status_code})
                 message = error_data.get('message', message)
+            else:
+                logger.warning(
+                    message, extra={'status_code': response.status_code})
             self.payment.change_status('error', message)
             raise PaymentError(message)
         else:
