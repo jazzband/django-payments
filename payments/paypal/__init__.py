@@ -154,7 +154,7 @@ class PaypalProvider(BasicProvider):
         for purchased_item in self.payment.get_purchased_items():
             price = purchased_item.price.quantize(
                 CENTS, rounding=ROUND_HALF_UP)
-            item = {'name': purchased_item.name,
+            item = {'name': purchased_item.name[:127],
                     'quantity': str(purchased_item.quantity),
                     'price': str(price),
                     'currency': purchased_item.currency,
