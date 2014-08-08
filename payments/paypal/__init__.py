@@ -80,7 +80,7 @@ class PaypalProvider(BasicProvider):
             links = filter(lambda url: url['rel'] == name, data['links'])
         except KeyError:
             return None
-        return links[0]['href']
+        return next(links)['href']
 
     def get_transactions_items(self):
         for purchased_item in self.payment.get_purchased_items():
