@@ -5,6 +5,11 @@ import json
 import requests
 from decimal import Decimal, ROUND_HALF_UP
 
+try:
+    from itertools import ifilter as filter
+except ImportError:
+    pass
+
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import timezone
