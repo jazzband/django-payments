@@ -26,7 +26,7 @@ class CyberSourceProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.merchant_id = kwargs.pop('merchant_id')
         self.password = kwargs.pop('password')
-        if kwargs.pop('sandbox', False):
+        if kwargs.pop('sandbox', True):
             wsdl_path = 'file://%s/xml/CyberSourceTransaction_1.101.test.wsdl' % (  # noqa
                 os.path.dirname(__file__),)
             self.endpoint = (
