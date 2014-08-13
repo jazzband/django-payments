@@ -26,12 +26,17 @@ class CyberSourceProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.merchant_id = kwargs.pop('merchant_id')
         self.password = kwargs.pop('password')
-        self.endpoint = kwargs.pop(
-            'endpoint',
-            'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
-        self.client = suds.client.Client(
-            'file://%s/CyberSourceTransaction_1.101.wsdl' % (
-                os.path.dirname(__file__),))
+        if kwargs.pop('sandbox', False):
+            wsdl_path = 'file://%s/xml/CyberSourceTransaction_1.101.test.wsdl' % (  # noqa
+                os.path.dirname(__file__),)
+            self.endpoint = (
+                'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
+        else:
+            wsdl_path = 'file://%s/xml/CyberSourceTransaction_1.101.wsdl' % (
+                os.path.dirname(__file__),)
+            self.endpoint = (
+                'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor')
+        self.client = suds.client.Client(wsdl_path)
         if 'fingerprint_url' in kwargs:
             self.fingerprint_url = kwargs.pop('fingerprint_url')
         self.org_id = kwargs.pop('org_id', None)
