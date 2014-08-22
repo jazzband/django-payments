@@ -47,10 +47,17 @@ class BasePayment(models.Model):
     '''
     Represents a single transaction. Each instance has one or more PaymentItem.
     '''
+    FRAUD_CHOICES = (
+        ('unknown', _('Unknown')),
+        ('accept', _('Accept')),
+        ('reject', _('Reject')),
+        ('review', _('Review')))
     variant = models.CharField(max_length=255)
     #: Transaction status
     status = models.CharField(
         max_length=10, choices=PAYMENT_STATUS_CHOICES, default='waiting')
+    fraud_status = models.CharField(
+        max_length=10, choices=FRAUD_CHOICES, default='unknown')
     #: Creation date and time
     created = models.DateTimeField(auto_now_add=True)
     #: Date and time of last modification
