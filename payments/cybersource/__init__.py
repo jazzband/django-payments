@@ -81,7 +81,7 @@ class CyberSourceProvider(BasicProvider):
         self.payment.attrs.capture = self._capture
         self.payment.transaction_id = response.requestID
         if response.reasonCode == ACCEPTED_STATUS:
-            self.payment.fraud_status = 'review'
+            self.payment.fraud_status = 'confirmed'
             self._change_status_to_confirmed()
         elif response.reasonCode == FRAUD_REVIEW_STATUS:
             self.payment.fraud_status = 'review'
