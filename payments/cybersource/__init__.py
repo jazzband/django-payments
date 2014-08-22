@@ -17,6 +17,12 @@ from .. import (
 from ..forms import PaymentForm as BaseForm
 
 
+ACCEPTED_STATUS = 100
+FRAUD_REVIEW_STATUS = 480
+FRAUD_REJECTED_STATUS = 481
+AUTHENTICATE_STATUS = 475
+
+
 class CyberSourceProvider(BasicProvider):
     '''CyberSource payment provider
     '''
@@ -59,6 +65,13 @@ class CyberSourceProvider(BasicProvider):
             return e.args[0]
         return form
 
+    def _change_status_to_confirmed(self):
+        if self.payment.attrs.capture:
+            self.payment.captured_amount = self.payment.total
+            self.payment.change_status('confirmed')
+        else:
+            self.payment.change_status('preauth')
+
     def charge(self, data):
         if self._capture:
             params = self._prepare_sale(data)
@@ -67,36 +80,38 @@ class CyberSourceProvider(BasicProvider):
         response = self._make_request(params)
         self.payment.attrs.capture = self._capture
         self.payment.transaction_id = response.requestID
-        if response.decision == 'ACCEPT':
-            if self.payment.attrs.capture:
-                self.payment.captured_amount = self.payment.total
-                self.payment.change_status('confirmed')
-            else:
-                self.payment.change_status('preauth')
+        if response.reasonCode == ACCEPTED_STATUS:
+            self.payment.fraud_status = 'review'
+            self._change_status_to_confirmed()
+        elif response.reasonCode == FRAUD_REVIEW_STATUS:
+            self.payment.fraud_status = 'review'
+            self._change_status_to_confirmed()
+        elif response.reasonCode == FRAUD_REJECTED_STATUS:
+            self.payment.fraud_status = 'reject'
+            self._change_status_to_confirmed()
+        elif response.reasonCode == AUTHENTICATE_STATUS:
+            xid = response.payerAuthEnrollReply.xid
+            self.payment.attrs.xid = xid
+            self.payment.change_status(
+                'waiting',
+                message=_('3-D Secure verification in progress'))
+            action = response.payerAuthEnrollReply.acsURL
+            cc_data = dict(data)
+            expiration = cc_data.pop('expiration')
+            cc_data['expiration'] = {
+                'month': expiration.month,
+                'year': expiration.year}
+            cc_data = signing.dumps(cc_data)
+            payload = {
+                'PaReq': response.payerAuthEnrollReply.paReq,
+                'TermUrl': self.get_return_url({'token': cc_data}),
+                'MD': xid}
+            form = BaseForm(data=payload, action=action, autosubmit=True)
+            raise ExternalPostNeeded(form)
         else:
-            if response.reasonCode == 475:
-                xid = response.payerAuthEnrollReply.xid
-                self.payment.attrs.xid = xid
-                self.payment.change_status(
-                    'waiting',
-                    message=_('3-D Secure verification in progress'))
-                action = response.payerAuthEnrollReply.acsURL
-                cc_data = dict(data)
-                expiration = cc_data.pop('expiration')
-                cc_data['expiration'] = {
-                    'month': expiration.month,
-                    'year': expiration.year}
-                cc_data = signing.dumps(cc_data)
-                payload = {
-                    'PaReq': response.payerAuthEnrollReply.paReq,
-                    'TermUrl': self.get_return_url({'token': cc_data}),
-                    'MD': xid}
-                form = BaseForm(data=payload, action=action, autosubmit=True)
-                raise ExternalPostNeeded(form)
-            else:
-                error = self._get_error_message(response.reasonCode)
-                self.payment.change_status('error', message=error)
-                raise PaymentError(error)
+            error = self._get_error_message(response.reasonCode)
+            self.payment.change_status('error', message=error)
+            raise PaymentError(error)
 
     def capture(self, amount=None):
         if amount is None:
