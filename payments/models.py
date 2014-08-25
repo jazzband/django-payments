@@ -49,7 +49,7 @@ class BasePayment(models.Model):
     '''
     FRAUD_CHOICES = (
         ('unknown', _('Unknown')),
-        ('confirmed', _('Passed')),
+        ('accept', _('Passed')),
         ('reject', _('Rejected')),
         ('review', _('Review')))
     variant = models.CharField(max_length=255)
