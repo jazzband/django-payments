@@ -49,15 +49,17 @@ class BasePayment(models.Model):
     '''
     FRAUD_CHOICES = (
         ('unknown', _('Unknown')),
-        ('accept', _('Accept')),
-        ('reject', _('Reject')),
+        ('confirmed', _('Passed')),
+        ('reject', _('Rejected')),
         ('review', _('Review')))
     variant = models.CharField(max_length=255)
     #: Transaction status
     status = models.CharField(
         max_length=10, choices=PAYMENT_STATUS_CHOICES, default='waiting')
     fraud_status = models.CharField(
-        max_length=10, choices=FRAUD_CHOICES, default='unknown')
+        _('fraud check'), max_length=10, choices=FRAUD_CHOICES,
+        default='unknown')
+    fraud_message = models.TextField(blank=True, default='')
     #: Creation date and time
     created = models.DateTimeField(auto_now_add=True)
     #: Date and time of last modification
@@ -100,6 +102,16 @@ class BasePayment(models.Model):
         self.message = message
         self.save()
         status_changed.send(sender=type(self), instance=self)
+
+    def change_fraud_status(self, status, message='', commit=True):
+        available_statuses = [choice[0] for choice in self.FRAUD_CHOICES]
+        if status not in available_statuses:
+            raise ValueError(
+                'Status should be one of: %s' % ', '.join(available_statuses))
+        self.fraud_status = status
+        self.fraud_message = message
+        if commit:
+            self.save()
 
     def save(self, *args, **kwargs):
         if not self.token:
