@@ -17,10 +17,17 @@ from .. import (
 from ..forms import PaymentForm as BaseForm
 
 
-ACCEPTED_STATUS = 100
-FRAUD_REVIEW_STATUS = 480
-FRAUD_REJECTED_STATUS = 481
-AUTHENTICATE_STATUS = 475
+ACCEPTED = 100
+AUTHENTICATE_REQUIRED = 475
+
+FRAUD_MANAGER_REVIEW = 480
+FRAUD_MANAGER_REJECT = 481
+FRAUD_SCORE_EXCEEDS_THRESHOLD = 400
+
+# Soft Decline
+ADDRESS_VERIFICATION_SERVICE_FAIL = 200
+CARD_VERIFICATION_NUMBER_FAIL = 230
+SMART_AUTHORIZATION_FAIL = 520
 
 
 class CyberSourceProvider(BasicProvider):
@@ -80,16 +87,43 @@ class CyberSourceProvider(BasicProvider):
         response = self._make_request(params)
         self.payment.attrs.capture = self._capture
         self.payment.transaction_id = response.requestID
-        if response.reasonCode == ACCEPTED_STATUS:
-            self.payment.fraud_status = 'confirmed'
+        if response.reasonCode == ACCEPTED:
+            self.payment.change_fraud_status('confirmed')
             self._change_status_to_confirmed()
-        elif response.reasonCode == FRAUD_REVIEW_STATUS:
-            self.payment.fraud_status = 'review'
+
+        elif response.reasonCode == FRAUD_MANAGER_REVIEW:
+            self.payment.change_fraud_status(
+                'review', _(
+                    'The order is marked for review by Decision Manager'))
             self._change_status_to_confirmed()
-        elif response.reasonCode == FRAUD_REJECTED_STATUS:
-            self.payment.fraud_status = 'reject'
+
+        elif response.reasonCode == FRAUD_MANAGER_REJECT:
+            self.payment.change_fraud_status(
+                'reject', _('The order has been rejected by Decision Manager'))
             self._change_status_to_confirmed()
-        elif response.reasonCode == AUTHENTICATE_STATUS:
+
+        elif response.reasonCode == FRAUD_SCORE_EXCEEDS_THRESHOLD:
+            self.payment.change_fraud_status(
+                'reject', _('Fraud score exceeds threshold.'))
+            self._change_status_to_confirmed()
+
+        elif response.reasonCode == SMART_AUTHORIZATION_FAIL:
+            self.payment.change_fraud_status(
+                'reject', _('CyberSource Smart Authorization failed.'))
+            self._change_status_to_confirmed()
+
+        elif response.reasonCode == CARD_VERIFICATION_NUMBER_FAIL:
+            self.payment.change_fraud_status(
+                'reject', _('Card verification number (CVN) did not match.'))
+            self._change_status_to_confirmed()
+
+        elif response.reasonCode == ADDRESS_VERIFICATION_SERVICE_FAIL:
+            self.payment.change_fraud_status(
+                'reject', _(
+                    'CyberSource Address Verification Service failed.'))
+            self._change_status_to_confirmed()
+
+        elif response.reasonCode == AUTHENTICATE_REQUIRED:
             xid = response.payerAuthEnrollReply.xid
             self.payment.attrs.xid = xid
             self.payment.change_status(
@@ -152,39 +186,40 @@ class CyberSourceProvider(BasicProvider):
         return amount
 
     def _get_error_message(self, code):
-        if code in [200, 221, 222, 400, 481, 520, 700, 701, 702, 703]:
+        if code in [221, 222, 700, 701, 702, 703]:
             return _(
-                'Our bank has flagged your transaction as unusually suspicious. Please contact us to resolve this issue.')
+                'Our bank has flagged your transaction as unusually suspicious. Please contact us to resolve this issue.')  # noqa
         elif code in [201, 203, 209]:
             return _(
-                'Your bank has declined the transaction. No additional information was provided.')
+                'Your bank has declined the transaction. No additional information was provided.')  # noqa
         elif code == 202:
             return _(
-                'The card has either expired or you have entered an incorrect expiration date.')
+                'The card has either expired or you have entered an incorrect expiration date.')  # noqa
         elif code in [204, 210, 251]:
             return _(
-                'There are insufficient funds on your card or it has reached its credit limit.')
+                'There are insufficient funds on your card or it has reached its credit limit.')  # noqa
         elif code == 205:
             return _(
-                'The card you are trying to use was reported as lost or stolen.')
+                'The card you are trying to use was reported as lost or stolen.')  # noqa
         elif code == 208:
             return _(
-                'Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue.')
-        elif code in [211, 230]:
+                'Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue.')  # noqa
+        elif code == 211:
             return _(
-                'Your bank has declined the transaction. Please check the verification number of your card and retry.')
+                'Your bank has declined the transaction. Please check the verification number of your card and retry.')  # noqa
         elif code == 231:
             return _(
-                'Your bank has declined the transaction. Please make sure the card number you have entered is correct and retry.')
+                'Your bank has declined the transaction. Please make sure the card number you have entered is correct and retry.')  # noqa
         elif code in [232, 240]:
             return _(
-                'We are sorry but our bank cannot handle the card type you are using.')
-        elif code in [450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461]:
+                'We are sorry but our bank cannot handle the card type you are using.')  # noqa
+        elif code in [450, 451, 452, 453, 454, 455,
+                      456, 457, 458, 459, 460, 461]:
             return _(
-                'We were unable to verify your address. Please make sure the address you entered is correct and retry.')
+                'We were unable to verify your address. Please make sure the address you entered is correct and retry.')  # noqa
         else:
             return _(
-                'We were unable to complete the transaction. Please try again later.')
+                'We were unable to complete the transaction. Please try again later.')  # noqa
 
     def _get_params_for_new_payment(self):
         params = {
