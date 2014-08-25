@@ -9,4 +9,5 @@ Contents:
 
    install.rst
    usage.rst
+   preauth.rst
    modules.rst
