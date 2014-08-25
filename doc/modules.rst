@@ -128,6 +128,8 @@ PayPal
    :param client_id: Client ID assigned by PayPal or your email address
    :param secret: Secret assigned by PayPal
    :param endpoint: The API endpoint to use. To test using sandbox, use ``'https://api.sandbox.paypal.com'`` instead
+   :param capture: A boolean parameter which tells whether to capture the payment automatically. See :ref:`capture-payments` for more details.
+
 
 Example::
 
