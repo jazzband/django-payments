@@ -33,7 +33,7 @@ setup(
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
-    version='0.4.3.a11',
+    version='0.4.3.a12',
     url='http://github.com/mirumee/django-payments',
     packages=PACKAGES,
     include_package_data=True,

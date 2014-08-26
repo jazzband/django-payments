@@ -88,39 +88,44 @@ class CyberSourceProvider(BasicProvider):
         self.payment.attrs.capture = self._capture
         self.payment.transaction_id = response.requestID
         if response.reasonCode == ACCEPTED:
-            self.payment.change_fraud_status('confirmed')
+            self.payment.change_fraud_status('accept', commit=False)
             self._change_status_to_confirmed()
 
         elif response.reasonCode == FRAUD_MANAGER_REVIEW:
             self.payment.change_fraud_status(
                 'review', _(
-                    'The order is marked for review by Decision Manager'))
+                    'The order is marked for review by Decision Manager'),
+                commit=False)
             self._change_status_to_confirmed()
 
         elif response.reasonCode == FRAUD_MANAGER_REJECT:
             self.payment.change_fraud_status(
-                'reject', _('The order has been rejected by Decision Manager'))
+                'reject', _('The order has been rejected by Decision Manager'),
+                commit=False)
             self._change_status_to_confirmed()
 
         elif response.reasonCode == FRAUD_SCORE_EXCEEDS_THRESHOLD:
             self.payment.change_fraud_status(
-                'reject', _('Fraud score exceeds threshold.'))
+                'reject', _('Fraud score exceeds threshold.'), commit=False)
             self._change_status_to_confirmed()
 
         elif response.reasonCode == SMART_AUTHORIZATION_FAIL:
             self.payment.change_fraud_status(
-                'reject', _('CyberSource Smart Authorization failed.'))
+                'reject', _('CyberSource Smart Authorization failed.'),
+                commit=False)
             self._change_status_to_confirmed()
 
         elif response.reasonCode == CARD_VERIFICATION_NUMBER_FAIL:
             self.payment.change_fraud_status(
-                'reject', _('Card verification number (CVN) did not match.'))
+                'reject', _('Card verification number (CVN) did not match.'),
+                commit=False)
             self._change_status_to_confirmed()
 
         elif response.reasonCode == ADDRESS_VERIFICATION_SERVICE_FAIL:
             self.payment.change_fraud_status(
                 'reject', _(
-                    'CyberSource Address Verification Service failed.'))
+                    'CyberSource Address Verification Service failed.'),
+                commit=False)
             self._change_status_to_confirmed()
 
         elif response.reasonCode == AUTHENTICATE_REQUIRED:
