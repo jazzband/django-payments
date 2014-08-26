@@ -9,16 +9,29 @@ Some gateways offer a two-step payment method known as Authorization & Capture, 
 
       # settings.py
       PAYMENT_VARIANTS = {
-          'paypal': ('payments.paypal.PaypalProvider', {
-              'client_id': 'user@example.com',
-              'secret': 'iseedeadpeople',
-              'endpoint': 'https://api.sandbox.paypal.com',
+          'default': ('payments.dummy.DummyProvider', {
               'capture': False})}
 
 
-#. To capture the payment, call the ``capture()`` method on the :class:`Payment` instance. By default, the total amount will be captured, but you can capture a lower amount, by providing the ``amount`` parameter.
+#. To capture the payment, call the ``capture()`` method on the :class:`Payment` instance. By default, the total amount will be captured, but you can capture a lower amount, by providing the ``amount`` parameter::
 
-#. To release the payment, call the ``release()`` method on your :class:`Payment` instance.
+    >>> from payments import get_payment_model
+    >>> Payment = get_payment_model()
+    >>> payment = Payment.objects.get(id=payment_id)
+    >>> payment.capture()
 
-#. You can refund a captured payment by calling the ``refund()`` method on your :class:`Payment` instance. For partial refund, provide the ``amount`` parameter.
 
+#. To release the payment, call the ``release()`` method on your :class:`Payment` instance::
+
+    >>> from payments import get_payment_model
+    >>> Payment = get_payment_model()
+    >>> payment = Payment.objects.get(id=payment_id)
+    >>> payment.release()
+
+
+#. You can refund a captured payment by calling the ``refund()`` method on your :class:`Payment` instance. For partial refund, provide the ``amount`` parameter::
+
+    >>> from payments import get_payment_model
+    >>> Payment = get_payment_model()
+    >>> payment = Payment.objects.get(id=payment_id)
+    >>> payment.refund()
