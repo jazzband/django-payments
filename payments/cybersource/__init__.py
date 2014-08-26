@@ -18,6 +18,8 @@ from ..forms import PaymentForm as BaseForm
 
 
 ACCEPTED = 100
+TRANSACTION_SETTLED = 238
+TRANSACTION_REVERSED = 237
 AUTHENTICATE_REQUIRED = 475
 
 FRAUD_MANAGER_REVIEW = 480
@@ -79,6 +81,46 @@ class CyberSourceProvider(BasicProvider):
         else:
             self.payment.change_status('preauth')
 
+    def _set_proper_payment_status_from_reason_code(self, reason_code):
+        if reason_code == ACCEPTED:
+            self.payment.change_fraud_status('accept', commit=False)
+            self._change_status_to_confirmed()
+        elif reason_code == FRAUD_MANAGER_REVIEW:
+            self.payment.change_fraud_status(
+                'review', _(
+                    'The order is marked for review by Decision Manager'),
+                commit=False)
+            self._change_status_to_confirmed()
+        elif reason_code == FRAUD_MANAGER_REJECT:
+            self.payment.change_fraud_status(
+                'reject', _('The order has been rejected by Decision Manager'),
+                commit=False)
+            self._change_status_to_confirmed()
+        elif reason_code == FRAUD_SCORE_EXCEEDS_THRESHOLD:
+            self.payment.change_fraud_status(
+                'reject', _('Fraud score exceeds threshold.'), commit=False)
+            self._change_status_to_confirmed()
+        elif reason_code == SMART_AUTHORIZATION_FAIL:
+            self.payment.change_fraud_status(
+                'reject', _('CyberSource Smart Authorization failed.'),
+                commit=False)
+            self._change_status_to_confirmed()
+        elif reason_code == CARD_VERIFICATION_NUMBER_FAIL:
+            self.payment.change_fraud_status(
+                'reject', _('Card verification number (CVN) did not match.'),
+                commit=False)
+            self._change_status_to_confirmed()
+        elif reason_code == ADDRESS_VERIFICATION_SERVICE_FAIL:
+            self.payment.change_fraud_status(
+                'reject', _(
+                    'CyberSource Address Verification Service failed.'),
+                commit=False)
+            self._change_status_to_confirmed()
+        else:
+            error = self._get_error_message(reason_code)
+            self.payment.change_status('error', message=error)
+            raise PaymentError(error)
+
     def charge(self, data):
         if self._capture:
             params = self._prepare_sale(data)
@@ -87,48 +129,7 @@ class CyberSourceProvider(BasicProvider):
         response = self._make_request(params)
         self.payment.attrs.capture = self._capture
         self.payment.transaction_id = response.requestID
-        if response.reasonCode == ACCEPTED:
-            self.payment.change_fraud_status('accept', commit=False)
-            self._change_status_to_confirmed()
-
-        elif response.reasonCode == FRAUD_MANAGER_REVIEW:
-            self.payment.change_fraud_status(
-                'review', _(
-                    'The order is marked for review by Decision Manager'),
-                commit=False)
-            self._change_status_to_confirmed()
-
-        elif response.reasonCode == FRAUD_MANAGER_REJECT:
-            self.payment.change_fraud_status(
-                'reject', _('The order has been rejected by Decision Manager'),
-                commit=False)
-            self._change_status_to_confirmed()
-
-        elif response.reasonCode == FRAUD_SCORE_EXCEEDS_THRESHOLD:
-            self.payment.change_fraud_status(
-                'reject', _('Fraud score exceeds threshold.'), commit=False)
-            self._change_status_to_confirmed()
-
-        elif response.reasonCode == SMART_AUTHORIZATION_FAIL:
-            self.payment.change_fraud_status(
-                'reject', _('CyberSource Smart Authorization failed.'),
-                commit=False)
-            self._change_status_to_confirmed()
-
-        elif response.reasonCode == CARD_VERIFICATION_NUMBER_FAIL:
-            self.payment.change_fraud_status(
-                'reject', _('Card verification number (CVN) did not match.'),
-                commit=False)
-            self._change_status_to_confirmed()
-
-        elif response.reasonCode == ADDRESS_VERIFICATION_SERVICE_FAIL:
-            self.payment.change_fraud_status(
-                'reject', _(
-                    'CyberSource Address Verification Service failed.'),
-                commit=False)
-            self._change_status_to_confirmed()
-
-        elif response.reasonCode == AUTHENTICATE_REQUIRED:
+        if response.reasonCode == AUTHENTICATE_REQUIRED:
             xid = response.payerAuthEnrollReply.xid
             self.payment.attrs.xid = xid
             self.payment.change_status(
@@ -148,33 +149,30 @@ class CyberSourceProvider(BasicProvider):
             form = BaseForm(data=payload, action=action, autosubmit=True)
             raise ExternalPostNeeded(form)
         else:
-            error = self._get_error_message(response.reasonCode)
-            self.payment.change_status('error', message=error)
-            raise PaymentError(error)
+            self._set_proper_payment_status_from_reason_code(
+                response.reasonCode)
 
     def capture(self, amount=None):
         if amount is None:
             amount = self.payment.total
         params = self._prepare_capture(amount=amount)
         response = self._make_request(params)
-        if response.decision == 'ACCEPT':
+        if response.reasonCode == ACCEPTED:
             self.payment.transaction_id = response.requestID
-        else:
-            if response.reasonCode == 238:
-                # already settled
+        elif response.reasonCode == TRANSACTION_SETTLED:
                 self.payment.change_status('confirmed')
-            else:
-                self.payment.save()
-                error = self._get_error_message(response.reasonCode)
-                raise PaymentError(error)
+        else:
+            self.payment.save()
+            error = self._get_error_message(response.reasonCode)
+            raise PaymentError(error)
         return amount
 
     def release(self):
         params = self._prepare_release()
         response = self._make_request(params)
-        if response.decision == 'ACCEPT':
+        if response.reasonCode == ACCEPTED:
             self.payment.transaction_id = response.requestID
-        elif response.reasonCode != 237:
+        elif response.reasonCode != TRANSACTION_REVERSED:
             self.payment.save()
             error = self._get_error_message(response.reasonCode)
             raise PaymentError(error)
@@ -185,7 +183,7 @@ class CyberSourceProvider(BasicProvider):
         params = self._prepare_refund(amount=amount)
         response = self._make_request(params)
         self.payment.save()
-        if response.decision != 'ACCEPT':
+        if response.reasonCode != ACCEPTED:
             error = self._get_error_message(response.reasonCode)
             raise PaymentError(error)
         return amount
@@ -427,11 +425,10 @@ class CyberSourceProvider(BasicProvider):
         params = self._prepare_payer_auth_validation_check(
             cc_data, request.POST.get('PaRes'))
         response = self._make_request(params)
-        if response.decision == 'ACCEPT':
-            self.payment.transaction_id = response.requestID
-            self.payment.change_status('preauth')
+        self.payment.transaction_id = response.requestID
+        self._set_proper_payment_status_from_reason_code(
+            response.reasonCode)
+        if self.payment.status in ['confirmed', 'preauth']:
             return redirect(self.payment.get_success_url())
         else:
-            error = self._get_error_message(response.reasonCode)
-            self.payment.change_status('error', message=error)
             return redirect(self.payment.get_failure_url())
