@@ -27,3 +27,12 @@ class DummyProvider(BasicProvider):
         if self.payment.status == 'confirmed':
             return redirect(self.payment.get_success_url())
         return redirect(self.payment.get_failure_url())
+
+    def capture(self, amount=None):
+        return amount
+
+    def release(self):
+        return None
+
+    def refund(self, amount=None):
+        return amount
