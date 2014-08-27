@@ -17,7 +17,7 @@ Some gateways offer a two-step payment method known as Authorization & Capture, 
 
     >>> from payments import get_payment_model
     >>> Payment = get_payment_model()
-    >>> payment = Payment.objects.get(id=payment_id)
+    >>> payment = Payment.objects.get()
     >>> payment.capture()
 
 
@@ -25,7 +25,7 @@ Some gateways offer a two-step payment method known as Authorization & Capture, 
 
     >>> from payments import get_payment_model
     >>> Payment = get_payment_model()
-    >>> payment = Payment.objects.get(id=payment_id)
+    >>> payment = Payment.objects.get()
     >>> payment.release()
 
 
@@ -33,5 +33,5 @@ Some gateways offer a two-step payment method known as Authorization & Capture, 
 
     >>> from payments import get_payment_model
     >>> Payment = get_payment_model()
-    >>> payment = Payment.objects.get(id=payment_id)
+    >>> payment = Payment.objects.get()
     >>> payment.refund()
