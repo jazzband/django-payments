@@ -28,10 +28,3 @@ Some gateways offer a two-step payment method known as Authorization & Capture, 
     >>> payment = Payment.objects.get()
     >>> payment.release()
 
-
-#. You can refund a captured payment by calling the ``refund()`` method on your :class:`Payment` instance. For partial refund, provide the ``amount`` parameter::
-
-    >>> from payments import get_payment_model
-    >>> Payment = get_payment_model()
-    >>> payment = Payment.objects.get()
-    >>> payment.refund()

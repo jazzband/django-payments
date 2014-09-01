@@ -9,5 +9,6 @@ Contents:
 
    install.rst
    usage.rst
+   refund.rst
    preauth.rst
    modules.rst
