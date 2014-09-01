@@ -169,7 +169,7 @@ class BasePayment(models.Model):
         provider = factory(self)
         amount = provider.refund(amount)
         self.captured_amount -= amount
-        if self.captured_amount == 0:
+        if self.captured_amount == 0 and self.status != 'refunded':
             self.change_status('refunded')
         self.save()
 
