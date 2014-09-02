@@ -1,35 +1,44 @@
 .. _capture-payments:
 
-Capture payments later
-======================
+Authorization and capture
+=========================
 
-Some gateways offer a two-step payment method known as Authorization & Capture, which allows you to collect the payment at a later time. To use this payment type, do the following:
+Some gateways offer a two-step payment method known as Authorization & Capture, which allows you to collect the payment manually after the buyer has authorized it. To enable this payment type, you have to set the ``capture`` parameter to ``False`` in the configuration of payment backend::
 
-1. Set ``capture`` parameter to ``False`` in the configuration of your payment backend, for example::
-
-      # settings.py
-      PAYMENT_VARIANTS = {
-          'default': ('payments.dummy.DummyProvider', {
-              'capture': False})}
+    # settings.py
+    PAYMENT_VARIANTS = {
+        'default': ('payments.dummy.DummyProvider', {
+            'capture': False})}
 
 
-2. To capture the payment, call the ``capture()`` method on the :class:`Payment` instance::
+Capturing the payment
+---------------------
+To capture the payment from the buyer, call the ``capture()`` method on the :class:`Payment` instance::
 
-    >>> from payments import get_payment_model
-    >>> Payment = get_payment_model()
-    >>> payment = Payment.objects.get()
-    >>> payment.capture()
+  >>> from payments import get_payment_model
+  >>> Payment = get_payment_model()
+  >>> payment = Payment.objects.get()
+  >>> payment.capture()
 
-  By default, the total amount will be captured, but you can capture a lower amount, by providing the ``amount`` parameter::
+By default, the total amount will be captured. You can capture a lower amount, by providing the ``amount`` parameter::
 
     >>> from decimal import Decimal
     >>> payment.capture(amount=Decimal(10.0))
 
+.. note::
 
-3. To release the payment, call the ``release()`` method on your :class:`Payment` instance::
+  Only payments with the ``preauth`` status can be captured.
 
-    >>> from payments import get_payment_model
-    >>> Payment = get_payment_model()
-    >>> payment = Payment.objects.get()
-    >>> payment.release()
 
+Releasing the payment
+---------------------
+To release the payment to the buyer, call the ``release()`` method on your :class:`Payment` instance::
+
+  >>> from payments import get_payment_model
+  >>> Payment = get_payment_model()
+  >>> payment = Payment.objects.get()
+  >>> payment.release()
+
+.. note::
+
+  Only payments with the ``preauth`` status can be released.
