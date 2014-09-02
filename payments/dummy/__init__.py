@@ -29,10 +29,11 @@ class DummyProvider(BasicProvider):
         return redirect(self.payment.get_failure_url())
 
     def capture(self, amount=None):
+        self.payment.change_status('confirmed')
         return amount
 
     def release(self):
         return None
 
     def refund(self, amount=None):
-        return amount
+        return amount or 0
