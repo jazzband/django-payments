@@ -56,6 +56,30 @@ Example::
            'public_key': '1234567890abcdef',
            'private_key': 'abcdef123456'})}
 
+
+Cybersource
+-----------
+
+.. class:: payments.cybersource.CyberSourceProvider(merchant_id, password[sandbox=True, capture=True])
+
+   This backend implements payments using `Cybersource <http://www.cybersource.com/www/>`_.
+
+   :param merchant_id: Your Merchant ID
+   :param password: Generated transaction security key for the SOAP toolkit
+   :param sandbox: Whether to use a sandbox environment for testing
+   :param capture: Whether to capture the payment automatically.  See :ref:`capture-payments` for more details.
+
+Example::
+
+    # use sandbox
+    PAYMENT_VARIANTS = {
+      'cybersource': ('payments.cybersource.CyberSourceProvider', {
+        'merchant_id': 'example',
+        'password': '1234567890abcdef',
+        'capture': False,
+        'sandbox': True})}
+
+
 Dotpay
 ------
 
@@ -121,13 +145,15 @@ E.g: ``https://example.com/payments/process/wallet``
 PayPal
 ------
 
-.. class:: payments.paypal.PaypalProvider(client_id, secret[, endpoint='https://api.paypal.com'])
+.. class:: payments.paypal.PaypalProvider(client_id, secret[, endpoint='https://api.paypal.com', capture=True])
 
    This backend implements payments using `PayPal.com <https://www.paypal.com/>`_.
 
    :param client_id: Client ID assigned by PayPal or your email address
    :param secret: Secret assigned by PayPal
    :param endpoint: The API endpoint to use. To test using sandbox, use ``'https://api.sandbox.paypal.com'`` instead
+   :param capture: Whether to capture the payment automatically. See :ref:`capture-payments` for more details.
+
 
 Example::
 
@@ -136,7 +162,8 @@ Example::
        'paypal': ('payments.paypal.PaypalProvider', {
            'client_id': 'user@example.com',
            'secret': 'iseedeadpeople',
-           'endpoint': 'https://api.sandbox.paypal.com'})}
+           'endpoint': 'https://api.sandbox.paypal.com',
+           'capture': False})}
 
 .. class:: payments.paypal.PaypalCardProvider(client_id, secret[, endpoint='https://api.paypal.com'])
 
