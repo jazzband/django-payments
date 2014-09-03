@@ -21,6 +21,12 @@ DEFAULT_PAYMENT_STATUS_CHOICES = (
 PAYMENT_STATUS_CHOICES = getattr(settings, 'PAYMENT_STATUS_CHOICES',
                                  DEFAULT_PAYMENT_STATUS_CHOICES)
 
+FRAUD_CHOICES = (
+    ('unknown', _('Unknown')),
+    ('accept', _('Passed')),
+    ('reject', _('Rejected')),
+    ('review', _('Review')))
+
 
 class PaymentAttributeProxy(object):
 
@@ -47,11 +53,6 @@ class BasePayment(models.Model):
     '''
     Represents a single transaction. Each instance has one or more PaymentItem.
     '''
-    FRAUD_CHOICES = (
-        ('unknown', _('Unknown')),
-        ('accept', _('Passed')),
-        ('reject', _('Rejected')),
-        ('review', _('Review')))
     variant = models.CharField(max_length=255)
     #: Transaction status
     status = models.CharField(
@@ -104,7 +105,7 @@ class BasePayment(models.Model):
         status_changed.send(sender=type(self), instance=self)
 
     def change_fraud_status(self, status, message='', commit=True):
-        available_statuses = [choice[0] for choice in self.FRAUD_CHOICES]
+        available_statuses = [choice[0] for choice in FRAUD_CHOICES]
         if status not in available_statuses:
             raise ValueError(
                 'Status should be one of: %s' % ', '.join(available_statuses))

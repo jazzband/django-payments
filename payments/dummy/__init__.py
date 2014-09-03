@@ -16,6 +16,8 @@ class DummyProvider(BasicProvider):
         if form.is_valid():
             new_status = form.cleaned_data['status']
             self.payment.change_status(new_status)
+            new_fraud_status = form.cleaned_data['fraud_status']
+            self.payment.change_fraud_status(new_fraud_status)
             if new_status == 'confirmed':
                 raise RedirectNeeded(self.payment.get_success_url())
             raise RedirectNeeded(self.payment.get_failure_url())
