@@ -28,7 +28,7 @@ class PaymentForm(BasePaymentForm):
             try:
                 self.charge = stripe.Charge.create(
                     capture=False,
-                    amount=self.payment.total * 100,
+                    amount= int(self.payment.total * 100),
                     currency=self.payment.currency,
                     card=data['stripe_token'],
                     description='%s %s' % (self.payment.billing_last_name,
