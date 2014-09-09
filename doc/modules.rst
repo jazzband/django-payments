@@ -60,7 +60,7 @@ Example::
 Cybersource
 -----------
 
-.. class:: payments.cybersource.CyberSourceProvider(merchant_id, password[sandbox=True, capture=True])
+.. class:: payments.cybersource.CyberSourceProvider(merchant_id, password[, sandbox=True, capture=True])
 
    This backend implements payments using `Cybersource <http://www.cybersource.com/www/>`_.
 
