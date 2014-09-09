@@ -80,6 +80,11 @@ Example::
         'sandbox': True})}
 
 
+Cybersource allows you to pass Merchant-Defined Data, which is additional information about the payment or the order, such as an order number, additional customer information, or a special comment or request from the customer. This can be accomplished by passing your data to the :class:`Payment` instance::
+
+    >>> payment.attrs.merchant_defined_data = {'01': 'foo', '02': 'bar'}
+
+
 Dotpay
 ------
 
