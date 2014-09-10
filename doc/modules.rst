@@ -35,6 +35,7 @@ Example::
               'transaction_key': '1234567890abcdef',
               'endpoint': 'https://test.authorize.net/gateway/transact.dll'})}
 
+This backend does not support fraud detection.
 
 Braintree (Python 2 only)
 -------------------------
@@ -55,6 +56,9 @@ Example::
               'merchant_id': '112233445566',
               'public_key': '1234567890abcdef',
               'private_key': 'abcdef123456'})}
+
+
+This backend does not support fraud detection.
 
 
 Cybersource
@@ -81,6 +85,7 @@ Example::
               'capture': False,
               'sandbox': True})}
 
+This backend supports fraud detection.
 
 Merchant-Defined Data
 """""""""""""""""""""
@@ -114,6 +119,8 @@ Example::
               'seller_id': '123',
               'pin': '0000',
               'lock': True})}
+
+This backend does not support fraud detection.
 
 
 Google Wallet
@@ -150,6 +157,9 @@ This backend requires js files that should be added to the template using ``{{ f
 To specify the `postback URL` at the Merchant Settings page use direct url to `process payment view` in conjunction with your `variant name`:
 
 E.g: ``https://example.com/payments/process/wallet``
+
+
+This backend does not support fraud detection.
 
 
 PayPal
@@ -189,6 +199,9 @@ Example::
               'secret': 'iseedeadpeople'})}
 
 
+This backend does not support fraud detection.
+
+
 Sage Pay
 --------
 
@@ -210,6 +223,9 @@ Example::
               'vendor': 'example',
               'encryption_key': '1234567890abcdef',
               'endpoint': 'https://test.sagepay.com/Simulator/VSPFormGateway.asp'})}
+
+
+This backend does not support fraud detection.
 
 
 Stripe
@@ -240,3 +256,6 @@ This backend requires js files that should be added to the template using ``{{ f
           <p><input type="submit" value="Proceed" /></p>
       </form>
       {{ form.media }}
+
+
+This backend does not support fraud detection.
