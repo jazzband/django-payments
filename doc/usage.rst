@@ -51,3 +51,14 @@ A payment may have one of several statuses, that indicates its current state. Th
 
 ``error``
       An error occurred during the communication with the payment gateway. Inspect the contents of the ``payment.message`` and ``payment.extra_data`` fields to see the gateway response.
+
+
+Payment amounts
+---------------
+The :class:`Payment` instance provides two fields that let you check the total charged amount and the amount actually captured::
+
+      >>> payment.total
+      Decimal('181.38')
+
+      >>> payment.captured_amount
+      Decimal('0')
