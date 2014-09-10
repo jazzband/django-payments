@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import time
 from decimal import Decimal
 from unittest import TestCase
 
@@ -18,8 +19,8 @@ JWT_DATA = {
     'iss': 'Google',
     'aud': SELLER_ID,
     'typ': 'google/payments/inapp/item/v1/postback/buy',
-    'iat': 1309988959,
-    'exp': 1409988959,
+    'iat': int(time.time()),
+    'exp': int(time.time() + 3600),
     'request': {
         'name': 'Test Order #12',
         'price': '22.50',
