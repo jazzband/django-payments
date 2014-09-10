@@ -1,3 +1,5 @@
+.. _refunding:
+
 Refunding a payment
 ===================
 

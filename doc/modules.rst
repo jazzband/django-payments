@@ -35,6 +35,7 @@ Example::
               'transaction_key': '1234567890abcdef',
               'endpoint': 'https://test.authorize.net/gateway/transact.dll'})}
 
+This backend does not support fraud detection.
 
 Braintree (Python 2 only)
 -------------------------
@@ -57,15 +58,20 @@ Example::
               'private_key': 'abcdef123456'})}
 
 
+This backend does not support fraud detection.
+
+
 Cybersource
 -----------
 
-.. class:: payments.cybersource.CyberSourceProvider(merchant_id, password[, sandbox=True, capture=True])
+.. class:: payments.cybersource.CyberSourceProvider(merchant_id, password[, org_id=None, fingerprint_url='https://h.online-metrix.net/fp/', sandbox=True, capture=True])
 
    This backend implements payments using `Cybersource <http://www.cybersource.com/www/>`_.
 
    :param merchant_id: Your Merchant ID
    :param password: Generated transaction security key for the SOAP toolkit
+   :param org_id: Provide this parameter to enable Cybersource Device Fingerprinting
+   :param fingerprint_url: Address of the fingerprint server
    :param sandbox: Whether to use a sandbox environment for testing
    :param capture: Whether to capture the payment automatically.  See :ref:`capture-payments` for more details.
 
@@ -79,6 +85,10 @@ Example::
               'capture': False,
               'sandbox': True})}
 
+This backend supports fraud detection.
+
+Merchant-Defined Data
+"""""""""""""""""""""
 
 Cybersource allows you to pass Merchant-Defined Data, which is additional information about the payment or the order, such as an order number, additional customer information, or a special comment or request from the customer. This can be accomplished by passing your data to the :class:`Payment` instance::
 
@@ -109,6 +119,8 @@ Example::
               'seller_id': '123',
               'pin': '0000',
               'lock': True})}
+
+This backend does not support fraud detection.
 
 
 Google Wallet
@@ -145,6 +157,9 @@ This backend requires js files that should be added to the template using ``{{ f
 To specify the `postback URL` at the Merchant Settings page use direct url to `process payment view` in conjunction with your `variant name`:
 
 E.g: ``https://example.com/payments/process/wallet``
+
+
+This backend does not support fraud detection.
 
 
 PayPal
@@ -184,6 +199,9 @@ Example::
               'secret': 'iseedeadpeople'})}
 
 
+This backend does not support fraud detection.
+
+
 Sage Pay
 --------
 
@@ -205,6 +223,9 @@ Example::
               'vendor': 'example',
               'encryption_key': '1234567890abcdef',
               'endpoint': 'https://test.sagepay.com/Simulator/VSPFormGateway.asp'})}
+
+
+This backend does not support fraud detection.
 
 
 Stripe
@@ -235,3 +256,6 @@ This backend requires js files that should be added to the template using ``{{ f
           <p><input type="submit" value="Proceed" /></p>
       </form>
       {{ form.media }}
+
+
+This backend does not support fraud detection.
