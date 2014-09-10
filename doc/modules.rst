@@ -60,12 +60,14 @@ Example::
 Cybersource
 -----------
 
-.. class:: payments.cybersource.CyberSourceProvider(merchant_id, password[, sandbox=True, capture=True])
+.. class:: payments.cybersource.CyberSourceProvider(merchant_id, password[, org_id=None, fingerprint_url='https://h.online-metrix.net/fp/', sandbox=True, capture=True])
 
    This backend implements payments using `Cybersource <http://www.cybersource.com/www/>`_.
 
    :param merchant_id: Your Merchant ID
    :param password: Generated transaction security key for the SOAP toolkit
+   :param org_id: Provide this parameter to enable Cybersource Device Fingerprinting
+   :param fingerprint_url: Address of the fingerprint server
    :param sandbox: Whether to use a sandbox environment for testing
    :param capture: Whether to capture the payment automatically.  See :ref:`capture-payments` for more details.
 
