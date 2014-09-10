@@ -90,24 +90,6 @@ Cybersource allows you to pass Merchant-Defined Data, which is additional inform
       >>> payment.attrs.merchant_defined_data = {'01': 'foo', '02': 'bar'}
 
 
-Fraud statuses
-""""""""""""""
-
-Cybersource provides services used for fraud detection. When using this gateway, you can check the fraud status of your payment by accessing ``payment.fraud_status`` and ``payment.fraud_message`` fields. The possible fraud statuses are:
-
-``unknown``
-      The fraud status is unknown. This is the default status for other gateways, that do not involve fraud detection.
-
-``accept``
-      Fraud was not detected.
-
-``reject``
-      Fraud service detected some problems with the payment. Inspect the details by accessing the ``payment.fraud_message`` field.
-
-``review``
-      The payment was marked for review.
-
-
 Dotpay
 ------
 

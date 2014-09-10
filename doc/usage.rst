@@ -27,6 +27,17 @@ Making a payment
 #. Redirect the user to your payment handling view.
 
 
+Payment amounts
+---------------
+The :class:`Payment` instance provides two fields that let you check the total charged amount and the amount actually captured::
+
+      >>> payment.total
+      Decimal('181.38')
+
+      >>> payment.captured_amount
+      Decimal('0')
+
+
 Payment statuses
 ----------------
 A payment may have one of several statuses, that indicates its current state. The status is stored in ``status`` field of your :class:`Payment` instance. Possible statuses are:
@@ -53,12 +64,20 @@ A payment may have one of several statuses, that indicates its current state. Th
       An error occurred during the communication with the payment gateway. Inspect the contents of the ``payment.message`` and ``payment.extra_data`` fields to see the gateway response.
 
 
-Payment amounts
----------------
-The :class:`Payment` instance provides two fields that let you check the total charged amount and the amount actually captured::
 
-      >>> payment.total
-      Decimal('181.38')
+Fraud statuses
+--------------
 
-      >>> payment.captured_amount
-      Decimal('0')
+Some gateways provide services used for fraud detection. You can check the fraud status of your payment by accessing ``payment.fraud_status`` and ``payment.fraud_message`` fields. The possible fraud statuses are:
+
+``unknown``
+      The fraud status is unknown. This is the default status for gateways, that do not involve fraud detection.
+
+``accept``
+      Fraud was not detected.
+
+``reject``
+      Fraud service detected some problems with the payment. Inspect the details by accessing the ``payment.fraud_message`` field.
+
+``review``
+      The payment was marked for review.
