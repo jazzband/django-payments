@@ -1,13 +1,18 @@
 from __future__ import unicode_literals
 
 import logging
+import requests
 from datetime import timedelta
 from functools import wraps
 import json
 from decimal import Decimal, ROUND_HALF_UP
 from requests.exceptions import HTTPError
 
-import requests
+try:
+    from itertools import ifilter as filter
+except ImportError:
+    pass
+
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -149,6 +154,13 @@ class PaypalProvider(BasicProvider):
             last_auth_response.update(data)
             self.set_response_data(last_auth_response, is_auth=True)
             return '%s %s' % (data['token_type'], data['access_token'])
+
+    def get_link(self, name, data):
+        try:
+            links = filter(lambda url: url['rel'] == name, data['links'])
+        except KeyError:
+            return None
+        return next(links)['href']
 
     def get_transactions_items(self):
         for purchased_item in self.payment.get_purchased_items():

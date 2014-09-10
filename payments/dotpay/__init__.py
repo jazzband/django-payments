@@ -37,6 +37,9 @@ class DotpayProvider(BasicProvider):
                 'Dotpay does not support pre-authorization.')
 
     def get_hidden_fields(self):
+        if not self.payment.description:
+            raise ValueError('Payment description is required')
+
         data = {
             'id': self._seller_id,
             'amount': str(self.payment.total),
