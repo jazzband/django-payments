@@ -25,7 +25,7 @@ class PaymentForm(forms.Form):
     method = 'post'
 
     def __init__(self, data=None, action=None, method='post', provider=None,
-                 payment=None, hidden_inputs=True):
+                 payment=None, hidden_inputs=True, autosubmit=False):
         if hidden_inputs and data is not None:
             super(PaymentForm, self).__init__(auto_id=False)
             for key, val in data.items():
@@ -34,6 +34,7 @@ class PaymentForm(forms.Form):
         else:
             super(PaymentForm, self).__init__(data=data)
         self.action = action
+        self.autosubmit = autosubmit
         self.method = method
         self.provider = provider
         self.payment = payment

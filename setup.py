@@ -8,6 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')
 PACKAGES = [
     'payments',
     'payments.authorizenet',
+    'payments.cybersource',
     'payments.dummy',
     'payments.dotpay',
     'payments.paypal',
@@ -20,7 +21,8 @@ REQUIREMENTS = [
     'pycrypto>=2.6',
     'PyJWT',
     'requests>=1.2.0',
-    'stripe>=1.9.8']
+    'stripe>=1.9.8',
+    'suds-jurko>=0.6']
 
 if sys.version_info < (3,):
     PACKAGES += ['payments.braintree']
@@ -31,19 +33,20 @@ setup(
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
-    version='0.4.3',
+    version='0.5.0',
     url='http://github.com/mirumee/django-payments',
     packages=PACKAGES,
+    include_package_data=True,
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Framework :: Django',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
 from .. import BasicProvider, RedirectNeeded
@@ -12,6 +13,9 @@ class StripeProvider(BasicProvider):
         self.secret_key = kwargs.pop('secret_key')
         self.public_key = kwargs.pop('public_key')
         super(StripeProvider, self).__init__(*args, **kwargs)
+        if not self._capture:
+            raise ImproperlyConfigured(
+                'Stripe does not support pre-authorization.')
 
     def get_form(self, data=None):
         kwargs = {

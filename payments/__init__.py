@@ -1,27 +1,50 @@
 from __future__ import unicode_literals
-import re
 from collections import namedtuple
+import re
 try:
-    from urllib.parse import urljoin
+    from urllib.parse import urljoin, urlencode
 except ImportError:
+    from urllib import urlencode
     from urlparse import urljoin
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import get_model
 
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {})}
 
-if not hasattr(settings, 'PAYMENT_BASE_URL'):
-    raise ImproperlyConfigured('The PAYMENT_BASE_URL setting '
-                               'must not be empty.')
+PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
+PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', False)
+
+if not PAYMENT_HOST:
+    if not 'django.contrib.sites' in settings.INSTALLED_APPS:
+        raise ImproperlyConfigured('The PAYMENT_HOST setting without '
+                                   'the sites app must not be empty.')
 
 PurchasedItem = namedtuple('PurchasedItem',
                            'name, quantity, price, currency, sku')
 
 
+def get_base_url():
+    protocol = 'https' if PAYMENT_USES_SSL else 'http'
+    if not PAYMENT_HOST:
+        current_site = Site.objects.get_current()
+        domain = current_site.domain
+        return '%s://%s' % (protocol, domain)
+    return '%s://%s' % (protocol, PAYMENT_HOST)
+
+
 class RedirectNeeded(Exception):
+    pass
+
+
+class PaymentError(Exception):
+    pass
+
+
+class ExternalPostNeeded(Exception):
     pass
 
 
@@ -36,7 +59,8 @@ class BasicProvider(object):
         return self.get_return_url()
     _action = property(_action)
 
-    def __init__(self, payment):
+    def __init__(self, payment, capture=True):
+        self._capture = capture
         self.payment = payment
 
     def get_hidden_fields(self):
@@ -69,9 +93,22 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_return_url(self):
+    def get_return_url(self, extra_data=None):
         payment_link = self.payment.get_process_url()
-        return urljoin(settings.PAYMENT_BASE_URL, payment_link)
+        url = urljoin(get_base_url(), payment_link)
+        if extra_data:
+            qs = urlencode(extra_data)
+            return url + '?' + qs
+        return url
+
+    def capture(self, amount=None):
+        raise NotImplementedError()
+
+    def release(self):
+        raise NotImplementedError()
+
+    def refund(self):
+        raise NotImplementedError()
 
 
 def provider_factory(variant, payment=None):
@@ -88,10 +125,10 @@ def provider_factory(variant, payment=None):
         raise ValueError('Payment variant uses an invalid payment module: %s' %
                          (variant,))
     module_path = str('.'.join(path[:-1]))
-    klass_name = str(path[-1])
-    module = __import__(module_path, globals(), locals(), [klass_name])
-    klass = getattr(module, klass_name)
-    return klass(payment, **config)
+    class_name = str(path[-1])
+    module = __import__(module_path, globals(), locals(), [class_name])
+    class_ = getattr(module, class_name)
+    return class_(payment, **config)
 
 
 def factory(payment):
@@ -120,12 +157,13 @@ def get_payment_model():
 
 
 CARD_TYPES = [
-    ('^4[0-9]{12}(?:[0-9]{3})?$', 'visa', 'VISA'),
-    ('^5[1-5][0-9]{14}$', 'mastercard', 'MasterCard'),
-    ('^6(?:011|5[0-9]{2})[0-9]{12}$', 'discover', 'Discover'),
-    ('^3[47][0-9]{13}$', 'amex', 'American Express'),
-    ('^(?:(?:2131|1800|35\d{3})\d{11})$', 'jcb', 'JCB'),
-    ('^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'diners', 'Diners Club')]
+    (r'^4[0-9]{12}(?:[0-9]{3})?$', 'visa', 'VISA'),
+    (r'^5[1-5][0-9]{14}$', 'mastercard', 'MasterCard'),
+    (r'^6(?:011|5[0-9]{2})[0-9]{12}$', 'discover', 'Discover'),
+    (r'^3[47][0-9]{13}$', 'amex', 'American Express'),
+    (r'^(?:(?:2131|1800|35\d{3})\d{11})$', 'jcb', 'JCB'),
+    (r'^(?:3(?:0[0-5]|[68][0-9])[0-9]{11})$', 'diners', 'Diners Club'),
+    (r'^(?:5[0678]\d\d|6304|6390|67\d\d)\d{8,15}$', 'maestro', 'Maestro')]
 
 
 def get_credit_card_issuer(number):

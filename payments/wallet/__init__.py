@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import time
 
+from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponseForbidden, HttpResponse
 import jwt
 
@@ -17,6 +18,9 @@ class GoogleWalletProvider(BasicProvider):
             'library',
             'https://sandbox.google.com/checkout/inapp/lib/buy.js')
         super(GoogleWalletProvider, self).__init__(*args, **kwargs)
+        if not self._capture:
+            raise ImproperlyConfigured(
+                'Google wallet does not support pre-authorization.')
 
     def get_jwt_data(self):
 

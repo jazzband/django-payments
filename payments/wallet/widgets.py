@@ -14,7 +14,7 @@ class WalletWidget(HiddenInput):
             'data-failure-url': provider.payment.get_failure_url(),
         }
         super(WalletWidget, self).__init__(*args, **kwargs)
-        self.js = [provider.library, 'payments/js/wallet.js']
+        self.js = [provider.library, 'js/payments/wallet.js']
 
     @property
     def media(self):

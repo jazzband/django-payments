@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from requests.exceptions import HTTPError
+
 from ..forms import CreditCardPaymentFormWithName
 from .. import get_credit_card_issuer
 
@@ -17,13 +19,19 @@ class PaymentForm(CreditCardPaymentFormWithName):
                 card_type, _card_issuer = get_credit_card_issuer(number)
                 request_data = {'type': card_type}
                 request_data.update(cleaned_data)
-                response = self.provider.get_payment_response(cleaned_data)
-                data = response.json()
-                if response.ok:
-                    self.payment.transaction_id = data['id']
-                    self.payment.change_status('confirmed')
-                else:
-                    errors = [error['issue'] for error in data['details']]
+                try:
+                    data = self.provider.create_payment(cleaned_data)
+                except HTTPError as e:
+                    response = e.response
+                    if response.status_code == 400:
+                        error_data = e.response.json()
+                        errors = [
+                            error['issue'] for error in error_data['details']]
+                    else:
+                        errors = ['Internal PayPal error']
                     self._errors['__all__'] = self.error_class(errors)
                     self.payment.change_status('error')
+                else:
+                    self.payment.transaction_id = data['id']
+                    self.payment.change_status('confirmed')
         return cleaned_data
