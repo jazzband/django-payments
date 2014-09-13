@@ -13,7 +13,7 @@ class StripeWidget(HiddenInput):
             'data_key': provider.public_key,
             'data_description': payment.description or _('Total payment'),
             # Stripe accepts cents
-            'data_amount': payment.total * 100,
+            'data_amount': int(payment.total * 100),
             'data_currency': payment.currency
         }
         kwargs['attrs'].update(attrs)
