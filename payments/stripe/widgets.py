@@ -10,15 +10,15 @@ class StripeWidget(HiddenInput):
         attrs = kwargs.get('attrs', {})
         kwargs['attrs'] = {
             'id': 'stripe-id',
-            'data-key': provider.public_key,
-            'data-description': payment.description or _('Total payment'),
+            'data_key': provider.public_key,
+            'data_description': payment.description or _('Total payment'),
             # Stripe accepts cents
-            'data-amount': payment.total * 100,
-            'data-currency': payment.currency
+            'data_amount': payment.total * 100,
+            'data_currency': payment.currency
         }
         kwargs['attrs'].update(attrs)
         super(StripeWidget, self).__init__(*args, **kwargs)
 
     class Media:
         js = ['https://checkout.stripe.com/v2/checkout.js',
-              'js/payments/stripe.js']
+              'https://js.stripe.com/v2/']
