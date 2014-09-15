@@ -15,8 +15,8 @@ class PaymentForm(BasePaymentForm):
     def __init__(self, *args, **kwargs):
         super(PaymentForm, self).__init__(*args, **kwargs)
         widget = StripeWidget(provider=self.provider, payment=self.payment)
-        self.fields['stripe_token'] = forms.CharField(widget=widget)
-        if self.is_bound and not self.data.get('stripe_token'):
+        self.fields['stripeToken'] = forms.CharField(widget=widget)
+        if self.is_bound and not self.data.get('stripeToken'):
             self.payment.change_status('rejected')
             raise RedirectNeeded(self.payment.get_failure_url())
 
@@ -30,7 +30,7 @@ class PaymentForm(BasePaymentForm):
                     capture=False,
                     amount= int(self.payment.total * 100),
                     currency=self.payment.currency,
-                    card=data['stripe_token'],
+                    card=data['stripeToken'],
                     description='%s %s' % (self.payment.billing_last_name,
                                            self.payment.billing_first_name)
                 )
