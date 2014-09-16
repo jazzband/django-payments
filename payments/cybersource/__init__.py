@@ -314,7 +314,7 @@ class CyberSourceProvider(BasicProvider):
         params = {
             'merchantID': self.merchant_id,
             'merchantReferenceCode': self.payment.id,
-            'ccCaptureService': service}
+            'ccAuthReversalService': service}
         params['purchaseTotals'] = self._prepare_totals()
         return params
 
