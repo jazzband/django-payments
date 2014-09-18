@@ -413,6 +413,8 @@ class CyberSourceProvider(BasicProvider):
         xid = request.POST.get('MD')
         if xid != self.payment.attrs.xid:
             return redirect(self.payment.get_failure_url())
+        if self.payment.status in ['confirmed', 'preauth']:
+            return redirect(self.payment.get_success_url())
         cc_data = request.GET.get('token')
         try:
             cc_data = signing.loads(cc_data)
