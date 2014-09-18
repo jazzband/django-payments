@@ -1,2 +1,2 @@
 include LICENSE README.md
-graft payments
+recursive-include payments *.html *.js *.wsdl *.xsd
