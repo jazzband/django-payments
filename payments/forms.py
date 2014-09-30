@@ -9,7 +9,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 
 from .fields import (CreditCardNumberField, CreditCardExpiryField,
-                     CreditCardVerificationField)
+                     CreditCardVerificationField, CreditCardNameField)
 
 
 class PaymentForm(forms.Form):
@@ -59,7 +59,7 @@ class CreditCardPaymentForm(PaymentForm):
 
 class CreditCardPaymentFormWithName(CreditCardPaymentForm):
 
-    name = forms.CharField(label=_('Name on Credit Card'), max_length=128)
+    name = CreditCardNameField(label=_('Name on Credit Card'), max_length=128)
 
     def __init__(self, *args, **kwargs):
         super(CreditCardPaymentFormWithName, self).__init__(*args, **kwargs)
