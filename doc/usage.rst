@@ -93,14 +93,30 @@ Below we show how to implement the above presented flow.
 
 Payment attributes
 ^^^^^^^^^^^^^^^^^^
-The :class:`Payment` instance provides fields that let you check the total charged amount and the amount actually captured::
+A :class:`Payment` instances provides several attributes, that can be useful in a typical application. These include attributes that were set when creating the payment object, such as payment variant or billing address. Other attributes are:
+
+Total payment amount::
 
       >>> payment.total
       Decimal('181.38')
 
+
+Captured amount::
+
       >>> payment.captured_amount
       Decimal('0')
 
+
+``JSON`` data containing the response from third party payment gateway (this may be useful for debugging purposes)::
+
+      >> payment.extra_data
+      u'{"payer_info": {"shipping_address": {"city": "San Jose", "line1": "1 Main St", "recipient_name": "SandboxTest Account", "state": "CA", "postal_code": "95131", "country_code": "US"}}'
+
+
+A message containing information about the current payment state, which is being set on payment status changes or on errors::
+
+      >> payment.message
+      '3-D Secure verification in progress'
 
 
 Payment statuses
