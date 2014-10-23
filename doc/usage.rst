@@ -1,57 +1,61 @@
 Making a payment
 ================
 
-The flow of making a payment may vary, depending on the kind and complexity of your application, but in general, it consists of a few typical steps:
+The flow of making a payment may vary, depending on the kind and complexity of a application. Using ``django-payments`` it would consist of the following steps:
 
-  * first of all, you may want to give your users a choice of payment method, as there is a number of payment gateways
-  * when the user chooses his method, you should display a form, that will handle user's input (such as a credit card number) or redirect him directly to the payment gateway, that will handle this
-  * based on the result of communication with payment gateway, you should inform the users about the success or failure of the payment
+  * User picks a payment method. Based on the choice, you create a payment object.
+  * The object provides you a payment form responsible for taking user's input or for submitting necessary information to a third party gateway. The experience depends on a particular payment backend.
+  * This can result in the payment completing immediately or the user leaving the current page and being redirected to either an external or local page where further interaction may happen (such as PayPal login or 3-D Secure credit card validation).
+  * Once the process is complete, the payment status changes and a signal is dispatched. The user is finally redirected to either the success or failure URL provided by the payment object.
 
-In this section we describe, how to implement a example payment flow using ``django-payments``. In addition, we explain some of the useful attributes of a :class:`Payment` instance and its statuses.  
+
+Below we show how to implement the above presented flow.
 
 
-Integrating ``django-payments``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Let's assume that we have an e-commerce application, where users can place some orders.
+#. Make sure you have set up ``django-payments`` properly, according to the guidelines showed in the :ref:`how-to-install` section. 
 
-#. Create a form, that will allow choosing the payment variant and render it in a view, that will redirect to the payment::
+#. Create a form that will allow choosing the payment variant and a view to render it. Ensure, that the choices defined in ``PAYMENT_CHOICES`` correspond to ``PAYMENT_VARIANTS`` defined in your ``settings.py`` (see :ref:`how-to-install`). If your application does not support multiple payment variants, this step may be omitted::
     
-    # forms.py
-    from django import forms
-
-    PAYMENT_CHOICES = [
-        ('default', 'Dummy provider'),
-    ]
-
-    class PaymentMethodsForm(forms.Form):
-        method = forms.ChoiceField(choices=PAYMENT_CHOICES)
+      # mypaymentapp/forms.py
+      from django import forms
 
 
-    # views.py
-    from django.shortcuts import redirect, render_to_response
-    from models import Order
+      PAYMENT_CHOICES = [
+          ('default', 'Dummy provider'),
+      ]
 
-    def order_details(request, pk):
-        order = Order.object.get(pk=pk)
-        form = PaymentMethodsForm(request.POST or None)
-        if form.is_valid():
-            payment_method = form.cleaned_data['method']
-            return redirect('app:payment',
-                            order_pk=order.pk,
-                            variant=payment_method)
-        else:
-            return render_to_response('order/details.html',
-                                      {'order': order, 'form': form})
+      class PaymentMethodsForm(forms.Form):
+          method = forms.ChoiceField(choices=PAYMENT_CHOICES)
 
 
-#. Create a view, that will handle creating a new :class:`Payment` instance::
+      # mypaymentapp/views.py
+      from django.shortcuts import redirect
+      from django.template.response import TemplateResponse
 
-      # views.py
+      from mypaymentapp.forms import PaymentMethodsForm
+
+
+      def payment_method(request):
+          form = PaymentMethodsForm(request.POST or None)
+          if form.is_valid():
+              payment_method = form.cleaned_data['method']
+              return redirect('payment-details', variant=payment_method)
+          else:
+              return TemplateResponse(request, 'payment_method.html',
+                                      {'form': form})
+
+
+#. Write a view in which a new :class:`Payment` instance will be created based on the chosen payment variant. It should be populated with the corresponding payment data, such as total amount, currency and buyer's address. The following view is also responsible for rendering a payment form provided by the :class:`Payment` instance. Note, that the form may throw a `RedirectNeeded` exception, which will provide a redirect URL you should use. When the payment process is completed, user will be automatically redirected to either success or failure URL::
+
+      # mypaymentapp/views.py
       from decimal import Decimal
-      from django.shortcuts import redirect, render_to_response
+
+      from django.shortcuts import redirect
+      from django.template.response import TemplateResponse
       from payments import get_payment_model, RedirectNeeded
 
-      def make_payment(request, order_pk, variant):
+
+      def payment_details(request, variant):
           Payment = get_payment_model()
           payment = Payment.objects.create(
               variant=variant,
@@ -68,29 +72,28 @@ Let's assume that we have an e-commerce application, where users can place some 
               billing_postcode='NW1 6XE',
               billing_country_code='UK',
               billing_country_area='Greater London')
-
           try:
               form = payment.get_form(data=request.POST or None)
           except RedirectNeeded as redirect_to:
               return redirect(str(redirect_to))
-          except Exception:
-              payment.change_status('error')
-              return redirect('order:details', pk=order.pk)
-
-          template = 'order/payment/%s.html' % variant
-          return render_to_response(request, template,
-                                    {'form': form, 'payment': payment})
+          return TemplateResponse(request, 'payment.html',
+                                  {'form': form, 'payment': payment})
 
 
+#. Prepare a template that displays the form using its *action* and *method*:
 
-Useful payment attributes
-^^^^^^^^^^^^^^^^^^^^^^^^^
-Below we present some of the useful attributes that are provided by the :class:`Payment` instances.
+   .. code-block:: html
+
+      <!-- templates/payment.html -->
+      <form action="{{ form.action }}" method="{{ form.method }}">
+          {{ form.as_p }}
+          <p><input type="submit" value="Proceed" /></p>
+      </form>
 
 
-Amounts
--------
-The :class:`Payment` instance provides two fields that let you check the total charged amount and the amount actually captured::
+Payment attributes
+^^^^^^^^^^^^^^^^^^
+The :class:`Payment` instance provides fields that let you check the total charged amount and the amount actually captured::
 
       >>> payment.total
       Decimal('181.38')
