@@ -55,7 +55,7 @@ def static_callback(request, variant):
 urlpatterns = patterns(
     '',
     url(r'^process/(?P<token>[0-9a-z]{8}-[0-9a-z]{4}-'
-        '[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})$', process_data,
+        '[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})/$', process_data,
         name='process_payment'),
-    url(r'^process/(?P<variant>[a-z-]+)$', static_callback,
+    url(r'^process/(?P<variant>[a-z-]+)/$', static_callback,
         name='static_process_payment'),)
