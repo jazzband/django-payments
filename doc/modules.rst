@@ -255,7 +255,6 @@ This backend requires js files that should be added to the template using ``{{ f
       <!-- templates/payment.html -->
       <form action="{{ form.action }}" method="{{ form.method }}">
           {{ form.as_p }}
-          <p><input type="submit" value="Proceed" /></p>
       </form>
       {{ form.media }}
 
