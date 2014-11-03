@@ -237,6 +237,8 @@ Stripe
 
    :param secret_key: Secret key assigned by Stripe.
    :param public_key: Public key assigned by Stripe.
+   :param name: A friendly name for your store.
+   :param image: Your logo.
 
 Example::
 
