@@ -12,6 +12,8 @@ class StripeProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.secret_key = kwargs.pop('secret_key')
         self.public_key = kwargs.pop('public_key')
+        self.image = kwargs.pop('image', '')
+        self.name = kwargs.pop('name', '')
         super(StripeProvider, self).__init__(*args, **kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
