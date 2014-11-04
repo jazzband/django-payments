@@ -248,15 +248,5 @@ Example::
               'secret_key': 'sk_test_123456',
               'public_key': 'pk_test_123456'})}
 
-This backend requires js files that should be added to the template using ``{{ form.media }}`` e.g:
-
-.. code-block:: html
-
-      <!-- templates/payment.html -->
-      <form action="{{ form.action }}" method="{{ form.method }}">
-          {{ form.as_p }}
-      </form>
-      {{ form.media }}
-
 
 This backend does not support fraud detection.

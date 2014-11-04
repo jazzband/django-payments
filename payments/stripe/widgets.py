@@ -13,7 +13,7 @@ class StripeWidget(Input):
     def __init__(self, provider, payment, *args, **kwargs):
         attrs = kwargs.get('attrs', {})
         kwargs['attrs'] = {
-            'id': 'stripe-id',
+            'class': 'stripe-button',
             'data-key': provider.public_key,
             'data-image': provider.image,
             'data-name': provider.name,
@@ -35,6 +35,3 @@ class StripeWidget(Input):
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_text(self._format_value(value))
         return format_html('<script{0}></script>', flatatt(final_attrs))
-
-    class Media:
-        js = ['https://js.stripe.com/v2/']
