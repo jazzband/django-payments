@@ -7,11 +7,6 @@ from ..models import PAYMENT_STATUS_CHOICES, FRAUD_CHOICES
 
 class DummyForm(PaymentForm):
 
-    status = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES)
-    fraud_status = forms.ChoiceField(choices=FRAUD_CHOICES)
-
-
-class Dummy3DSecureForm(PaymentForm):
     RESPONSE_CHOICES = (
         ('3ds-disabled', '3DS disabled'),
         ('3ds-redirect', '3DS redirect'),
@@ -25,7 +20,7 @@ class Dummy3DSecureForm(PaymentForm):
                                             required=False)
 
     def clean(self):
-        cleaned_data = super(Dummy3DSecureForm, self).clean()
+        cleaned_data = super(DummyForm, self).clean()
         gateway_response = cleaned_data['gateway_response']
         verification_result = cleaned_data.get('verification_result')
         if gateway_response == '3ds-redirect' and not verification_result:
