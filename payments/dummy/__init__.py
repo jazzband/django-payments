@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import urllib
 from urllib2 import URLError
-from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
 
 from .forms import DummyForm, Dummy3DSecureForm
 from .. import BasicProvider, RedirectNeeded, ExternalPostNeeded, PaymentError
@@ -29,8 +29,8 @@ class DummyProvider(BasicProvider):
 
     def process_data(self, request):
         if self.payment.status == 'confirmed':
-            return redirect(self.payment.get_success_url())
-        return redirect(self.payment.get_failure_url())
+            return HttpResponseRedirect(self.payment.get_success_url())
+        return HttpResponseRedirect(self.payment.get_failure_url())
 
     def capture(self, amount=None):
         self.payment.change_status('confirmed')
@@ -87,5 +87,5 @@ class Dummy3DSecureProvider(DummyProvider):
         if verification_result:
             self.payment.change_status(verification_result)
         if self.payment.status in ['confirmed', 'preauth']:
-            return redirect(self.payment.get_success_url())
-        return redirect(self.payment.get_failure_url())
+            return HttpResponseRedirect(self.payment.get_success_url())
+        return HttpResponseRedirect(self.payment.get_failure_url())
