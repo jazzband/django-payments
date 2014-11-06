@@ -4,7 +4,7 @@ from urllib2 import URLError
 from django.http import HttpResponseRedirect
 
 from .forms import DummyForm, Dummy3DSecureForm
-from .. import BasicProvider, RedirectNeeded
+from .. import BasicProvider, RedirectNeeded, PaymentError
 
 
 class DummyProvider(BasicProvider):
@@ -61,9 +61,6 @@ class Dummy3DSecureProvider(DummyProvider):
             if gateway_respose == '3ds-disabled':
                 # Standard request without 3DSecure
                 pass
-            elif gateway_respose == 'failure':
-                # Gateway raises error (HTTP 500 for example)
-                raise URLError('Opps')
             elif gateway_respose == '3ds-redirect':
                 # Simulate redirect to 3DS and get back to normal
                 # payment processing
@@ -72,6 +69,11 @@ class Dummy3DSecureProvider(DummyProvider):
                     {'verification_result': verification_result})
                 redirect_url = '%s?%s' % (process_url, params)
                 raise RedirectNeeded(redirect_url)
+            elif gateway_respose == 'failure':
+                # Gateway raises error (HTTP 500 for example)
+                raise URLError('Opps')
+            elif gateway_respose == 'payment-error':
+                raise PaymentError('Unsupported operation')
 
             if new_status == 'preauth':
                 raise RedirectNeeded(self.payment.get_success_url())

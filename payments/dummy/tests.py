@@ -4,7 +4,8 @@ from urllib2 import URLError
 
 from mock import MagicMock
 
-from payments import RedirectNeeded
+from payments import RedirectNeeded, PaymentError
+
 from . import Dummy3DSecureProvider
 
 
@@ -129,3 +130,14 @@ class TestDummy3DSProvider(TestCase):
         with self.assertRaises(RedirectNeeded) as exc:
             provider.get_form(data)
             self.assertEqual(exc.args[0], self.payment.get_failure_url())
+
+    def test_provider_raises_payment_error(self):
+        provider = Dummy3DSecureProvider(self.payment)
+        data = {
+            'status': 'preauth',
+            'fraud_status': 'unknown',
+            'gateway_response': 'payment-error',
+            'verification_result': ''
+        }
+        with self.assertRaises(PaymentError):
+            provider.get_form(data)

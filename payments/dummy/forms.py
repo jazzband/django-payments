@@ -14,8 +14,9 @@ class DummyForm(PaymentForm):
 class Dummy3DSecureForm(PaymentForm):
     RESPONSE_CHOICES = (
         ('3ds-disabled', '3DS disabled'),
-        ('failure', 'Gateway connection error'),
         ('3ds-redirect', '3DS redirect'),
+        ('failure', 'Gateway connection error'),
+        ('payment-error', 'Gateway returned unsupported response')
     )
     status = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES)
     fraud_status = forms.ChoiceField(choices=FRAUD_CHOICES)
