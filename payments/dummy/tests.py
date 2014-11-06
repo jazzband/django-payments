@@ -1,15 +1,14 @@
 from unittest import TestCase
 try:
-    # For Python 3.0 and later
     from urllib.error import URLError
     from urllib.parse import urlencode
-    from unittest.mock import MagicMock
 except ImportError:
-    # Fall back to Python 2's libs
-    from mock import MagicMock
     from urllib import urlencode
     from urllib2 import URLError
-
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 from payments import RedirectNeeded, PaymentError
 
