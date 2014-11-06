@@ -1,6 +1,12 @@
 from __future__ import unicode_literals
-import urllib
-from urllib2 import URLError
+try:
+    # For Python 3.0 and later
+    from urllib.error import URLError
+    from urllib.parse import urlencode
+except ImportError:
+    # Fall back to Python 2's urllib2
+    from urllib2 import URLError
+    from urllib import urlencode
 from django.http import HttpResponseRedirect
 
 from .forms import DummyForm, Dummy3DSecureForm
@@ -65,7 +71,7 @@ class Dummy3DSecureProvider(DummyProvider):
                 # Simulate redirect to 3DS and get back to normal
                 # payment processing
                 process_url = self.payment.get_process_url()
-                params = urllib.urlencode(
+                params = urlencode(
                     {'verification_result': verification_result})
                 redirect_url = '%s?%s' % (process_url, params)
                 raise RedirectNeeded(redirect_url)

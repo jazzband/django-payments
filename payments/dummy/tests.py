@@ -1,8 +1,15 @@
-import urllib
 from unittest import TestCase
-from urllib2 import URLError
+try:
+    # For Python 3.0 and later
+    from urllib.error import URLError
+    from urllib.parse import urlencode
+    from unittest.mock import MagicMock
+except ImportError:
+    # Fall back to Python 2's libs
+    from mock import MagicMock
+    from urllib import urlencode
+    from urllib2 import URLError
 
-from mock import MagicMock
 
 from payments import RedirectNeeded, PaymentError
 
@@ -89,7 +96,7 @@ class TestDummy3DSProvider(TestCase):
             'gateway_response': '3ds-redirect',
             'verification_result': verification_result
         }
-        params = urllib.urlencode({'verification_result': verification_result})
+        params = urlencode({'verification_result': verification_result})
         expected_redirect = '%s?%s' % (self.payment.get_process_url(), params)
 
         with self.assertRaises(RedirectNeeded) as exc:
