@@ -9,3 +9,26 @@ class DummyForm(PaymentForm):
 
     status = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES)
     fraud_status = forms.ChoiceField(choices=FRAUD_CHOICES)
+
+
+class Dummy3DSecureForm(PaymentForm):
+    RESPONSE_CHOICES = (
+        ('3ds-disabled', '3DS disabled'),
+        ('3ds-redirect', '3DS redirect'),
+        ('failure', 'Gateway connection error'),
+        ('payment-error', 'Gateway returned unsupported response')
+    )
+    status = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES)
+    fraud_status = forms.ChoiceField(choices=FRAUD_CHOICES)
+    gateway_response = forms.ChoiceField(choices=RESPONSE_CHOICES)
+    verification_result = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES,
+                                            required=False)
+
+    def clean(self):
+        cleaned_data = super(Dummy3DSecureForm, self).clean()
+        gateway_response = cleaned_data['gateway_response']
+        verification_result = cleaned_data.get('verification_result')
+        if gateway_response == '3ds-redirect' and not verification_result:
+            raise forms.ValidationError(
+                'When 3DS is enabled you must set post validation status')
+        return cleaned_data
