@@ -120,7 +120,7 @@ Example::
               'seller_id': '123',
               'pin': '0000',
               'lock': True,
-              'endpoint': 'https://ssl.dotpay.pl/'})}
+              'endpoint': 'https://ssl.dotpay.pl/test_payment/'})}
 
 This backend does not support fraud detection.
 
