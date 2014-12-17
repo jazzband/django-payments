@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-
+from decimal import Decimal as D
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseForbidden
 
@@ -23,40 +23,45 @@ class DotpayProvider(BasicProvider):
         whether to disable channels other than the default selected above
     '''
     _method = 'post'
-    _action = 'https://ssl.dotpay.pl/'
 
     def __init__(self, *args, **kwargs):
-        self._seller_id = kwargs.pop('seller_id')
-        self._pin = kwargs.pop('pin')
-        self._channel = kwargs.pop('channel', 0)
-        self._lang = kwargs.pop('lang', 'pl')
-        self._lock = kwargs.pop('lock', False)
+        self.endpoint = kwargs.get(
+            'endpoint', 'https://ssl.dotpay.pl/test_payment/')
+        self.seller_id = kwargs.pop('seller_id')
+        self.pin = kwargs.pop('pin')
+        self.channel = kwargs.pop('channel', 0)
+        self.lang = kwargs.pop('lang', 'pl')
+        self.lock = kwargs.pop('lock', False)
         super(DotpayProvider, self).__init__(*args, **kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Dotpay does not support pre-authorization.')
+
+    @property
+    def _action(self):
+        return self.endpoint
 
     def get_hidden_fields(self):
         if not self.payment.description:
             raise ValueError('Payment description is required')
 
         data = {
-            'id': self._seller_id,
-            'amount': str(self.payment.total),
+            'id': self.seller_id,
+            'amount': D(str(self.payment.total)).quantize(D('0.01')),
             'control': str(self.payment.id),
             'currency': self.payment.currency,
             'description': self.payment.description,
-            'lang': self._lang,
-            'channel': str(self._channel),
-            'ch_lock': '1' if self._lock else '0',
+            'lang': self.lang,
+            'channel': str(self.channel),
+            'ch_lock': '1' if self.lock else '0',
             'URL': self.payment.get_success_url(),
             'URLC': self.get_return_url(),
-            'type': '2'
+            'type': '1'
         }
         return data
 
     def process_data(self, request):
-        form = ProcessPaymentForm(payment=self.payment, pin=self._pin,
+        form = ProcessPaymentForm(payment=self.payment, pin=self.pin,
                                   data=request.POST or None)
         if not form.is_valid():
             return HttpResponseForbidden('FAILED')

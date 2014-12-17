@@ -98,7 +98,7 @@ Cybersource allows you to pass Merchant-Defined Data, which is additional inform
 Dotpay
 ------
 
-.. class:: payments.dotpay.DotpayProvider(seller_id, pin[, channel=0[, lock=False], lang='pl'])
+.. class:: payments.dotpay.DotpayProvider(seller_id, pin[, channel=0, lock=False, lang='pl', endpoint='https://ssl.dotpay.pl/test_payment/'])
 
    This backend implements payments using a popular Polish gateway, `Dotpay.pl <http://www.dotpay.pl>`_.
 
@@ -110,6 +110,7 @@ Dotpay
    :param channel: Default payment channel (consult reference guide)
    :param lang: UI language
    :param lock: Whether to disable channels other than the default selected above
+   :param endpoint: The API endpoint to use. For the production environment, use ``'https://ssl.dotpay.pl/'`` instead
 
 Example::
 
@@ -118,7 +119,8 @@ Example::
           'dotpay': ('payments.dotpay.DotpayProvider', {
               'seller_id': '123',
               'pin': '0000',
-              'lock': True})}
+              'lock': True,
+              'endpoint': 'https://ssl.dotpay.pl/test_payment/'})}
 
 This backend does not support fraud detection.
 
