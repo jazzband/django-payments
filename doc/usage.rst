@@ -22,7 +22,8 @@ Making a payment
           billing_city='London',
           billing_postcode='NW1 6XE',
           billing_country_code='UK',
-          billing_country_area='Greater London')
+          billing_country_area='Greater London',
+          customer_ip_address='127.0.0.1')
 
 #. Redirect the user to your payment handling view.
 
