@@ -20,7 +20,7 @@ class SagepayProvider(BasicProvider):
         gateway URL to post transaction data to
     '''
     _version = '2.23'
-    _action = 'https://live.sagepay.com/gateway/service/vspform-register.vsp'
+    _action = 'https://test.sagepay.com/Simulator/VSPFormGateway.asp'
 
     def __init__(self, *args, **kwargs):
         self._vendor = kwargs.pop('vendor')
