@@ -385,10 +385,10 @@ class CyberSourceProvider(BasicProvider):
             return
         else:
             data = self.client.factory.create('data:MerchantDefinedData')
-            for i, value in merchant_defined_data.iteritems():
+            for i, value in merchant_defined_data.items():
                 field = self.client.factory.create('data:MDDField')
                 field._id = int(i)
-                field.value = str(value)
+                field.value = value
                 data.mddField.append(field)
             return data
 
