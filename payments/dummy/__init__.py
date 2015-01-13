@@ -19,6 +19,8 @@ class DummyProvider(BasicProvider):
     '''
 
     def get_form(self, data=None):
+        if self.payment.status == 'waiting':
+            self.payment.change_status('input')
         form = DummyForm(data=data, hidden_inputs=False, provider=self,
                          payment=self.payment)
         if form.is_valid():
