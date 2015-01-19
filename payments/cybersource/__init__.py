@@ -41,14 +41,18 @@ class CyberSourceProvider(BasicProvider):
     def __init__(self, *args, **kwargs):
         self.merchant_id = kwargs.pop('merchant_id')
         self.password = kwargs.pop('password')
+        local_path = os.path.dirname(__file__)
+        if os.path.sep != '/':
+            # ugly hack for urllib and Windows
+            local_path = local_path.replace(os.path.sep, '/')
         if kwargs.pop('sandbox', True):
-            wsdl_path = 'file://%s/xml/CyberSourceTransaction_1.101.test.wsdl' % (  # noqa
-                os.path.dirname(__file__),)
+            wsdl_path = 'file:///%s/xml/CyberSourceTransaction_1.101.test.wsdl' % (
+                local_path,)
             self.endpoint = (
                 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
         else:
-            wsdl_path = 'file://%s/xml/CyberSourceTransaction_1.101.wsdl' % (
-                os.path.dirname(__file__),)
+            wsdl_path = 'file:///%s/xml/CyberSourceTransaction_1.101.wsdl' % (
+                local_path,)
             self.endpoint = (
                 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor')
         self.client = suds.client.Client(wsdl_path)
