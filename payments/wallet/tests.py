@@ -70,8 +70,8 @@ class TestGoogleWalletProvider(TestCase):
         payment = Payment()
         request = MagicMock()
         request.POST = {'jwt': jwt.encode(JWT_DATA, SELLER_SECRET)}
-        provider = GoogleWalletProvider(payment, seller_id=SELLER_ID,
-                                        seller_secret=SELLER_SECRET)
+        provider = GoogleWalletProvider(
+            payment, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         response = provider.process_data(request)
         self.assertEqual(type(response), HttpResponse)
         self.assertEqual(payment.status, 'confirmed')
@@ -85,31 +85,32 @@ class TestGoogleWalletProvider(TestCase):
         request = MagicMock()
         payload = jwt.encode(data, SELLER_SECRET)
         request.POST = {'jwt': payload}
-        provider = GoogleWalletProvider(payment, seller_id=SELLER_ID,
-                                        seller_secret=SELLER_SECRET)
+        provider = GoogleWalletProvider(
+            payment, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         response = provider.process_data(request)
         self.assertEqual(type(response), HttpResponseForbidden)
 
     def test_provider_request_payment_token(self):
         request = MagicMock()
         request.POST = {'jwt': jwt.encode(JWT_DATA, SELLER_SECRET)}
-        provider = GoogleWalletProvider(payment=None, seller_id=SELLER_ID,
-                                        seller_secret=SELLER_SECRET)
+        provider = GoogleWalletProvider(
+            payment=None, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         token = provider.get_token_from_request(request)
         self.assertEqual(token, PAYMENT_TOKEN)
 
     def test_provider_invalid_request(self):
         request = MagicMock()
         request.POST = {'jwt': 'wrong jwt data'}
-        provider = GoogleWalletProvider(payment=None, seller_id=SELLER_ID,
-                                        seller_secret=SELLER_SECRET)
+        provider = GoogleWalletProvider(
+            payment=None, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         token = provider.get_token_from_request(request)
         self.assertFalse(token)
 
     def test_jwt_encoder(self):
         payment = Payment()
-        provider = GoogleWalletProvider(payment, seller_id=SELLER_ID,
-                                        seller_secret=SELLER_SECRET)
+        provider = GoogleWalletProvider(
+            payment, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         payload = provider.get_jwt_data()
-        data = jwt.decode(payload, SELLER_SECRET)
+        data = jwt.decode(
+            payload, SELLER_SECRET, audience='Google', issuer='Google')
         self.assertEqual(data['request']['price'], '100')
