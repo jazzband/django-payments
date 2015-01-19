@@ -112,5 +112,5 @@ class TestGoogleWalletProvider(TestCase):
             payment, seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         payload = provider.get_jwt_data()
         data = jwt.decode(
-            payload, SELLER_SECRET, audience='Google', issuer='Google')
+            payload, SELLER_SECRET, audience='Google', issuer=SELLER_ID)
         self.assertEqual(data['request']['price'], '100')
