@@ -25,7 +25,7 @@ class DotpayProvider(BasicProvider):
     _method = 'post'
 
     def __init__(self, *args, **kwargs):
-        self.endpoint = kwargs.get(
+        self.endpoint = kwargs.pop(
             'endpoint', 'https://ssl.dotpay.pl/test_payment/')
         self.seller_id = kwargs.pop('seller_id')
         self.pin = kwargs.pop('pin')
