@@ -75,7 +75,14 @@ class TestDotpayProvider(TestCase):
         """DotpayProvider.process_data() returns a correct HTTP response"""
         request = MagicMock()
         request.POST = get_post_with_md5(PROCESS_POST)
-        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
+        params = {
+            'seller_id': 123,
+            'pin': PIN,
+            'endpoint': 'test.endpoint.com',
+            'channel': 1,
+            'lang': 'en',
+            'lock': True}
+        provider = DotpayProvider(self.payment, **params)
         response = provider.process_data(request)
         self.assertEqual(type(response), HttpResponse)
 
