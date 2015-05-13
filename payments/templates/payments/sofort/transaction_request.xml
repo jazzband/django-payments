@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transaction_request version="2">
+    {% for transaction in transactions %}<transaction>{{ transaction }}</transaction>{% endfor %}
+</transaction_request>
