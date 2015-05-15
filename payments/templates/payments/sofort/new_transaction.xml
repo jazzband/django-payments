@@ -6,7 +6,7 @@
 <amount>{{ amount }}</amount>
 <currency_code>{{ currency }}</currency_code>
 <reasons>
-<reason>{% blocktrans %}Order Number {{ order_number }}{% endblocktrans %}</reason>
+<reason>{{description}}</reason>
 </reasons>
 <success_url>{{ success_url }}?trans=-TRANSACTION-</success_url>
 <abort_url>{{ abort_url }}?trans=-TRANSACTION-</abort_url>

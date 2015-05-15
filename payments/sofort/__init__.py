@@ -12,20 +12,20 @@ import requests
 import xmltodict
 import json
 
-from .. import BasicProvider, RedirectNeeded
+from .. import BasicProvider, RedirectNeeded, get_base_url
 
 __version__ = '0.0.1'
 
-PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
-PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', False)
-
-def get_base_url():
-    protocol = 'https' if PAYMENT_USES_SSL else 'http'
-    if not PAYMENT_HOST:
-        current_site = Site.objects.get_current()
-        domain = current_site.domain
-        return '%s://%s' % (protocol, domain)
-    return '%s://%s' % (protocol, PAYMENT_HOST)
+# PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
+# PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', False)
+# 
+# def get_base_url():
+#     protocol = 'https' if PAYMENT_USES_SSL else 'http'
+#     if not PAYMENT_HOST:
+#         current_site = Site.objects.get_current()
+#         domain = current_site.domain
+#         return '%s://%s' % (protocol, domain)
+#     return '%s://%s' % (protocol, PAYMENT_HOST)
 
 
 class SofortProvider(BasicProvider):
@@ -61,11 +61,12 @@ class SofortProvider(BasicProvider):
             headers={'Content-Type': 'application/xml; charset=UTF-8'},
             auth=(self.client_id, self.secret),
         )
-        
         if response.status_code == 200:
             doc = xmltodict.parse(response.content)
-            raise RedirectNeeded(doc['new_transaction']['payment_url'])
-
+            try:
+                raise RedirectNeeded(doc['new_transaction']['payment_url'])
+            except KeyError:
+                raise Exception,'Error in %s: %s' % (doc['errors']['error']['field'],doc['errors']['error']['message'])
 
     def process_data(self, request):
         
