@@ -5,7 +5,7 @@ from django.http import HttpResponseForbidden
 import requests
 
 from .forms import PaymentForm
-from .. import BasicProvider
+from .. import BasicProvider, RedirectNeeded
 
 
 class AuthorizeNetProvider(BasicProvider):
@@ -56,8 +56,12 @@ class AuthorizeNetProvider(BasicProvider):
         return requests.post(self.endpoint, data=post)
 
     def get_form(self, data=None):
-        return PaymentForm(data=data, payment=self.payment, provider=self,
-                           action='')
+        if self.payment.status == 'waiting':
+            self.payment.change_status('input')
+        form = PaymentForm(data=data, payment=self.payment, provider=self)
+        if form.is_valid():
+            raise RedirectNeeded(self.payment.get_success_url())
+        return form
 
     def process_data(self, request):
         return HttpResponseForbidden('FAILED')
