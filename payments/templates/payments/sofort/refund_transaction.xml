@@ -1,0 +1,15 @@
+{% load l10n i18n %}{% load url from future %}{% localize off %}<?xml version="1.0" encoding="UTF-8" ?>
+<refunds version="3">
+      <sender>
+            <holder>{{holder}}</holder>
+            <bic>{{bic}}</bic>
+            <iban>{{iban}}</iban>
+      </sender>
+      <title>{{title}}</title>
+      <refund>
+            <transaction>{{transaction_id}}</transaction>
+            <amount>{{amount}}</amount>
+            <comment>{{comment}}</comment>
+            <reason_1>Refund</reason_1>
+      </refund>
+</refunds>{% endlocalize %}
