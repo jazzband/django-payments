@@ -229,6 +229,30 @@ Example::
 
 This backend does not support fraud detection.
 
+Sofort.com
+--------
+
+.. class:: payments.sofort.SofortProvider(key, id, project_id[, endpoint='https://api.sofort.com/api/xml'])
+
+   This backend implements payments using `sofort.com <https://www.sofort.com/>` API.
+
+   :param id: Your sofort.com user id
+   :param key: Your secret key
+   :param project_id: Your sofort.com project id
+   :param endpoint: The API endpoint to use. 
+
+Example::
+
+      PAYMENT_VARIANTS = {
+          'sage': ('payments.sofort.SofortProvider', {
+              'id': '123456',
+              'key': '1234567890abcdef',
+              'project_id': '654321',
+              'endpoint': 'https://api.sofort.com/api/xml'})}
+
+
+This backend does not support fraud detection.
+
 
 Stripe
 ------
