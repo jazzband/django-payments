@@ -24,7 +24,8 @@ class CreditCardNumberField(forms.CharField):
         super(CreditCardNumberField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):
-        value = re.sub('[\s-]+', '', value)
+        if value is not None:
+            value = re.sub('[\s-]+', '', value)
         return super(CreditCardNumberField, self).to_python(value)
 
     def validate(self, value):
