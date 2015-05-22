@@ -45,13 +45,16 @@ class CyberSourceProvider(BasicProvider):
         if os.path.sep != '/':
             # ugly hack for urllib and Windows
             local_path = local_path.replace(os.path.sep, '/')
+        if not local_path.startswith('/'):
+            # windows paths don't start with '/'
+            local_path = '/%s' % (local_path,)
         if kwargs.pop('sandbox', True):
-            wsdl_path = 'file:///%s/xml/CyberSourceTransaction_1.101.test.wsdl' % (
+            wsdl_path = 'file://%s/xml/CyberSourceTransaction_1.101.test.wsdl' % (
                 local_path,)
             self.endpoint = (
                 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
         else:
-            wsdl_path = 'file:///%s/xml/CyberSourceTransaction_1.101.wsdl' % (
+            wsdl_path = 'file://%s/xml/CyberSourceTransaction_1.101.wsdl' % (
                 local_path,)
             self.endpoint = (
                 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor')
