@@ -19,8 +19,8 @@ VARIANT = 'coinbase'
 COINBASE_REQUEST = {
     'order': {
         'transaction': {'id': '123456'},
-        'custom': hashlib.md5('coinbase-%s-%s' % (
-            PAYMENT_TOKEN, KEY)).hexdigest()}}
+        'custom': hashlib.md5(('coinbase-%s-%s' % (
+            PAYMENT_TOKEN, KEY)).encode('utf-8')).hexdigest()}}
 
 
 class Payment(object):

@@ -30,7 +30,7 @@ class CoinbaseProvider(BasicProvider):
 
     def get_custom_token(self):
         value = 'coinbase-%s-%s' % (self.payment.token, self.key)
-        return hashlib.md5(value).hexdigest()
+        return hashlib.md5(value.encode('utf-8')).hexdigest()
 
     def get_checkout_code(self):
         api_url = self.api_url % {'endpoint': self.endpoint}
@@ -70,8 +70,11 @@ class CoinbaseProvider(BasicProvider):
         return {}
 
     def process_data(self, request):
+        body = request.body
+        if not isinstance(request.body, str):
+            body = body.decode("utf-8")
         try:
-            results = json.loads(request.body.decode("utf-8"))
+            results = json.loads(body)
         except (ValueError, TypeError):
             return HttpResponseForbidden('FAILED')
 
