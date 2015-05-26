@@ -76,10 +76,9 @@ Installation
           # ...
           'payments']
 
-      PAYMENT_BASE_URL = 'http://localhost:8000/'
-
+      PAYMENT_HOST = 'localhost:8000'
+      PAYMENT_USES_SSL = False
       PAYMENT_MODEL = 'mypaymentapp.Payment'
-
       PAYMENT_VARIANTS = {
           'default': ('payments.dummy.DummyProvider', {})}
 
