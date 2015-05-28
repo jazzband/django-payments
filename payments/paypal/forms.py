@@ -20,7 +20,8 @@ class PaymentForm(CreditCardPaymentFormWithName):
                 request_data = {'type': card_type}
                 request_data.update(cleaned_data)
                 try:
-                    data = self.provider.create_payment(cleaned_data)
+                    data = self.provider.create_payment(
+                        self.payment, cleaned_data)
                 except HTTPError as e:
                     response = e.response
                     if response.status_code == 400:

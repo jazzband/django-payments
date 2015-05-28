@@ -49,33 +49,33 @@ class TestDummy3DSProvider(TestCase):
         self.payment = Payment()
 
     def test_process_data_supports_verification_result(self):
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         verification_status = 'confirmed'
         request = MagicMock()
         request.GET = {'verification_result': verification_status}
-        response = provider.process_data(request)
+        response = provider.process_data(self.payment, request)
         self.assertEqual(self.payment.status, verification_status)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'], self.payment.get_success_url())
 
     def test_process_data_redirects_to_success_on_payment_success(self):
         self.payment.status = 'preauth'
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         request = MagicMock()
         request.GET = {}
-        response = provider.process_data(request)
+        response = provider.process_data(self.payment, request)
         self.assertEqual(response['location'], self.payment.get_success_url())
 
     def test_process_data_redirects_to_failure_on_payment_failure(self):
         self.payment.status = 'reject'
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         request = MagicMock()
         request.GET = {}
-        response = provider.process_data(request)
+        response = provider.process_data(self.payment, request)
         self.assertEqual(response['location'], self.payment.get_failure_url())
 
     def test_provider_supports_non_3ds_transactions(self):
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         data = {
             'status': 'preauth',
             'fraud_status': 'unknown',
@@ -83,11 +83,11 @@ class TestDummy3DSProvider(TestCase):
             'verification_result': ''
         }
         with self.assertRaises(RedirectNeeded) as exc:
-            provider.get_form(data)
+            provider.get_form(self.payment, data)
             self.assertEqual(exc.args[0], self.payment.get_success_url())
 
     def test_provider_supports_3ds_redirect(self):
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         verification_result = 'confirmed'
         data = {
             'status': 'waiting',
@@ -99,22 +99,22 @@ class TestDummy3DSProvider(TestCase):
         expected_redirect = '%s?%s' % (self.payment.get_process_url(), params)
 
         with self.assertRaises(RedirectNeeded) as exc:
-            provider.get_form(data)
+            provider.get_form(self.payment, data)
             self.assertEqual(exc.args[0], expected_redirect)
 
     def test_provider_supports_gateway_failure(self):
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         data = {
             'status': 'waiting',
             'fraud_status': 'unknown',
             'gateway_response': 'failure',
             'verification_result': ''
         }
-        with self.assertRaises(URLError) as exc:
-            provider.get_form(data)
+        with self.assertRaises(URLError):
+            provider.get_form(self.payment, data)
 
     def test_provider_raises_redirect_needed_on_success(self):
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         data = {
             'status': 'preauth',
             'fraud_status': 'unknown',
@@ -122,11 +122,11 @@ class TestDummy3DSProvider(TestCase):
             'verification_result': ''
         }
         with self.assertRaises(RedirectNeeded) as exc:
-            provider.get_form(data)
+            provider.get_form(self.payment, data)
             self.assertEqual(exc.args[0], self.payment.get_success_url())
 
     def test_provider_raises_redirect_needed_on_failure(self):
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         data = {
             'status': 'error',
             'fraud_status': 'unknown',
@@ -134,11 +134,11 @@ class TestDummy3DSProvider(TestCase):
             'verification_result': ''
         }
         with self.assertRaises(RedirectNeeded) as exc:
-            provider.get_form(data)
+            provider.get_form(self.payment, data)
             self.assertEqual(exc.args[0], self.payment.get_failure_url())
 
     def test_provider_raises_payment_error(self):
-        provider = DummyProvider(self.payment)
+        provider = DummyProvider()
         data = {
             'status': 'preauth',
             'fraud_status': 'unknown',
@@ -146,9 +146,9 @@ class TestDummy3DSProvider(TestCase):
             'verification_result': ''
         }
         with self.assertRaises(PaymentError):
-            provider.get_form(data)
+            provider.get_form(self.payment, data)
 
     def test_provider_switches_payment_status_on_get_form(self):
-        provider = DummyProvider(self.payment)
-        form = provider.get_form(data={})
+        provider = DummyProvider()
+        form = provider.get_form(self.payment, data={})
         self.assertEqual(self.payment.status, 'input')

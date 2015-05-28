@@ -39,8 +39,8 @@ class TestStripeProvider(TestCase):
     def test_form(self):
         payment = Payment()
         provider = StripeProvider(
-            payment=payment, name='Example.com store',
+            name='Example.com store',
             secret_key='123', public_key='abc')
-        form = provider.get_form()
+        form = provider.get_form(payment)
         self.assertTrue(
             '<script class="stripe-button" data-amount="10000" data-currency="USD" data-description="payment" data-image="" data-key="abc" data-name="Example.com store" src="https://checkout.stripe.com/checkout.js"></script>' in str(form))

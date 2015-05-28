@@ -22,11 +22,11 @@ class SagepayProvider(BasicProvider):
     _version = '2.23'
     _action = 'https://test.sagepay.com/Simulator/VSPFormGateway.asp'
 
-    def __init__(self, *args, **kwargs):
-        self._vendor = kwargs.pop('vendor')
-        self._enckey = kwargs.pop('encryption_key')
-        self._action = kwargs.pop('endpoint', self._action)
-        super(SagepayProvider, self).__init__(*args, **kwargs)
+    def __init__(self, vendor, encryption_key, endpoint=_action, **kwargs):
+        self._vendor = vendor
+        self._enckey = encryption_key
+        self._action = endpoint
+        super(SagepayProvider, self).__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Sagepay does not support pre-authorization.')
@@ -52,50 +52,50 @@ class SagepayProvider(BasicProvider):
         dec = aes.decrypt(dec)
         return dec
 
-    def get_hidden_fields(self):
-        self.payment.save()
-        return_url = self.get_return_url()
+    def get_hidden_fields(self, payment):
+        payment.save()
+        return_url = self.get_return_url(payment)
         data = {
-            'VendorTxCode': self.payment.pk,
-            'Amount': "%.2f" % (self.payment.total,),
-            'Currency': self.payment.currency,
+            'VendorTxCode': payment.pk,
+            'Amount': "%.2f" % (payment.total,),
+            'Currency': payment.currency,
             'SuccessURL': return_url,
             'FailureURL': return_url,
-            'Description': "Payment #%s" % (self.payment.pk,),
-            'BillingSurname': self.payment.billing_last_name,
-            'BillingFirstnames': self.payment.billing_first_name,
-            'BillingAddress1': self.payment.billing_address_1,
-            'BillingAddress2': self.payment.billing_address_2,
-            'BillingCity': self.payment.billing_city,
-            'BillingPostCode': self.payment.billing_postcode,
-            'BillingCountry': self.payment.billing_country_code,
-            'DeliverySurname': self.payment.billing_last_name,
-            'DeliveryFirstnames': self.payment.billing_first_name,
-            'DeliveryAddress1': self.payment.billing_address_1,
-            'DeliveryAddress2': self.payment.billing_address_2,
-            'DeliveryCity': self.payment.billing_city,
-            'DeliveryPostCode': self.payment.billing_postcode,
-            'DeliveryCountry': self.payment.billing_country_code}
+            'Description': "Payment #%s" % (payment.pk,),
+            'BillingSurname': payment.billing_last_name,
+            'BillingFirstnames': payment.billing_first_name,
+            'BillingAddress1': payment.billing_address_1,
+            'BillingAddress2': payment.billing_address_2,
+            'BillingCity': payment.billing_city,
+            'BillingPostCode': payment.billing_postcode,
+            'BillingCountry': payment.billing_country_code,
+            'DeliverySurname': payment.billing_last_name,
+            'DeliveryFirstnames': payment.billing_first_name,
+            'DeliveryAddress1': payment.billing_address_1,
+            'DeliveryAddress2': payment.billing_address_2,
+            'DeliveryCity': payment.billing_city,
+            'DeliveryPostCode': payment.billing_postcode,
+            'DeliveryCountry': payment.billing_country_code}
         udata = "&".join("%s=%s" % kv for kv in data.items())
         crypt = self.aes_enc(udata)
         return {'VPSProtocol': self._version, 'TxType': 'PAYMENT',
                 'Vendor': self._vendor, 'Crypt': crypt}
 
-    def process_data(self, request):
+    def process_data(self, payment, request):
         udata = self.aes_dec(request.GET['crypt'])
         data = {}
         for kv in udata.split('&'):
             k, v = kv.split('=')
             data[k] = v
-        success_url = self.payment.get_success_url()
-        if self.payment.status == 'waiting':
+        success_url = payment.get_success_url()
+        if payment.status == 'waiting':
             # If the payment is not in waiting state, we probably have a page reload.
             # We should neither throw 404 nor alter the payment again in such case.
             if data['Status'] == 'OK':
-                self.payment.change_status('confirmed')
+                payment.change_status('confirmed')
                 return redirect(success_url)
             else:
                 # XXX: We should recognize AUTHENTICATED and REGISTERED in the future.
-                self.payment.change_status('rejected')
-                return redirect(self.payment.get_failure_url())
+                payment.change_status('rejected')
+                return redirect(payment.get_failure_url())
         return redirect(success_url)

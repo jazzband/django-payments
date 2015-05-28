@@ -1,21 +1,19 @@
 from __future__ import unicode_literals
-
-import logging
-import requests
 from datetime import timedelta
-from functools import wraps
-import json
 from decimal import Decimal, ROUND_HALF_UP
-from requests.exceptions import HTTPError
-
+from functools import wraps
 try:
     from itertools import ifilter as filter
 except ImportError:
     pass
+import json
+import logging
 
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import timezone
+import requests
+from requests.exceptions import HTTPError
 
 from .forms import PaymentForm
 from .. import (
@@ -46,7 +44,8 @@ def authorize(fun):
                     self.set_response_data(last_auth_response, is_auth=True)
                 self.access_token = self.get_access_token()
                 response = fun(*args, **kwargs)
-            raise
+            else:
+                raise
         return response
 
     return wrapper
@@ -56,8 +55,20 @@ class PaypalProvider(BasicProvider):
     '''
     paypal.com payment provider
     '''
-    def set_response_data(self, response, is_auth=False):
-        extra_data = json.loads(self.payment.extra_data or '{}')
+    def __init__(self, client_id, secret,
+                 endpoint='https://api.sandbox.paypal.com', **kwargs):
+        self.secret = secret
+        self.client_id = client_id
+        self.endpoint = endpoint
+        self.oauth2_url = self.endpoint + '/v1/oauth2/token'
+        self.payments_url = self.endpoint + '/v1/payments/payment'
+        self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
+        self.payment_refund_url = (
+            self.endpoint + '/v1/payments/capture/{captureId}/refund')
+        super(PaypalProvider, self).__init__(**kwargs)
+
+    def set_response_data(self, payment, response, is_auth=False):
+        extra_data = json.loads(payment.extra_data or '{}')
         if is_auth:
             extra_data['auth_response'] = response
         else:
@@ -65,26 +76,25 @@ class PaypalProvider(BasicProvider):
             if 'links' in response:
                 extra_data['links'] = dict(
                     (link['rel'], link) for link in response['links'])
-        self.payment.extra_data = json.dumps(extra_data)
+        payment.extra_data = json.dumps(extra_data)
 
-    def set_response_links(self, links):
-        extra_data = json.loads(self.payment.extra_data or '{}')
+    def set_response_links(self, payment, links):
+        extra_data = json.loads(payment.extra_data or '{}')
         extra_data['links'] = dict((link['rel'], link) for link in links)
-        self.payment.extra_data = json.dumps(extra_data)
+        payment.extra_data = json.dumps(extra_data)
 
-    def set_error_data(self, error):
-        extra_data = json.loads(self.payment.extra_data or '{}')
+    def set_error_data(self, payment, error):
+        extra_data = json.loads(payment.extra_data or '{}')
         extra_data['error'] = error
-        self.payment.extra_data = json.dumps(extra_data)
+        payment.extra_data = json.dumps(extra_data)
 
-    @property
-    def links(self):
-        extra_data = json.loads(self.payment.extra_data or '{}')
+    def _get_links(self, payment):
+        extra_data = json.loads(payment.extra_data or '{}')
         links = extra_data.get('links', {})
         return links
 
     @authorize
-    def post(self, *args, **kwargs):
+    def post(self, payment, *args, **kwargs):
         kwargs['headers'] = {
             'Content-Type': 'application/json',
             'Authorization': self.access_token}
@@ -96,7 +106,7 @@ class PaypalProvider(BasicProvider):
         except ValueError:
             data = {}
         if 400 <= response.status_code <= 500:
-            self.set_error_data(data)
+            self.set_error_data(payment, data)
             logger.debug(data)
             message = 'Paypal error'
             if response.status_code == 400:
@@ -108,33 +118,21 @@ class PaypalProvider(BasicProvider):
             else:
                 logger.warning(
                     message, extra={'status_code': response.status_code})
-            self.payment.change_status('error', message)
+            payment.change_status('error', message)
             raise PaymentError(message)
         else:
-            self.set_response_data(data)
+            self.set_response_data(payment, data)
         return data
 
-    def get_last_response(self, is_auth=False):
-        extra_data = json.loads(self.payment.extra_data or '{}')
+    def get_last_response(self, payment, is_auth=False):
+        extra_data = json.loads(payment.extra_data or '{}')
         if is_auth:
             return extra_data.get('auth_response', {})
         return extra_data.get('response', {})
 
-    def __init__(self, *args, **kwargs):
-        self.secret = kwargs.pop('secret')
-        self.client_id = kwargs.pop('client_id')
-        self.endpoint = kwargs.pop(
-            'endpoint', 'https://api.sandbox.paypal.com')
-        self.oauth2_url = self.endpoint + '/v1/oauth2/token'
-        self.payments_url = self.endpoint + '/v1/payments/payment'
-        self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
-        self.payment_refund_url = (
-            self.endpoint + '/v1/payments/capture/{captureId}/refund')
-        super(PaypalProvider, self).__init__(*args, **kwargs)
-
-    def get_access_token(self):
-        last_auth_response = self.get_last_response(is_auth=True)
-        created = self.payment.created
+    def get_access_token(self, payment):
+        last_auth_response = self.get_last_response(payment, is_auth=True)
+        created = payment.created
         now = timezone.now()
         if ('access_token' in last_auth_response and
                 'expires_in' in last_auth_response and
@@ -152,7 +150,7 @@ class PaypalProvider(BasicProvider):
             response.raise_for_status()
             data = response.json()
             last_auth_response.update(data)
-            self.set_response_data(last_auth_response, is_auth=True)
+            self.set_response_data(payment, last_auth_response, is_auth=True)
             return '%s %s' % (data['token_type'], data['access_token'])
 
     def get_link(self, name, data):
@@ -162,8 +160,8 @@ class PaypalProvider(BasicProvider):
             return None
         return next(links)['href']
 
-    def get_transactions_items(self):
-        for purchased_item in self.payment.get_purchased_items():
+    def get_transactions_items(self, payment):
+        for purchased_item in payment.get_purchased_items():
             price = purchased_item.price.quantize(
                 CENTS, rounding=ROUND_HALF_UP)
             item = {'name': purchased_item.name[:127],
@@ -173,96 +171,100 @@ class PaypalProvider(BasicProvider):
                     'sku': purchased_item.sku}
             yield item
 
-    def get_transactions_data(self):
-        items = list(self.get_transactions_items())
+    def get_transactions_data(self, payment):
+        items = list(self.get_transactions_items(payment))
         sub_total = (
-            self.payment.total - self.payment.delivery - self.payment.tax)
+            payment.total - payment.delivery - payment.tax)
         sub_total = sub_total.quantize(CENTS, rounding=ROUND_HALF_UP)
-        total = self.payment.total.quantize(CENTS, rounding=ROUND_HALF_UP)
-        tax = self.payment.tax.quantize(CENTS, rounding=ROUND_HALF_UP)
-        delivery = self.payment.delivery.quantize(
+        total = payment.total.quantize(CENTS, rounding=ROUND_HALF_UP)
+        tax = payment.tax.quantize(CENTS, rounding=ROUND_HALF_UP)
+        delivery = payment.delivery.quantize(
             CENTS, rounding=ROUND_HALF_UP)
         data = {
             'intent': 'sale' if self._capture else 'authorize',
             'transactions': [{'amount': {
                 'total': str(total),
-                'currency': self.payment.currency,
+                'currency': payment.currency,
                 'details': {
                     'subtotal': str(sub_total),
                     'tax': str(tax),
                     'shipping': str(delivery)}},
                 'item_list': {'items': items},
-                'description': self.payment.description}]}
+                'description': payment.description}]}
         return data
 
-    def get_product_data(self, extra_data=None):
-        return_url = self.get_return_url()
-        data = self.get_transactions_data()
+    def get_product_data(self, payment, extra_data=None):
+        return_url = self.get_return_url(payment)
+        data = self.get_transactions_data(payment)
         data['redirect_urls'] = {'return_url': return_url,
                                  'cancel_url': return_url}
         data['payer'] = {'payment_method': 'paypal'}
         return data
 
-    def get_form(self, data=None):
-        if not self.payment.id:
-            self.payment.save()
-        redirect_to = self.links.get('approval_url')
+    def get_form(self, payment, data=None):
+        if not payment.id:
+            payment.save()
+        links = self._get_links(payment)
+        redirect_to = links.get('approval_url')
         if not redirect_to:
-            payment = self.create_payment()
-            self.payment.transaction_id = payment['id']
-            redirect_to = self.links['approval_url']
-        self.payment.change_status('waiting')
+            payment = self.create_payment(payment)
+            payment.transaction_id = payment['id']
+            links = self._get_links(payment)
+            redirect_to = links['approval_url']
+        payment.change_status('waiting')
         raise RedirectNeeded(redirect_to['href'])
 
-    def process_data(self, request):
-        success_url = self.payment.get_success_url()
+    def process_data(self, payment, request):
+        success_url = payment.get_success_url()
         if not 'token' in request.GET:
             return HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:
-            if self.payment.status != 'confirmed':
-                self.payment.change_status('rejected')
-                return redirect(self.payment.get_failure_url())
+            if payment.status != 'confirmed':
+                payment.change_status('rejected')
+                return redirect(payment.get_failure_url())
             else:
                 return redirect(success_url)
-        payment = self.execute_payment(payer_id)
+        payment = self.execute_payment(payment, payer_id)
         related_resources = payment['transactions'][0]['related_resources'][0]
         resource_key = 'sale' if self._capture else 'authorization'
         authorization_links = related_resources[resource_key]['links']
-        self.set_response_links(authorization_links)
-        self.payment.attrs.payer_info = payment['payer']['payer_info']
+        self.set_response_links(payment, authorization_links)
+        payment.attrs.payer_info = payment['payer']['payer_info']
         if self._capture:
-            self.payment.captured_amount = self.payment.total
-            self.payment.change_status('confirmed')
+            payment.captured_amount = payment.total
+            payment.change_status('confirmed')
         else:
-            self.payment.change_status('preauth')
+            payment.change_status('preauth')
         return redirect(success_url)
 
-    def create_payment(self, extra_data=None):
-        product_data = self.get_product_data(extra_data)
+    def create_payment(self, payment, extra_data=None):
+        product_data = self.get_product_data(payment, extra_data)
         payment = self.post(self.payments_url, data=product_data)
         return payment
 
-    def execute_payment(self, payer_id):
+    def execute_payment(self, payment, payer_id):
         post = {'payer_id': payer_id}
-        execute_url = self.links['execute']['href']
+        links = self._get_links(payment)
+        execute_url = links['execute']['href']
         return self.post(execute_url, data=post)
 
-    def get_amount_data(self, amount=None):
+    def get_amount_data(self, payment, amount=None):
         return {
-            'currency': self.payment.currency,
+            'currency': payment.currency,
             'total': str(amount.quantize(
                 CENTS, rounding=ROUND_HALF_UP))}
 
-    def capture(self, amount=None):
+    def capture(self, payment, amount=None):
         if amount is None:
-            amount = self.payment.total
-        amount_data = self.get_amount_data(amount)
+            amount = payment.total
+        amount_data = self.get_amount_data(payment, amount)
         capture_data = {
             'amount': amount_data,
             'is_final_capture': True
         }
-        url = self.links['capture']['href']
+        links = self._get_links(payment)
+        url = links['capture']['href']
         try:
             capture = self.post(url, data=capture_data)
         except HTTPError as e:
@@ -278,23 +280,25 @@ class PaypalProvider(BasicProvider):
                 'completed', 'partially_captured', 'partially_refunded']:
             return amount
         elif state == 'pending':
-            self.payment.change_status('waiting')
+            payment.change_status('waiting')
         elif state == 'refunded':
-            self.payment.change_status('refunded')
+            payment.change_status('refunded')
             raise PaymentError('Payment already refunded')
 
-    def release(self):
-        url = self.links['void']['href']
+    def release(self, payment):
+        links = self._get_links(payment)
+        url = links['void']['href']
         self.post(url)
 
-    def refund(self, amount=None):
+    def refund(self, payment, amount=None):
         if amount is None:
-            amount = self.payment.captured_amount
+            amount = payment.captured_amount
         amount_data = self.get_amount_data(amount)
         refund_data = {'amount': amount_data}
-        url = self.links['refund']['href']
+        links = self._get_links(payment)
+        url = links['refund']['href']
         self.post(url, data=refund_data)
-        self.payment.change_status('refunded')
+        payment.change_status('refunded')
         return amount
 
 
@@ -303,16 +307,16 @@ class PaypalCardProvider(PaypalProvider):
     paypal.com credit card payment provider
     '''
 
-    def get_form(self, data=None):
-        if self.payment.status == 'waiting':
-            self.payment.change_status('input')
-        form = PaymentForm(data, provider=self, payment=self.payment)
+    def get_form(self, payment, data=None):
+        if payment.status == 'waiting':
+            payment.change_status('input')
+        form = PaymentForm(data, provider=self, payment=payment)
         if form.is_valid():
-            raise RedirectNeeded(self.payment.get_success_url())
+            raise RedirectNeeded(payment.get_success_url())
         return form
 
-    def get_product_data(self, extra_data):
-        data = self.get_transactions_data()
+    def get_product_data(self, payment, extra_data):
+        data = self.get_transactions_data(payment)
         year = extra_data['expiration'].year
         month = extra_data['expiration'].month
         number = extra_data['number']
@@ -327,5 +331,5 @@ class PaypalCardProvider(PaypalProvider):
                          'funding_instruments': [{'credit_card': credit_card}]}
         return data
 
-    def process_data(self, request):
+    def process_data(self, payment, request):
         return HttpResponseForbidden('FAILED')

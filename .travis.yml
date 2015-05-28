@@ -1,7 +1,6 @@
 language: python
 python:
 - 2.7
-- 3.2
 - 3.3
 - 3.4
 install:
@@ -9,5 +8,3 @@ install:
 script:
 - export DJANGO_SETTINGS_MODULE=test_settings
 - python setup.py test
-notifications:
-  webhooks: https://webhooks.gitter.im/e/af18bf2decb40329066b

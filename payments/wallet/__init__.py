@@ -11,18 +11,18 @@ from .. import BasicProvider
 
 class GoogleWalletProvider(BasicProvider):
 
-    def __init__(self, *args, **kwargs):
-        self.seller_id = kwargs.pop('seller_id')
-        self.seller_secret = kwargs.pop('seller_secret')
-        self.library = kwargs.pop(
-            'library',
-            'https://sandbox.google.com/checkout/inapp/lib/buy.js')
-        super(GoogleWalletProvider, self).__init__(*args, **kwargs)
+    def __init__(self, seller_id, seller_secret,
+                 library='https://sandbox.google.com/checkout/inapp/lib/buy.js',
+                 **kwargs):
+        self.seller_id = seller_id
+        self.seller_secret = seller_secret
+        self.library = library
+        super(GoogleWalletProvider, self).__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
-                'Google wallet does not support pre-authorization.')
+                'Google Wallet does not support pre-authorization.')
 
-    def get_jwt_data(self):
+    def get_jwt_data(self, payment):
 
         current_time = int(time.time())
         exp_time = current_time + 3600
@@ -34,33 +34,33 @@ class GoogleWalletProvider(BasicProvider):
             'iat': current_time,
             'exp': exp_time,
             'request': {
-                'currencyCode': self.payment.currency,
-                'price': str(self.payment.total),
-                'name': self.payment.description or 'Total payment',
-                'sellerData': self.payment.token}}
+                'currencyCode': payment.currency,
+                'price': str(payment.total),
+                'name': payment.description or 'Total payment',
+                'sellerData': payment.token}}
 
         return jwt.encode(jwt_info, self.seller_secret)
 
-    def get_form(self, data=None):
+    def get_form(self, payment, data=None):
         kwargs = {
             'data': data,
-            'payment': self.payment,
+            'payment': payment,
             'provider': self,
             'action': '',
             'hidden_inputs': False}
         return PaymentForm(**kwargs)
 
-    def get_process_form(self, request):
-        return ProcessPaymentForm(payment=self.payment, provider=self,
+    def get_process_form(self, payment, request):
+        return ProcessPaymentForm(payment=payment, provider=self,
                                   data=request.POST or None)
 
-    def get_token_from_request(self, request):
-        form = self.get_process_form(request)
+    def get_token_from_request(self, payment, request):
+        form = self.get_process_form(payment, request)
         if form.is_valid():
             return form.token
 
-    def process_data(self, request):
-        form = self.get_process_form(request)
+    def process_data(self, payment, request):
+        form = self.get_process_form(payment, request)
         if not form.is_valid():
             return HttpResponseForbidden('FAILED')
         form.save()

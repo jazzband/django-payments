@@ -68,8 +68,8 @@ class TestDotpayProvider(TestCase):
 
     def test_get_hidden_fields(self):
         """DotpayProvider.get_hidden_fields() returns a dictionary"""
-        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
-        self.assertEqual(type(provider.get_hidden_fields()), dict)
+        provider = DotpayProvider(seller_id='123', pin=PIN)
+        self.assertEqual(type(provider.get_hidden_fields(self.payment)), dict)
 
     def test_process_data(self):
         """DotpayProvider.process_data() returns a correct HTTP response"""
@@ -82,14 +82,14 @@ class TestDotpayProvider(TestCase):
             'channel': 1,
             'lang': 'en',
             'lock': True}
-        provider = DotpayProvider(self.payment, **params)
-        response = provider.process_data(request)
+        provider = DotpayProvider(**params)
+        response = provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponse)
 
     def test_incorrect_process_data(self):
         """DotpayProvider.process_data() checks POST signature"""
         request = MagicMock()
         request.POST = PROCESS_POST
-        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
-        response = provider.process_data(request)
+        provider = DotpayProvider(seller_id='123', pin=PIN)
+        response = provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponseForbidden)

@@ -28,12 +28,12 @@ class PaymentForm(BasePaymentForm):
             try:
                 self.charge = stripe.Charge.create(
                     capture=False,
-                    amount= int(self.payment.total * 100),
+                    amount=int(self.payment.total * 100),
                     currency=self.payment.currency,
                     card=data['stripeToken'],
-                    description='%s %s' % (self.payment.billing_last_name,
-                                           self.payment.billing_first_name)
-                )
+                    description='%s %s' % (
+                        self.payment.billing_last_name,
+                        self.payment.billing_first_name))
             except stripe.CardError as e:
                 # The card has been declined
                 self._errors['__all__'] = self.error_class([e.message])

@@ -55,15 +55,13 @@ class BasicProvider(object):
     '''
     _method = 'post'
 
-    def _action(self):
-        return self.get_return_url()
-    _action = property(_action)
+    def get_action(self, payment):
+        return self.get_return_url(payment)
 
-    def __init__(self, payment, capture=True):
+    def __init__(self, capture=True):
         self._capture = capture
-        self.payment = payment
 
-    def get_hidden_fields(self):
+    def get_hidden_fields(self, payment):
         '''
         Converts a payment into a dict containing transaction data. Use
         get_form instead to get a form suitable for templates.
@@ -73,45 +71,48 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_form(self, data=None):
+    def get_form(self, payment, data=None):
         '''
         Converts *payment* into a form suitable for Django templates.
         '''
         from .forms import PaymentForm
-        return PaymentForm(self.get_hidden_fields(),
-                           self._action, self._method)
+        return PaymentForm(self.get_hidden_fields(payment),
+                           self.get_action(payment), self._method)
 
-    def process_data(self, request):
+    def process_data(self, payment, request):
         '''
         Process callback request from a payment provider.
         '''
         raise NotImplementedError()
 
-    def get_token_from_request(self, request):
+    def get_token_from_request(self, payment, request):
         '''
         Return payment token from provider request.
         '''
         raise NotImplementedError()
 
-    def get_return_url(self, extra_data=None):
-        payment_link = self.payment.get_process_url()
+    def get_return_url(self, payment, extra_data=None):
+        payment_link = payment.get_process_url()
         url = urljoin(get_base_url(), payment_link)
         if extra_data:
             qs = urlencode(extra_data)
             return url + '?' + qs
         return url
 
-    def capture(self, amount=None):
+    def capture(self, payment, amount=None):
         raise NotImplementedError()
 
-    def release(self):
+    def release(self, payment):
         raise NotImplementedError()
 
-    def refund(self):
+    def refund(self, payment):
         raise NotImplementedError()
 
 
-def provider_factory(variant, payment=None):
+PROVIDER_CACHE = {}
+
+
+def provider_factory(variant):
     '''
     Return the provider instance based on variant
     '''
@@ -120,22 +121,12 @@ def provider_factory(variant, payment=None):
     if not handler:
         raise ValueError('Payment variant does not exist: %s' %
                          (variant,))
-    path = handler.split('.')
-    if len(path) < 2:
-        raise ValueError('Payment variant uses an invalid payment module: %s' %
-                         (variant,))
-    module_path = str('.'.join(path[:-1]))
-    class_name = str(path[-1])
-    module = __import__(module_path, globals(), locals(), [class_name])
-    class_ = getattr(module, class_name)
-    return class_(payment, **config)
-
-
-def factory(payment):
-    '''
-    Takes the payment object and returns an appropriate provider instance.
-    '''
-    return provider_factory(payment.variant, payment)
+    if not variant in PROVIDER_CACHE:
+        module_path, class_name = handler.rsplit('.', 1)
+        module = __import__(module_path, globals(), locals(), [class_name])
+        class_ = getattr(module, class_name)
+        PROVIDER_CACHE[variant] = class_(**config)
+    return PROVIDER_CACHE[variant]
 
 
 def get_payment_model():

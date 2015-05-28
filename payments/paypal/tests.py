@@ -48,5 +48,5 @@ class TestPaypalProvider(TestCase):
 
     def test_payload_serializable(self):
         payment = Payment()
-        provider = PaypalProvider(payment, secret=SECRET, client_id=CLIENT_ID)
-        json.dumps(provider.get_product_data())
+        provider = PaypalProvider(secret=SECRET, client_id=CLIENT_ID)
+        json.dumps(provider.get_product_data(payment))
