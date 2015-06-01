@@ -14,7 +14,7 @@ except ImportError:
     def atomic(func):
         return func
 
-from . import factory, get_payment_model, provider_factory
+from . import get_payment_model, provider_factory
 
 
 @csrf_exempt
@@ -31,7 +31,7 @@ def process_data(request, token, provider=None):
         provider.payment = payment
     else:
         try:
-            provider = factory(payment)
+            provider = provider_factory(payment.variant)
         except ValueError:
             raise Http404('No such payment')
     return provider.process_data(request)
