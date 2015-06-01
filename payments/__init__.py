@@ -121,9 +121,10 @@ def provider_factory(variant):
     if not handler:
         raise ValueError('Payment variant does not exist: %s' %
                          (variant,))
-    if not variant in PROVIDER_CACHE:
+    if variant not in PROVIDER_CACHE:
         module_path, class_name = handler.rsplit('.', 1)
-        module = __import__(str(module_path), globals(), locals(), [class_name])
+        module = __import__(
+            str(module_path), globals(), locals(), [str(class_name)])
         class_ = getattr(module, class_name)
         PROVIDER_CACHE[variant] = class_(**config)
     return PROVIDER_CACHE[variant]
