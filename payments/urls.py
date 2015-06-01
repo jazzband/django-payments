@@ -34,7 +34,7 @@ def process_data(request, token, provider=None):
             provider = provider_factory(payment.variant)
         except ValueError:
             raise Http404('No such payment')
-    return provider.process_data(request)
+    return provider.process_data(payment, request)
 
 
 @csrf_exempt
@@ -46,7 +46,7 @@ def static_callback(request, variant):
     except ValueError:
         raise Http404('No such provider')
 
-    token = provider.get_token_from_request(request)
+    token = provider.get_token_from_request(request=request, payment=None)
     if not token:
         raise Http404('Invalid response')
     return process_data(request, token, provider)

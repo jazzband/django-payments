@@ -33,7 +33,8 @@ def authorize(fun):
     @wraps(fun)
     def wrapper(*args, **kwargs):
         self = args[0]
-        self.access_token = self.get_access_token()
+        payment = args[1]
+        self.access_token = self.get_access_token(payment)
         try:
             response = fun(*args, **kwargs)
         except HTTPError as e:
@@ -207,8 +208,8 @@ class PaypalProvider(BasicProvider):
         links = self._get_links(payment)
         redirect_to = links.get('approval_url')
         if not redirect_to:
-            payment = self.create_payment(payment)
-            payment.transaction_id = payment['id']
+            payment_data = self.create_payment(payment)
+            payment.transaction_id = payment_data['id']
             links = self._get_links(payment)
             redirect_to = links['approval_url']
         payment.change_status('waiting')
@@ -240,14 +241,14 @@ class PaypalProvider(BasicProvider):
 
     def create_payment(self, payment, extra_data=None):
         product_data = self.get_product_data(payment, extra_data)
-        payment = self.post(self.payments_url, data=product_data)
+        payment = self.post(payment, self.payments_url, data=product_data)
         return payment
 
     def execute_payment(self, payment, payer_id):
         post = {'payer_id': payer_id}
         links = self._get_links(payment)
         execute_url = links['execute']['href']
-        return self.post(execute_url, data=post)
+        return self.post(payment, execute_url, data=post)
 
     def get_amount_data(self, payment, amount=None):
         return {
@@ -266,7 +267,7 @@ class PaypalProvider(BasicProvider):
         links = self._get_links(payment)
         url = links['capture']['href']
         try:
-            capture = self.post(url, data=capture_data)
+            capture = self.post(payment, url, data=capture_data)
         except HTTPError as e:
             try:
                 error = e.response.json()
@@ -288,7 +289,7 @@ class PaypalProvider(BasicProvider):
     def release(self, payment):
         links = self._get_links(payment)
         url = links['void']['href']
-        self.post(url)
+        self.post(payment, url)
 
     def refund(self, payment, amount=None):
         if amount is None:
@@ -297,7 +298,7 @@ class PaypalProvider(BasicProvider):
         refund_data = {'amount': amount_data}
         links = self._get_links(payment)
         url = links['refund']['href']
-        self.post(url, data=refund_data)
+        self.post(payment, url, data=refund_data)
         payment.change_status('refunded')
         return amount
 
@@ -315,7 +316,8 @@ class PaypalCardProvider(PaypalProvider):
             raise RedirectNeeded(payment.get_success_url())
         return form
 
-    def get_product_data(self, payment, extra_data):
+    def get_product_data(self, payment, extra_data=None):
+        extra_data = extra_data or {}
         data = self.get_transactions_data(payment)
         year = extra_data['expiration'].year
         month = extra_data['expiration'].month
