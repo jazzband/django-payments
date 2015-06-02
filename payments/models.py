@@ -164,12 +164,13 @@ class BasePayment(models.Model):
         if self.status != 'confirmed':
             raise ValueError(
                 'Only charged payments can be refunded.')
-        if amount > self.captured_amount:
-            raise ValueError(
-                'Refund amount can not be greater then captured amount')
-        provider = provider_factory(self.variant)
-        amount = provider.refund(self, amount)
-        self.captured_amount -= amount
+        if amount:
+            if amount > self.captured_amount:
+                raise ValueError(
+                    'Refund amount can not be greater then captured amount')
+            provider = provider_factory(self.variant)
+            amount = provider.refund(self, amount)
+            self.captured_amount -= amount
         if self.captured_amount == 0 and self.status != 'refunded':
             self.change_status('refunded')
         self.save()
