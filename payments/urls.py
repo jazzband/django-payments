@@ -27,9 +27,7 @@ def process_data(request, token, provider=None):
     '''
     Payment = get_payment_model()
     payment = get_object_or_404(Payment, token=token)
-    if provider:
-        provider.payment = payment
-    else:
+    if not provider:
         try:
             provider = provider_factory(payment.variant)
         except ValueError:
