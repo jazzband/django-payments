@@ -40,8 +40,7 @@ class DotpayProvider(BasicProvider):
             raise ImproperlyConfigured(
                 'Dotpay does not support pre-authorization.')
 
-    @property
-    def _action(self):
+    def get_action(self, payment):
         return self.endpoint
 
     def get_hidden_fields(self, payment):

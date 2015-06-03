@@ -10,6 +10,7 @@ try:
 except ImportError:
     from mock import MagicMock
 
+from django.forms import ValidationError
 from payments import RedirectNeeded, PaymentError
 
 from . import DummyProvider
@@ -85,6 +86,16 @@ class TestDummy3DSProvider(TestCase):
         with self.assertRaises(RedirectNeeded) as exc:
             provider.get_form(self.payment, data)
             self.assertEqual(exc.args[0], self.payment.get_success_url())
+
+    def test_provider_raises_verification_result_needed_on_success(self):
+        provider = DummyProvider()
+        data = {
+            'status': 'waiting',
+            'fraud_status': 'unknown',
+            'gateway_response': '3ds-redirect'}
+
+        form = provider.get_form(self.payment, data)
+        self.assertFalse(form.is_valid())
 
     def test_provider_supports_3ds_redirect(self):
         provider = DummyProvider()

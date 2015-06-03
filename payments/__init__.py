@@ -105,7 +105,7 @@ class BasicProvider(object):
     def release(self, payment):
         raise NotImplementedError()
 
-    def refund(self, payment):
+    def refund(self, payment, amount=None):
         raise NotImplementedError()
 
 
