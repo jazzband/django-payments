@@ -10,6 +10,7 @@ if hasattr(django, 'setup'):
 
 from . import provider_factory
 from .models import BasePayment
+from .authorizenet.tests import TestAuthorizeNetProvider
 from .dotpay.tests import TestDotpayProvider
 from .paypal.tests import TestPaypalProvider
 from .stripe.tests import TestStripeProvider
@@ -18,7 +19,8 @@ from .dummy.tests import TestDummy3DSProvider
 
 
 __all__ = ['TestDotpayProvider', 'TestGoogleWalletProvider',
-           'TestPaypalProvider', 'TestStripeProvider', 'TestDummy3DSProvider']
+           'TestPaypalProvider', 'TestStripeProvider', 'TestDummy3DSProvider',
+           'TestAuthorizeNetProvider']
 
 
 class TestProviderFactory(TestCase):
