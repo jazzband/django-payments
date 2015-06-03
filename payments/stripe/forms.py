@@ -44,4 +44,5 @@ class PaymentForm(BasePaymentForm):
     def save(self):
         self.charge.capture()
         self.payment.transaction_id = self.charge.id
+        self.payment.captured_amount = self.payment.total
         self.payment.change_status('confirmed')

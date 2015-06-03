@@ -22,9 +22,11 @@ class PaymentForm(CreditCardPaymentForm):
                     self.payment, data)
                 data = response.text.split('|')
                 if response.ok and RESPONSE_STATUS.get(data[0], False):
+                    status = RESPONSE_STATUS.get(data[0], 'error')
                     self.payment.transaction_id = data[6]
-                    self.payment.change_status(
-                        RESPONSE_STATUS.get(data[0], 'error'))
+                    if status == 'confirmed':
+                        self.payment.captured_amount = self.payment.total
+                    self.payment.change_status(status)
                 else:
                     errors = [data[3]]
                     self._errors['__all__'] = self.error_class(errors)

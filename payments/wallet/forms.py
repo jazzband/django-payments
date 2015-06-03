@@ -43,5 +43,6 @@ class ProcessPaymentForm(forms.Form):
 
     def save(self):
         self.payment.transaction_id = self.order_id
+        self.payment.captured_amount = self.payment.total
         self.payment.change_status('confirmed')
         self.payment.save()

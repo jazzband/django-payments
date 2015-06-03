@@ -92,6 +92,7 @@ class SagepayProvider(BasicProvider):
             # If the payment is not in waiting state, we probably have a page reload.
             # We should neither throw 404 nor alter the payment again in such case.
             if data['Status'] == 'OK':
+                payment.captured_amount = payment.total
                 payment.change_status('confirmed')
                 return redirect(success_url)
             else:
