@@ -114,3 +114,11 @@ class TestGoogleWalletProvider(TestCase):
         data = jwt.decode(
             payload, SELLER_SECRET, audience='Google', issuer=SELLER_ID)
         self.assertEqual(data['request']['price'], '100')
+
+    def test_form_contains_additional_media(self):
+        payment = Payment()
+        library = 'http://example.com/checkout/lib.js'
+        provider = GoogleWalletProvider(
+            seller_id=SELLER_ID, seller_secret=SELLER_SECRET, library=library)
+        form = provider.get_form(payment)
+        self.assertTrue(library in str(form.media))
