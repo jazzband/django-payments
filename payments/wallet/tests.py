@@ -121,4 +121,4 @@ class TestGoogleWalletProvider(TestCase):
         provider = GoogleWalletProvider(
             seller_id=SELLER_ID, seller_secret=SELLER_SECRET, library=library)
         form = provider.get_form(payment)
-        self.assertTrue(library in str(form.media))
+        self.assertIn(library, str(form.media))

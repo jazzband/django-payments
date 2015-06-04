@@ -16,7 +16,7 @@ class PaymentForm(forms.Form):
     '''
     Payment form, suitable for Django templates.
 
-    When displaying the form remeber to use *action* and *method*.
+    When displaying the form remember to use *action* and *method*.
     '''
 
     #: Form action URL for template use
