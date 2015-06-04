@@ -21,7 +21,7 @@ PROCESS_DATA = {
 class Payment(MagicMock):
 
     id = 1
-    variant = 'authorizenet'
+    variant = 'braintree'
     currency = 'USD'
     total = 100
     status = 'waiting'
