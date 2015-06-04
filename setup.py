@@ -13,6 +13,7 @@ PACKAGES = [
     'payments.dotpay',
     'payments.paypal',
     'payments.sagepay',
+    'payments.sofort',
     'payments.stripe',
     'payments.wallet']
 
