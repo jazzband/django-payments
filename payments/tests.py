@@ -13,6 +13,7 @@ from .forms import CreditCardPaymentFormWithName, PaymentForm
 from .models import BasePayment
 
 from .authorizenet.tests import TestAuthorizeNetProvider
+from .braintree.tests import TestBraintreeProvider
 from .dotpay.tests import TestDotpayProvider
 from .paypal.tests import TestPaypalProvider
 from .stripe.tests import TestStripeProvider
@@ -22,7 +23,7 @@ from .dummy.tests import TestDummy3DSProvider
 
 __all__ = ['TestDotpayProvider', 'TestGoogleWalletProvider',
            'TestPaypalProvider', 'TestStripeProvider', 'TestDummy3DSProvider',
-           'TestAuthorizeNetProvider']
+           'TestAuthorizeNetProvider', 'TestBraintreeProvider']
 
 
 class TestProviderFactory(TestCase):

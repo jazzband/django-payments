@@ -40,14 +40,14 @@ This backend does not support fraud detection.
 Braintree
 ---------
 
-.. class:: payments.braintree.BraintreeProvider(merchant_id, public_key, private_key[, endpoint='api.sandbox.braintreegateway.com'])
+.. class:: payments.braintree.BraintreeProvider(merchant_id, public_key, private_key[, sandbox=True])
 
    This backend implements payments using `Braintree <https://www.braintreepayments.com/>`_.
 
    :param merchant_id: Merchant ID assigned by Braintree
    :param public_key: Public key assigned by Braintree
    :param private_key: Private key assigned by Braintree
-   :param endpoint: The API endpoint to use. For the production environment, use ``'api.braintreegateway.com'`` instead
+   :param sandbox: Whether to use a sandbox environment for testing
 
 Example::
 
@@ -57,7 +57,8 @@ Example::
               'merchant_id': '112233445566',
               'public_key': '1234567890abcdef',
               'private_key': 'abcdef123456',
-              'endpoint': 'api.braintreegateway.com'})}
+              'endpoint': 'api.sandbox.braintreegateway.com',
+              'auth_url: 'https://auth.sandbox.venmo.com'})}
 
 
 This backend does not support fraud detection.
