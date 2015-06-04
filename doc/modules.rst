@@ -57,8 +57,7 @@ Example::
               'merchant_id': '112233445566',
               'public_key': '1234567890abcdef',
               'private_key': 'abcdef123456',
-              'endpoint': 'api.sandbox.braintreegateway.com',
-              'auth_url: 'https://auth.sandbox.venmo.com'})}
+              'sandbox': True})}
 
 
 This backend does not support fraud detection.
