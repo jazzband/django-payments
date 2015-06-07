@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from django.core.exceptions import ImproperlyConfigured
-from django.shortcuts import redirect
 
 from .. import BasicProvider, RedirectNeeded
 from .forms import PaymentForm
@@ -20,22 +19,16 @@ class StripeProvider(BasicProvider):
                 'Stripe does not support pre-authorization.')
 
     def get_form(self, payment, data=None):
+        if payment.status == 'waiting':
+            payment.change_status('input')
         kwargs = {
             'data': data,
             'payment': payment,
             'provider': self,
-            'action': '',
             'hidden_inputs': False}
         form = PaymentForm(**kwargs)
 
         if form.is_valid():
             form.save()
             raise RedirectNeeded(payment.get_success_url())
-        else:
-            payment.change_status('input')
         return form
-
-    def process_data(self, request, payment):
-        if payment.status == 'confirmed':
-            return redirect(payment.get_success_url())
-        return redirect(payment.get_failure_url())
