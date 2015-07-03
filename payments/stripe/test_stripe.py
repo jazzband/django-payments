@@ -3,7 +3,7 @@ from mock import patch, MagicMock
 from unittest import TestCase
 import stripe
 
-from . import StripeProvider
+from payments.stripe import StripeProvider
 
 from payments import RedirectNeeded
 

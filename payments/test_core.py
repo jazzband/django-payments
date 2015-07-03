@@ -3,27 +3,9 @@ from decimal import Decimal
 from unittest import TestCase
 from mock import patch, Mock
 
-import django
-
-if hasattr(django, 'setup'):
-    django.setup()
-
 from . import provider_factory
 from .forms import CreditCardPaymentFormWithName, PaymentForm
 from .models import BasePayment
-
-from .authorizenet.tests import TestAuthorizeNetProvider
-from .braintree.tests import TestBraintreeProvider
-from .dotpay.tests import TestDotpayProvider
-from .paypal.tests import TestPaypalProvider
-from .stripe.tests import TestStripeProvider
-from .wallet.tests import TestGoogleWalletProvider
-from .dummy.tests import TestDummy3DSProvider
-
-
-__all__ = ['TestDotpayProvider', 'TestGoogleWalletProvider',
-           'TestPaypalProvider', 'TestStripeProvider', 'TestDummy3DSProvider',
-           'TestAuthorizeNetProvider', 'TestBraintreeProvider']
 
 
 class TestProviderFactory(TestCase):
