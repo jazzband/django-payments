@@ -154,13 +154,6 @@ class PaypalProvider(BasicProvider):
             self.set_response_data(payment, last_auth_response, is_auth=True)
             return '%s %s' % (data['token_type'], data['access_token'])
 
-    def get_link(self, name, data):
-        try:
-            links = filter(lambda url: url['rel'] == name, data['links'])
-        except KeyError:
-            return None
-        return next(links)['href']
-
     def get_transactions_items(self, payment):
         for purchased_item in payment.get_purchased_items():
             price = purchased_item.price.quantize(

@@ -34,5 +34,9 @@ class PaymentForm(CreditCardPaymentFormWithName):
                     self.payment.change_status('error')
                 else:
                     self.payment.transaction_id = data['id']
-                    self.payment.change_status('confirmed')
+                    if self.provider._capture:
+                        self.payment.captured_amount = self.payment.total
+                        self.payment.change_status('confirmed')
+                    else:
+                        self.payment.change_status('preauth')
         return cleaned_data
