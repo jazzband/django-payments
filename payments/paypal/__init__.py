@@ -39,11 +39,13 @@ def authorize(fun):
             response = fun(*args, **kwargs)
         except HTTPError as e:
             if e.response.status_code == 401:
-                last_auth_response = self.get_last_response(is_auth=True)
+                last_auth_response = self.get_last_response(
+                    payment, is_auth=True)
                 if 'access_token' in last_auth_response:
                     del last_auth_response['access_token']
-                    self.set_response_data(last_auth_response, is_auth=True)
-                self.access_token = self.get_access_token()
+                    self.set_response_data(
+                        payment, last_auth_response, is_auth=True)
+                self.access_token = self.get_access_token(payment)
                 response = fun(*args, **kwargs)
             else:
                 raise
@@ -219,8 +221,9 @@ class PaypalProvider(BasicProvider):
                 return redirect(payment.get_failure_url())
             else:
                 return redirect(success_url)
-        payment = self.execute_payment(payment, payer_id)
-        related_resources = payment['transactions'][0]['related_resources'][0]
+        execute_payment = self.execute_payment(payment, payer_id)
+        transaction = execute_payment['transactions'][0]
+        related_resources = transaction['related_resources'][0]
         resource_key = 'sale' if self._capture else 'authorization'
         authorization_links = related_resources[resource_key]['links']
         self.set_response_links(payment, authorization_links)
@@ -270,8 +273,11 @@ class PaypalProvider(BasicProvider):
                 raise e
             capture = {'state': 'completed'}
         state = capture['state']
-        if state in [
-                'completed', 'partially_captured', 'partially_refunded']:
+        if state == 'completed':
+            payment.change_status('confirmed')
+            return amount
+        elif state in [
+                'partially_captured', 'partially_refunded']:
             return amount
         elif state == 'pending':
             payment.change_status('waiting')
@@ -287,7 +293,7 @@ class PaypalProvider(BasicProvider):
     def refund(self, payment, amount=None):
         if amount is None:
             amount = payment.captured_amount
-        amount_data = self.get_amount_data(amount)
+        amount_data = self.get_amount_data(payment, amount)
         refund_data = {'amount': amount_data}
         links = self._get_links(payment)
         url = links['refund']['href']
