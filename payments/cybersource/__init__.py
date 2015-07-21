@@ -152,7 +152,7 @@ class CyberSourceProvider(BasicProvider):
             cc_data = signing.dumps(cc_data)
             payload = {
                 'PaReq': response.payerAuthEnrollReply.paReq,
-                'TermUrl': self.get_return_url({'token': cc_data}),
+                'TermUrl': self.get_return_url(payment, {'token': cc_data}),
                 'MD': xid}
             form = BaseForm(data=payload, action=action, autosubmit=True)
             raise ExternalPostNeeded(form)
