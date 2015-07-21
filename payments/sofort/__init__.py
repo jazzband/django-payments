@@ -53,7 +53,7 @@ class SofortProvider(BasicProvider):
                         doc['errors']['error']['field'],
                         doc['errors']['error']['message']))
 
-    def process_data(self, request, payment):
+    def process_data(self, payment, request):
         if not 'trans' in request.GET:
             return HttpResponseForbidden('FAILED')
         transaction_id = request.GET.get('trans')
@@ -93,7 +93,7 @@ class SofortProvider(BasicProvider):
                 'holder': sender_data['holder'],
                 'bic': sender_data['bic'],
                 'iban': sender_data['iban'],
-                'title': 'Refund Contest %s' % payment.contest.slug,
+                'title': 'Refund %s' % payment.description,
                 'transaction_id': payment.transaction_id,
                 'amount': amount,
                 'comment': 'User requested a refund'})
@@ -102,5 +102,5 @@ class SofortProvider(BasicProvider):
         # to start a online transaction one needs to upload the "pain"
         # data to his bank account
         payment.message = json.dumps(doc)
-        payment.save()
+        payment.change_status('refunded')
         return amount

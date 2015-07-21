@@ -33,7 +33,6 @@ class Payment(MagicMock):
         self.status = status
 
 
-
 class TestSagepayProvider(TestCase):
 
     def setUp(self):
