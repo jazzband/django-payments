@@ -104,6 +104,17 @@ class TestPaypalProvider(TestCase):
         self.assertEqual(self.payment.status, 'confirmed')
 
     @patch('requests.post')
+    def test_provider_handles_captured_payment(self, mocked_post):
+        data = MagicMock()
+        data.return_value = {
+            'name': 'AUTHORIZATION_ALREADY_COMPLETED'}
+        response = MagicMock()
+        response.json = data
+        mocked_post.side_effect = HTTPError(response=response)
+        self.provider.capture(self.payment)
+        self.assertEqual(self.payment.status, 'confirmed')
+
+    @patch('requests.post')
     def test_provider_refunds_payment(self, mocked_post):
         data = MagicMock()
         data.return_value = {
