@@ -1,6 +1,7 @@
 [run]
 branch = 1
 omit =
+    payments/test_*.py
     payments/*/test_*.py
 source = payments
 
