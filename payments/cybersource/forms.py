@@ -61,7 +61,7 @@ class PaymentForm(CreditCardPaymentFormWithName):
                 self.payment.attrs.fingerprint_session_id = fingerprint
             if not self.payment.transaction_id:
                 try:
-                    self.provider.charge(cleaned_data)
+                    self.provider.charge(self.payment, cleaned_data)
                 except PaymentError as e:
                     self._errors['__all__'] = self.error_class([e.args[0]])
             else:

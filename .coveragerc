@@ -1,0 +1,11 @@
+[run]
+branch = 1
+omit =
+    payments/*/test_*.py
+source = payments
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    return NotImplemented

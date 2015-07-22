@@ -33,7 +33,7 @@ Installation
 
           def get_purchased_items(self):
               # you'll probably want to retrieve these from an associated order
-              yield PurchasedItem(name='The Hound of the Baservilles', sku='BSKV',
+              yield PurchasedItem(name='The Hound of the Baskervilles', sku='BSKV',
                                   quantity=9, price=Decimal(10), currency='USD')
 
    The :meth:`get_purchased_items` method should return an iterable yielding instances of :class:`payments.PurchasedItem`.

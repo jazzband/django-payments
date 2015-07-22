@@ -5,7 +5,7 @@ from unittest import TestCase
 from django.http import HttpResponse, HttpResponseForbidden
 from mock import MagicMock
 
-from .forms import ACCEPTED
+from .forms import ACCEPTED, REJECTED
 from . import DotpayProvider
 
 VARIANT = 'dotpay'
@@ -50,6 +50,7 @@ class Payment(MagicMock):
     variant = VARIANT
     currency = 'USD'
     total = 100
+    status = 'waiting'
 
     def get_process_url(self):
         return 'http://example.com'
@@ -60,6 +61,9 @@ class Payment(MagicMock):
     def get_success_url(self):
         return 'http://success.com'
 
+    def change_status(self, status):
+        self.status = status
+
 
 class TestDotpayProvider(TestCase):
 
@@ -68,10 +72,10 @@ class TestDotpayProvider(TestCase):
 
     def test_get_hidden_fields(self):
         """DotpayProvider.get_hidden_fields() returns a dictionary"""
-        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
-        self.assertEqual(type(provider.get_hidden_fields()), dict)
+        provider = DotpayProvider(seller_id='123', pin=PIN)
+        self.assertEqual(type(provider.get_hidden_fields(self.payment)), dict)
 
-    def test_process_data(self):
+    def test_process_data_payment_accepted(self):
         """DotpayProvider.process_data() returns a correct HTTP response"""
         request = MagicMock()
         request.POST = get_post_with_md5(PROCESS_POST)
@@ -82,14 +86,33 @@ class TestDotpayProvider(TestCase):
             'channel': 1,
             'lang': 'en',
             'lock': True}
-        provider = DotpayProvider(self.payment, **params)
-        response = provider.process_data(request)
+        provider = DotpayProvider(**params)
+        response = provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponse)
+        self.assertEqual(self.payment.status, 'confirmed')
+
+    def test_process_data_payment_rejected(self):
+        """DotpayProvider.process_data() returns a correct HTTP response"""
+        data = dict(PROCESS_POST)
+        data.update({'t_status': str(REJECTED)})
+        request = MagicMock()
+        request.POST = get_post_with_md5(data)
+        params = {
+            'seller_id': 123,
+            'pin': PIN,
+            'endpoint': 'test.endpoint.com',
+            'channel': 1,
+            'lang': 'en',
+            'lock': True}
+        provider = DotpayProvider(**params)
+        response = provider.process_data(self.payment, request)
+        self.assertEqual(type(response), HttpResponse)
+        self.assertEqual(self.payment.status, 'rejected')
 
     def test_incorrect_process_data(self):
         """DotpayProvider.process_data() checks POST signature"""
         request = MagicMock()
         request.POST = PROCESS_POST
-        provider = DotpayProvider(self.payment, seller_id='123', pin=PIN)
-        response = provider.process_data(request)
+        provider = DotpayProvider(seller_id='123', pin=PIN)
+        response = provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponseForbidden)

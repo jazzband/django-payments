@@ -1,13 +1,13 @@
 language: python
 python:
-- 2.7
-- 3.2
-- 3.3
-- 3.4
+  - 2.7
+  - 3.3
+  - 3.4
 install:
-- python setup.py install
+  - python setup.py install
+  - pip install coverage
+  - pip install codecov
 script:
-- export DJANGO_SETTINGS_MODULE=test_settings
-- python setup.py test
-notifications:
-  webhooks: https://webhooks.gitter.im/e/af18bf2decb40329066b
+  - coverage run setup.py test
+after_success:
+  - codecov

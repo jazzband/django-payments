@@ -11,7 +11,7 @@ class PaymentForm(BasePaymentForm):
 
     def __init__(self, *args, **kwargs):
         super(PaymentForm, self).__init__(*args, **kwargs)
-        widget = WalletWidget(provider=self.provider)
+        widget = WalletWidget(provider=self.provider, payment=self.payment)
         self.fields['payment'] = forms.CharField(widget=widget, required=False)
 
 
@@ -43,5 +43,6 @@ class ProcessPaymentForm(forms.Form):
 
     def save(self):
         self.payment.transaction_id = self.order_id
+        self.payment.captured_amount = self.payment.total
         self.payment.change_status('confirmed')
         self.payment.save()

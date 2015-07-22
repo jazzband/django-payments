@@ -20,7 +20,8 @@ class PaymentForm(CreditCardPaymentFormWithName):
                 request_data = {'type': card_type}
                 request_data.update(cleaned_data)
                 try:
-                    data = self.provider.create_payment(cleaned_data)
+                    data = self.provider.create_payment(
+                        self.payment, cleaned_data)
                 except HTTPError as e:
                     response = e.response
                     if response.status_code == 400:
@@ -33,5 +34,9 @@ class PaymentForm(CreditCardPaymentFormWithName):
                     self.payment.change_status('error')
                 else:
                     self.payment.transaction_id = data['id']
-                    self.payment.change_status('confirmed')
+                    if self.provider._capture:
+                        self.payment.captured_amount = self.payment.total
+                        self.payment.change_status('confirmed')
+                    else:
+                        self.payment.change_status('preauth')
         return cleaned_data

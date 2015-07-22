@@ -60,4 +60,5 @@ class BraintreePaymentForm(CreditCardPaymentFormWithName):
     def save(self):
         braintree.Transaction.submit_for_settlement(self.transaction_id)
         self.payment.transaction_id = self.transaction_id
+        self.payment.captured_amount = self.payment.total
         self.payment.change_status('confirmed')

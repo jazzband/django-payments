@@ -67,6 +67,7 @@ class ProcessPaymentForm(forms.Form):
         self.payment.save()
         payment_status = self.payment.status
         if status == ACCEPTED:
+            self.payment.captured_amount = self.payment.total
             self.payment.change_status('confirmed')
         elif ((status == NO_MORE_CONFIRMATION and payment_status == 'waiting')
               or status == REJECTED or status == CANCELED):

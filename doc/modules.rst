@@ -37,16 +37,17 @@ Example::
 
 This backend does not support fraud detection.
 
-Braintree (Python 2 only)
--------------------------
+Braintree
+---------
 
-.. class:: payments.braintree.BraintreeProvider(merchant_id, public_key, private_key)
+.. class:: payments.braintree.BraintreeProvider(merchant_id, public_key, private_key[, sandbox=True])
 
    This backend implements payments using `Braintree <https://www.braintreepayments.com/>`_.
 
    :param merchant_id: Merchant ID assigned by Braintree
    :param public_key: Public key assigned by Braintree
    :param private_key: Private key assigned by Braintree
+   :param sandbox: Whether to use a sandbox environment for testing
 
 Example::
 
@@ -55,7 +56,8 @@ Example::
           'braintree': ('payments.braintree.BraintreeProvider', {
               'merchant_id': '112233445566',
               'public_key': '1234567890abcdef',
-              'private_key': 'abcdef123456'})}
+              'private_key': 'abcdef123456',
+              'sandbox': True})}
 
 
 This backend does not support fraud detection.

@@ -1,4 +1,5 @@
 .*
+!.coveragerc
 !.gitignore
 !.travis.yml
 *.swp

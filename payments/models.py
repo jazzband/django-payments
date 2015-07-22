@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from . import factory
+from . import provider_factory
 
 DEFAULT_PAYMENT_STATUS_CHOICES = (
     ('waiting', _('Waiting for confirmation')),
@@ -127,8 +127,8 @@ class BasePayment(models.Model):
         return self.variant
 
     def get_form(self, data=None):
-        provider = factory(self)
-        return provider.get_form(data=data)
+        provider = provider_factory(self.variant)
+        return provider.get_form(self, data=data)
 
     def get_purchased_items(self):
         return []
@@ -146,8 +146,8 @@ class BasePayment(models.Model):
         if self.status != 'preauth':
             raise ValueError(
                 'Only pre-authorized payments can be captured.')
-        provider = factory(self)
-        amount = provider.capture(amount)
+        provider = provider_factory(self.variant)
+        amount = provider.capture(self, amount)
         if amount:
             self.captured_amount = amount
             self.change_status('confirmed')
@@ -156,20 +156,21 @@ class BasePayment(models.Model):
         if self.status != 'preauth':
             raise ValueError(
                 'Only pre-authorized payments can be released.')
-        provider = factory(self)
-        provider.release()
+        provider = provider_factory(self.variant)
+        provider.release(self)
         self.change_status('refunded')
 
     def refund(self, amount=None):
         if self.status != 'confirmed':
             raise ValueError(
                 'Only charged payments can be refunded.')
-        if amount > self.captured_amount:
-            raise ValueError(
-                'Refund amount can not be greater then captured amount')
-        provider = factory(self)
-        amount = provider.refund(amount)
-        self.captured_amount -= amount
+        if amount:
+            if amount > self.captured_amount:
+                raise ValueError(
+                    'Refund amount can not be greater then captured amount')
+            provider = provider_factory(self.variant)
+            amount = provider.refund(self, amount)
+            self.captured_amount -= amount
         if self.captured_amount == 0 and self.status != 'refunded':
             self.change_status('refunded')
         self.save()
