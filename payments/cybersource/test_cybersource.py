@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
+from decimal import Decimal
 from unittest import TestCase
+from django.core import signing
 from mock import patch, MagicMock
 
 from . import CyberSourceProvider, AUTHENTICATE_REQUIRED, ACCEPTED, \
     TRANSACTION_SETTLED
-from payments import RedirectNeeded, ExternalPostNeeded
+from payments import RedirectNeeded, ExternalPostNeeded, PurchasedItem
 
 MERCHANT_ID = 'abcd1234'
 PASSWORD = '1234abdd1234abcd'
@@ -42,6 +44,12 @@ class Payment(MagicMock):
     def change_status(self, status, message=''):
         self.status = status
         self.message = message
+
+    def get_purchased_items(self):
+        return [
+            PurchasedItem(
+                name='foo', quantity=Decimal('10'), price=Decimal('20'),
+                currency='USD', sku='bar')]
 
 
 class TestCybersourceProvider(TestCase):
@@ -106,3 +114,78 @@ class TestCybersourceProvider(TestCase):
         mocked_request.return_value = response
         self.provider.capture(self.payment)
         self.assertEqual(self.payment.status, 'confirmed')
+
+    @patch.object(CyberSourceProvider, '_make_request')
+    def test_provider_refunds_payment(self, mocked_request):
+        self.payment.captured_amount = self.payment.total
+        response = MagicMock()
+        response.reasonCode = ACCEPTED
+        mocked_request.return_value = response
+        amount = self.provider.refund(self.payment)
+        self.assertEqual(self.payment.total, amount)
+
+    @patch.object(CyberSourceProvider, '_make_request')
+    def test_provider_releases_payment(self, mocked_request):
+        transaction_id = 123
+        response = MagicMock()
+        response.requestID = transaction_id
+        response.reasonCode = ACCEPTED
+        mocked_request.return_value = response
+        amount = self.provider.release(self.payment)
+        self.assertEqual(self.payment.transaction_id, transaction_id)
+
+    @patch('payments.cybersource.redirect')
+    @patch.object(CyberSourceProvider, '_make_request')
+    def test_provider_redirects_on_success_captured_payment(
+            self, mocked_request, mocked_redirect):
+        transaction_id = 1234
+        xid = 'abc'
+        self.payment.attrs.xid = xid
+
+        response = MagicMock()
+        response.requestID = transaction_id
+        response.reasonCode = ACCEPTED
+        mocked_request.return_value = response
+
+        request = MagicMock()
+        request.POST = {'MD': xid}
+        request.GET = {'token': signing.dumps({
+            'expiration': {'year': 2020, 'month': 9},
+            'name': 'John Doe',
+            'number': '371449635398431',
+            'cvv2': '123'
+        })}
+        self.provider.process_data(self.payment, request)
+        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.captured_amount, self.payment.total)
+        self.assertEqual(self.payment.transaction_id, transaction_id)
+
+    @patch('payments.cybersource.redirect')
+    @patch.object(CyberSourceProvider, '_make_request')
+    @patch('payments.cybersource.suds.client.Client', new=MagicMock())
+    def test_provider_redirects_on_success_preauth_payment(
+            self, mocked_request, mocked_redirect):
+        provider = CyberSourceProvider(
+            merchant_id=MERCHANT_ID, password=PASSWORD, org_id=ORG_ID,
+            capture=False)
+        transaction_id = 1234
+        xid = 'abc'
+        self.payment.attrs.xid = xid
+
+        response = MagicMock()
+        response.requestID = transaction_id
+        response.reasonCode = ACCEPTED
+        mocked_request.return_value = response
+
+        request = MagicMock()
+        request.POST = {'MD': xid}
+        request.GET = {'token': signing.dumps({
+            'expiration': {'year': 2020, 'month': 9},
+            'name': 'John Doe',
+            'number': '371449635398431',
+            'cvv2': '123'
+        })}
+        provider.process_data(self.payment, request)
+        self.assertEqual(self.payment.status, 'preauth')
+        self.assertEqual(self.payment.captured_amount, 0)
+        self.assertEqual(self.payment.transaction_id, transaction_id)

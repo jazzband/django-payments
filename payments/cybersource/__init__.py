@@ -83,7 +83,7 @@ class CyberSourceProvider(BasicProvider):
         return form
 
     def _change_status_to_confirmed(self, payment):
-        if payment.attrs.capture:
+        if self._capture:
             payment.captured_amount = payment.total
             payment.change_status('confirmed')
         else:
