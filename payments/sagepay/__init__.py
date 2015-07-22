@@ -33,20 +33,20 @@ class SagepayProvider(BasicProvider):
 
     def _aes_pad(self, crypt):
         padding = ""
-        padlength = 16 - (len(crypt) % 16)
+        padlength = 16 - (len(crypt.encode('utf-8')) % 16)
         for _i in range(1, padlength + 1):
             padding += chr(padlength)
         return crypt + padding
 
     def aes_enc(self, data):
         aes = AES.new(self._enckey, AES.MODE_CBC, self._enckey)
-        data = self._aes_pad(data.encode('utf-8'))
+        data = self._aes_pad(data)
         enc = aes.encrypt(data)
-        enc = "@" + binascii.hexlify(enc)
+        enc = b"@" + binascii.hexlify(enc)
         return enc
 
     def aes_dec(self, data):
-        data = data.lstrip('@').decode('utf-8')
+        data = data.lstrip(b'@').decode('utf-8')
         aes = AES.new(self._enckey, AES.MODE_CBC, self._enckey)
         dec = binascii.unhexlify(data)
         dec = aes.decrypt(dec)

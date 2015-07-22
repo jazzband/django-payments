@@ -83,6 +83,7 @@ class TestPaypalProvider(TestCase):
                 ]}
             post = MagicMock()
             post.json = data
+            post.status_code = 200
             mocked_post.return_value = post
             with self.assertRaises(RedirectNeeded) as exc:
                 self.provider.get_form(payment=self.payment)
@@ -99,6 +100,7 @@ class TestPaypalProvider(TestCase):
             'access_token': 'test_access_token'}
         post = MagicMock()
         post.json = data
+        post.status_code = 200
         mocked_post.return_value = post
         self.provider.capture(self.payment)
         self.assertEqual(self.payment.status, 'confirmed')
@@ -122,6 +124,7 @@ class TestPaypalProvider(TestCase):
             'access_token': 'test_access_token'}
         post = MagicMock()
         post.json = data
+        post.status_code = 200
         mocked_post.return_value = post
         self.provider.refund(self.payment)
         self.assertEqual(self.payment.status, 'refunded')
@@ -142,6 +145,7 @@ class TestPaypalProvider(TestCase):
             ]}
         post = MagicMock()
         post.json = data
+        post.status_code = 200
         mocked_post.return_value = post
 
         request = MagicMock()
@@ -167,6 +171,7 @@ class TestPaypalProvider(TestCase):
             ]}
         post = MagicMock()
         post.json = data
+        post.status_code = 200
         mocked_post.return_value = post
 
         request = MagicMock()
@@ -195,6 +200,7 @@ class TestPaypalProvider(TestCase):
         data.return_value = {'access_token': new_token, 'token_type': 'type'}
         response = MagicMock()
         response.json = data
+        response.status_code = 200
         mocked_post.side_effect = [
             HTTPError(response=response401), response, response]
 
@@ -225,6 +231,7 @@ class TestPaypalCardProvider(TestCase):
                 'access_token': 'test_access_token'}
             post = MagicMock()
             post.json = data
+            post.status_code = 200
             mocked_post.return_value = post
             with self.assertRaises(RedirectNeeded) as exc:
                 self.provider.get_form(
@@ -246,6 +253,7 @@ class TestPaypalCardProvider(TestCase):
                 'access_token': 'test_access_token'}
             post = MagicMock()
             post.json = data
+            post.status_code = 200
             mocked_post.return_value = post
             with self.assertRaises(RedirectNeeded) as exc:
                 provider.get_form(
