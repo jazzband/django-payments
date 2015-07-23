@@ -189,3 +189,30 @@ class TestCybersourceProvider(TestCase):
         self.assertEqual(self.payment.status, 'preauth')
         self.assertEqual(self.payment.captured_amount, 0)
         self.assertEqual(self.payment.transaction_id, transaction_id)
+
+    @patch('payments.cybersource.redirect')
+    @patch.object(CyberSourceProvider, '_make_request')
+    @patch('payments.cybersource.suds.client.Client', new=MagicMock())
+    def test_provider_redirects_on_failure(
+            self, mocked_request, mocked_redirect):
+        transaction_id = 1234
+        xid = 'abc'
+        self.payment.attrs.xid = xid
+
+        response = MagicMock()
+        response.requestID = transaction_id
+        response.reasonCode = 'test code'
+        mocked_request.return_value = response
+
+        request = MagicMock()
+        request.POST = {'MD': xid}
+        request.GET = {'token': signing.dumps({
+            'expiration': {'year': 2020, 'month': 9},
+            'name': 'John Doe',
+            'number': '371449635398431',
+            'cvv2': '123'
+        })}
+        self.provider.process_data(self.payment, request)
+        self.assertEqual(self.payment.status, 'error')
+        self.assertEqual(self.payment.captured_amount, 0)
+        self.assertEqual(self.payment.transaction_id, transaction_id)

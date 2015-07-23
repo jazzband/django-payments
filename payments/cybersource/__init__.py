@@ -440,8 +440,11 @@ class CyberSourceProvider(BasicProvider):
             payment, cc_data, request.POST.get('PaRes'))
         response = self._make_request(payment, params)
         payment.transaction_id = response.requestID
-        self._set_proper_payment_status_from_reason_code(
-            payment, response.reasonCode)
+        try:
+            self._set_proper_payment_status_from_reason_code(
+                payment, response.reasonCode)
+        except PaymentError as e:
+            pass
         if payment.status in ['confirmed', 'preauth']:
             return redirect(payment.get_success_url())
         else:
