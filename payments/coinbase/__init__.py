@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from collections import OrderedDict
 
 import hashlib
 import hmac
@@ -34,16 +35,16 @@ class CoinbaseProvider(BasicProvider):
 
     def get_checkout_code(self, payment):
         api_url = self.api_url % {'endpoint': self.endpoint}
-        data = {
-            'button': {
-                'name': payment.description,
-                'price_string': str(payment.total),
-                'price_currency_iso': payment.currency,
-                'callback_url': self.get_return_url(payment),
-                'success_url': payment.get_success_url(),
-                'cancel_url': payment.get_failure_url(),
-                'custom': self.get_custom_token(payment)}}
-
+        button_data = {
+            'name': payment.description,
+            'price_string': str(payment.total),
+            'price_currency_iso': payment.currency,
+            'callback_url': self.get_return_url(payment),
+            'success_url': payment.get_success_url(),
+            'cancel_url': payment.get_failure_url(),
+            'custom': self.get_custom_token(payment)}
+        # ordered dict for stable JSON output
+        data = {'button': OrderedDict(sorted(button_data.items()))}
         nonce = int(time.time() * 1e6)
         message = str(nonce) + api_url + json.dumps(data)
         signature = hmac.new(self.secret.encode(), message.encode(),
