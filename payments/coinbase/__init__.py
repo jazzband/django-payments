@@ -69,11 +69,8 @@ class CoinbaseProvider(BasicProvider):
         return {}
 
     def process_data(self, payment, request):
-        body = request.body
-        if not isinstance(request.body, str):
-            body = body.decode("utf-8")
         try:
-            results = json.loads(body)
+            results = json.loads(request.body)
         except (ValueError, TypeError):
             return HttpResponseForbidden('FAILED')
 
