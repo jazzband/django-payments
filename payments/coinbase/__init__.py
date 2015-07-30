@@ -39,7 +39,7 @@ class CoinbaseProvider(BasicProvider):
                 'name': payment.description,
                 'price_string': str(payment.total),
                 'price_currency_iso': payment.currency,
-                'callback_url': self.get_return_url(),
+                'callback_url': self.get_return_url(payment),
                 'success_url': payment.get_success_url(),
                 'cancel_url': payment.get_failure_url(),
                 'custom': self.get_custom_token(payment)}}
@@ -48,7 +48,6 @@ class CoinbaseProvider(BasicProvider):
         message = str(nonce) + api_url + json.dumps(data)
         signature = hmac.new(self.secret.encode(), message.encode(),
                              hashlib.sha256).hexdigest()
-
         headers = {
             'ACCESS_KEY': self.key,
             'ACCESS_SIGNATURE': signature,

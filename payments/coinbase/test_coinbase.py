@@ -6,10 +6,10 @@ from decimal import Decimal
 from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
-from mock import MagicMock
+from mock import MagicMock, patch
 
 from . import CoinbaseProvider
-
+from payments import RedirectNeeded
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
 KEY = 'abc123'
@@ -87,3 +87,21 @@ class TestCoinbaseProvider(TestCase):
         request.POST = {'id': '1234'}
         response = self.provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponseForbidden)
+
+    @patch('time.time')
+    @patch('requests.post')
+    def test_provider_returns_checkout_url(self, mocked_post, mocked_time):
+        code = '123abc'
+        signature = '44bc83c265a28e76402b9f23256431e49089b87bcbfcd950' \
+                    '72ce13467ff5477e'
+        url = 'https://sandbox.coinbase.com/checkouts/%s' % code
+        post = MagicMock()
+        post.json = MagicMock(return_value={'button': {'code': code}})
+        post.status_code = 200
+        mocked_post.return_value = post
+        mocked_time.return_value = 1
+
+        form = self.provider.get_form(self.payment)
+        self.assertEqual(form.action, url)
+        self.assertEqual(
+            mocked_post.call_args[1]['headers']['ACCESS_SIGNATURE'], signature)
