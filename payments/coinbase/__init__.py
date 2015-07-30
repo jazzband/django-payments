@@ -28,21 +28,21 @@ class CoinbaseProvider(BasicProvider):
             raise ImproperlyConfigured(
                 'Coinbase does not support pre-authorization.')
 
-    def get_custom_token(self):
-        value = 'coinbase-%s-%s' % (self.payment.token, self.key)
+    def get_custom_token(self, payment):
+        value = 'coinbase-%s-%s' % (payment.token, self.key)
         return hashlib.md5(value.encode('utf-8')).hexdigest()
 
-    def get_checkout_code(self):
+    def get_checkout_code(self, payment):
         api_url = self.api_url % {'endpoint': self.endpoint}
         data = {
             'button': {
-                'name': self.payment.description,
-                'price_string': str(self.payment.total),
-                'price_currency_iso': self.payment.currency,
+                'name': payment.description,
+                'price_string': str(payment.total),
+                'price_currency_iso': payment.currency,
                 'callback_url': self.get_return_url(),
-                'success_url': self.payment.get_success_url(),
-                'cancel_url': self.payment.get_failure_url(),
-                'custom': self.get_custom_token()}}
+                'success_url': payment.get_success_url(),
+                'cancel_url': payment.get_failure_url(),
+                'custom': self.get_custom_token(payment)}}
 
         nonce = int(time.time() * 1e6)
         message = str(nonce) + api_url + json.dumps(data)
@@ -61,15 +61,14 @@ class CoinbaseProvider(BasicProvider):
         results = response.json()
         return results['button']['code']
 
-    @property
-    def _action(self):
+    def get_action(self, payment):
         checkout_url = self.checkout_url % {'endpoint': self.endpoint}
-        return '%s/%s' % (checkout_url, self.get_checkout_code())
+        return '%s/%s' % (checkout_url, self.get_checkout_code(payment))
 
-    def get_hidden_fields(self):
+    def get_hidden_fields(self, payment):
         return {}
 
-    def process_data(self, request):
+    def process_data(self, payment, request):
         body = request.body
         if not isinstance(request.body, str):
             body = body.decode("utf-8")
@@ -78,11 +77,11 @@ class CoinbaseProvider(BasicProvider):
         except (ValueError, TypeError):
             return HttpResponseForbidden('FAILED')
 
-        if results['order']['custom'] != self.get_custom_token():
+        if results['order']['custom'] != self.get_custom_token(payment):
             return HttpResponseForbidden('FAILED')
 
-        if self.payment.status == 'waiting':
-            self.payment.transaction_id = results['order']['transaction']['id']
-            self.payment.change_status('confirmed')
-            self.payment.save()
+        if payment.status == 'waiting':
+            payment.transaction_id = results['order']['transaction']['id']
+            payment.change_status('confirmed')
+            payment.save()
         return HttpResponse('OK')

@@ -54,17 +54,19 @@ class Payment(object):
 
 class TestCoinbaseProvider(TestCase):
 
+    def setUp(self):
+        self.payment = Payment()
+        self.provider = CoinbaseProvider(key=KEY, secret=SECRET)
+
     def test_process_data(self):
         """
         CoinbaseProvider.process_data() returns a correct HTTP response
         """
-        payment = Payment()
         request = MagicMock()
         request.body = json.dumps(COINBASE_REQUEST)
-        provider = CoinbaseProvider(payment, key=KEY, secret=SECRET)
-        response = provider.process_data(request)
+        response = self.provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponse)
-        self.assertEqual(payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, 'confirmed')
 
     def test_incorrect_custom_token_process_data(self):
         """
@@ -72,20 +74,16 @@ class TestCoinbaseProvider(TestCase):
         """
         data = dict(COINBASE_REQUEST)
         data.update({'order': {'custom': 'fake'}})
-        payment = Payment()
         request = MagicMock()
         request.body = json.dumps(data)
-        provider = CoinbaseProvider(payment, key=KEY, secret=SECRET)
-        response = provider.process_data(request)
+        response = self.provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponseForbidden)
 
     def test_incorrect_data_process_data(self):
         """
         CoinbaseProvider.process_data() checks request body
         """
-        payment = Payment()
         request = MagicMock()
         request.POST = {'id': '1234'}
-        provider = CoinbaseProvider(payment, key=KEY, secret=SECRET)
-        response = provider.process_data(request)
+        response = self.provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponseForbidden)
