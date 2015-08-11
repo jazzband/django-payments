@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 import stripe
 
 from ..forms import PaymentForm as BasePaymentForm
+from ..models import FRAUD_CHOICES
 from .widgets import StripeWidget
 from . import RedirectNeeded
 
@@ -20,6 +21,17 @@ class PaymentForm(BasePaymentForm):
         if self.is_bound and not self.data.get('stripeToken'):
             self.payment.change_status('rejected')
             raise RedirectNeeded(self.payment.get_failure_url())
+
+    def _handle_potentially_fraudulent_charge(self, charge, commit=True):
+        fraud_details = charge['fraud_details']
+        if fraud_details.get('stripe_report', None) == 'fraudulent':
+            reject_fraud_choice = FRAUD_CHOICES[2][0]
+            self.payment.change_fraud_status(
+                reject_fraud_choice, commit=commit)
+        else:
+            accept_fraud_choice = FRAUD_CHOICES[1][0]
+            self.payment.change_fraud_status(
+                accept_fraud_choice, commit=commit)
 
     def clean(self):
         data = self.cleaned_data
@@ -37,6 +49,12 @@ class PaymentForm(BasePaymentForm):
                             self.payment.billing_last_name,
                             self.payment.billing_first_name))
                 except stripe.CardError as e:
+                    # Making sure we retrieve the charge
+                    charge_id = e.json_body['error']['charge']
+                    self.charge = stripe.Charge.retrieve(charge_id)
+                    # Checking if the charge was fraudulent
+                    self._handle_potentially_fraudulent_charge(
+                        self.charge, commit=False)
                     # The card has been declined
                     self._errors['__all__'] = self.error_class([e])
                     self.payment.change_status('error', e.message)
@@ -48,6 +66,9 @@ class PaymentForm(BasePaymentForm):
 
     def save(self):
         self.charge.capture()
+        # Make sure we store the info of the charge being marked as fraudulent
+        self._handle_potentially_fraudulent_charge(
+            self.charge, commit=False)
         self.payment.transaction_id = self.charge.id
         self.payment.captured_amount = self.payment.total
         self.payment.change_status('confirmed')
