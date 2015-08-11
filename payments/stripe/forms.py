@@ -37,7 +37,7 @@ class PaymentForm(BasePaymentForm):
             except stripe.CardError as e:
                 # The card has been declined
                 self._errors['__all__'] = self.error_class([e])
-                self.payment.change_status('error')
+                self.payment.change_status('error', e.message)
 
         return data
 
