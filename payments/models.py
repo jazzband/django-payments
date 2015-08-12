@@ -108,7 +108,8 @@ class BasePayment(models.Model):
         available_statuses = [choice[0] for choice in FRAUD_CHOICES]
         if status not in available_statuses:
             raise ValueError(
-                'Status should be one of: %s' % ', '.join(available_statuses))
+                'Wrong status "%s", it should be one of: %s' % (
+                    status, ', '.join(available_statuses)))
         self.fraud_status = status
         self.fraud_message = message
         if commit:
