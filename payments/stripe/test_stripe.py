@@ -50,15 +50,18 @@ class Payment(MagicMock):
 
 
 @contextmanager
-def mock_stripe_Charge_create(error_msg):
+def mock_stripe_Charge_create(error_msg=None):
     json_body = {
         'error': {
             'charge': 'charge_id'
         }
     }
     with patch('stripe.Charge.create') as mocked_charge_create:
-        mocked_charge_create.side_effect = stripe.CardError(
-            error_msg, param=None, code=None, json_body=json_body)
+        if error_msg:
+            mocked_charge_create.side_effect = stripe.CardError(
+                error_msg, param=None, code=None, json_body=json_body)
+        else:
+            mocked_charge_create.side_effect = lambda **kwargs: {}
         yield mocked_charge_create
 
 
@@ -126,7 +129,7 @@ class TestStripeProvider(TestCase):
             name='Example.com store',
             secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
         data = {'stripeToken': 'abcd'}
-        with mock_stripe_Charge_create(error_msg):
+        with mock_stripe_Charge_create(error_msg=error_msg):
             with mock_stripe_Charge_retrieve():
                 form = provider.get_form(payment, data=data)
                 self.assertEqual(form.errors['__all__'][0], error_msg)
@@ -141,9 +144,22 @@ class TestStripeProvider(TestCase):
             name='Example.com store',
             secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
         data = {'stripeToken': 'abcd'}
-        with mock_stripe_Charge_create(error_msg):
+        with mock_stripe_Charge_create(error_msg=error_msg):
             with mock_stripe_Charge_retrieve(fraudulent=True):
                 provider.get_form(payment, data=data)
         self.assertEqual(payment.status, 'error')
         self.assertEqual(payment.fraud_status, 'reject')
         self.assertEqual(payment.captured_amount, 0)
+
+    def test_provider_detect_already_processed_payment(self):
+        payment = Payment()
+        payment.transaction_id = 'existing_transaction_id'
+        provider = StripeProvider(
+            name='Example.com store',
+            secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
+        data = {'stripeToken': 'abcd'}
+        with mock_stripe_Charge_create():
+            with mock_stripe_Charge_retrieve():
+                form = provider.get_form(payment, data=data)
+                msg = 'This payment has already been processed.'
+                self.assertEqual(form.errors['__all__'][0], msg)
