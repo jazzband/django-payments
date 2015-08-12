@@ -133,3 +133,17 @@ class TestStripeProvider(TestCase):
         self.assertEqual(payment.status, 'error')
         self.assertEqual(payment.message, error_msg)
         self.assertEqual(payment.captured_amount, 0)
+
+    def test_provider_set_fraudulent_status(self):
+        error_msg = 'Error message'
+        payment = Payment()
+        provider = StripeProvider(
+            name='Example.com store',
+            secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
+        data = {'stripeToken': 'abcd'}
+        with mock_stripe_Charge_create(error_msg):
+            with mock_stripe_Charge_retrieve(fraudulent=True):
+                provider.get_form(payment, data=data)
+        self.assertEqual(payment.status, 'error')
+        self.assertEqual(payment.fraud_status, 'reject')
+        self.assertEqual(payment.captured_amount, 0)
