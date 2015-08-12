@@ -57,7 +57,7 @@ class PaymentForm(BasePaymentForm):
                         self.charge, commit=False)
                     # The card has been declined
                     self._errors['__all__'] = self.error_class([e])
-                    self.payment.change_status('error', e.message)
+                    self.payment.change_status('error', str(e))
             else:
                 msg = _('This payment has already been processed.')
                 self._errors['__all__'] = self.error_class([msg])
