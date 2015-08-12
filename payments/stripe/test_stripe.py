@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from contextlib import contextmanager
+
 from mock import patch, MagicMock
 from unittest import TestCase
 import stripe
@@ -19,13 +22,19 @@ class Payment(MagicMock):
     currency = 'USD'
     delivery = 10
     status = 'waiting'
+    message = None
     tax = 10
     total = 100
     captured_amount = 0
     transaction_id = None
 
-    def change_status(self, status):
+    def change_status(self, status, message=''):
         self.status = status
+        self.message = message
+
+    def change_fraud_status(self, status, message='', commit=True):
+        self.fraud_status = status
+        self.fraud_message = message
 
     def get_failure_url(self):
         return 'http://cancel.com'
@@ -38,6 +47,34 @@ class Payment(MagicMock):
 
     def get_success_url(self):
         return 'http://success.com'
+
+
+@contextmanager
+def mock_stripe_Charge_create(error_msg):
+    json_body = {
+        'error': {
+            'charge': 'charge_id'
+        }
+    }
+    with patch('stripe.Charge.create') as mocked_charge_create:
+        mocked_charge_create.side_effect = stripe.CardError(
+            error_msg, param=None, code=None, json_body=json_body)
+        yield mocked_charge_create
+
+
+@contextmanager
+def mock_stripe_Charge_retrieve(fraudulent=False):
+    with patch('stripe.Charge.retrieve') as mocked_charge_retrieve:
+        fraud_details = {
+            'stripe_report': None
+        }
+        if fraudulent:
+            fraud_details['stripe_report'] = 'fraudulent'
+        mocked_charge_retrieve.side_effect = lambda charge_id: {
+            'id': charge_id,
+            'fraud_details': fraud_details
+        }
+        yield mocked_charge_retrieve
 
 
 class TestStripeProvider(TestCase):
@@ -83,15 +120,16 @@ class TestStripeProvider(TestCase):
 
     def test_provider_shows_validation_error_message(self):
         error_msg = 'Error message'
+
         payment = Payment()
         provider = StripeProvider(
             name='Example.com store',
             secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
         data = {'stripeToken': 'abcd'}
-        with patch('stripe.Charge.create') as mocked_charge:
-            mocked_charge.side_effect = stripe.CardError(
-                error_msg, param=None, code=None)
-            form = provider.get_form(payment, data=data)
-            self.assertEqual(form.errors['__all__'][0], error_msg)
+        with mock_stripe_Charge_create(error_msg):
+            with mock_stripe_Charge_retrieve():
+                form = provider.get_form(payment, data=data)
+                self.assertEqual(form.errors['__all__'][0], error_msg)
         self.assertEqual(payment.status, 'error')
+        self.assertEqual(payment.message, error_msg)
         self.assertEqual(payment.captured_amount, 0)
