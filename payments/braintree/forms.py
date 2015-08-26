@@ -19,10 +19,8 @@ class BraintreePaymentForm(CreditCardPaymentFormWithName):
                 'credit_card': self.get_credit_card_clean_data(),
                 'customer': self.get_customer_data(),
                 'options': {
-                    'submit_for_settlement': True
-                },
-                'order_id': self.payment.description
-            })
+                    'submit_for_settlement': False},
+                'order_id': self.payment.description})
 
             if result.is_success:
                 self.transaction_id = result.transaction.id
