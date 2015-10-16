@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
-from mock import patch, Mock
+from mock import patch
 
 from . import provider_factory
 from .forms import CreditCardPaymentFormWithName, PaymentForm

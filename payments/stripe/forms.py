@@ -56,7 +56,7 @@ class PaymentForm(BasePaymentForm):
                     self._handle_potentially_fraudulent_charge(
                         self.charge, commit=False)
                     # The card has been declined
-                    self._errors['__all__'] = self.error_class([e])
+                    self._errors['__all__'] = self.error_class([str(e)])
                     self.payment.change_status('error', str(e))
             else:
                 msg = _('This payment has already been processed.')

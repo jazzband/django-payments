@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import json
 from decimal import Decimal
 from unittest import TestCase
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 
 from django.utils import timezone
 
@@ -23,8 +23,7 @@ PROCESS_DATA = {
     'cvv2': '1234'}
 
 
-class Payment(MagicMock):
-
+class Payment(Mock):
     id = 1
     description = 'payment'
     currency = 'USD'

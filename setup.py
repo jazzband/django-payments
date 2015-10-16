@@ -43,7 +43,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
@@ -54,7 +54,7 @@ setup(
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
-    version='0.7.2',
+    version='0.7.3',
     url='http://github.com/mirumee/django-payments',
     packages=PACKAGES,
     include_package_data=True,
@@ -76,6 +76,5 @@ setup(
     tests_require=[
         'mock',
         'pytest',
-        'pytest-django'
-    ],
+        'pytest-django'],
     zip_safe=False)

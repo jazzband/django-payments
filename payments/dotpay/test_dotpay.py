@@ -3,7 +3,7 @@ import hashlib
 from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
-from mock import MagicMock
+from mock import MagicMock, Mock
 
 from .forms import ACCEPTED, REJECTED
 from . import DotpayProvider
@@ -44,8 +44,7 @@ def get_post_with_md5(post):
     return post
 
 
-class Payment(MagicMock):
-
+class Payment(Mock):
     id = 1
     variant = VARIANT
     currency = 'USD'

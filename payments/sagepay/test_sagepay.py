@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from unittest import TestCase
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 
 from . import SagepayProvider
 
@@ -9,8 +9,7 @@ VENDOR = 'abcd1234'
 ENCRYPTION_KEY = '1234abdd1234abcd'
 
 
-class Payment(MagicMock):
-
+class Payment(Mock):
     id = 1
     variant = 'sagepay'
     currency = 'USD'

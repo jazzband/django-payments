@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 
-from mock import patch, MagicMock
+from mock import patch, Mock
 from unittest import TestCase
 import stripe
 
@@ -15,7 +15,7 @@ SECRET_KEY = '1234abcd'
 PUBLIC_KEY = 'abcd1234'
 
 
-class Payment(MagicMock):
+class Payment(Mock):
 
     id = 1
     description = 'payment'

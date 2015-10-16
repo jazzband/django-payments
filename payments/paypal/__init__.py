@@ -221,13 +221,13 @@ class PaypalProvider(BasicProvider):
                 return redirect(payment.get_failure_url())
             else:
                 return redirect(success_url)
-        execute_payment = self.execute_payment(payment, payer_id)
-        transaction = execute_payment['transactions'][0]
+        executed_payment = self.execute_payment(payment, payer_id)
+        transaction = executed_payment['transactions'][0]
         related_resources = transaction['related_resources'][0]
         resource_key = 'sale' if self._capture else 'authorization'
         authorization_links = related_resources[resource_key]['links']
         self.set_response_links(payment, authorization_links)
-        payment.attrs.payer_info = payment['payer']['payer_info']
+        payment.attrs.payer_info = executed_payment['payer']['payer_info']
         if self._capture:
             payment.captured_amount = payment.total
             payment.change_status('confirmed')

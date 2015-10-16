@@ -10,7 +10,6 @@ try:
 except ImportError:
     from mock import MagicMock
 
-from django.forms import ValidationError
 from payments import RedirectNeeded, PaymentError
 
 from . import DummyProvider
@@ -20,7 +19,6 @@ VARIANT = 'dummy-3ds'
 
 
 class Payment(object):
-
     id = 1
     variant = VARIANT
     currency = 'USD'

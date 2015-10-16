@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from unittest import TestCase
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 import json
 
 from . import SofortProvider
@@ -11,8 +11,7 @@ CLIENT_ID = '1234'
 PROJECT_ID = 'abcd'
 
 
-class Payment(MagicMock):
-
+class Payment(Mock):
     id = 1
     variant = 'sagepay'
     currency = 'USD'

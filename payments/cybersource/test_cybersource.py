@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
 from django.core import signing
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 
 from . import CyberSourceProvider, AUTHENTICATE_REQUIRED, ACCEPTED, \
     TRANSACTION_SETTLED
@@ -21,8 +21,7 @@ PROCESS_DATA = {
     'fingerprint': 'abcd1234'}
 
 
-class Payment(MagicMock):
-
+class Payment(Mock):
     id = 1
     variant = 'cybersource'
     currency = 'USD'
@@ -31,6 +30,10 @@ class Payment(MagicMock):
     transaction_id = None
     captured_amount = 0
     message = ''
+
+    class attrs(object):
+        fingerprint_session_id = 'fake'
+        merchant_defined_data = {}
 
     def get_process_url(self):
         return 'http://example.com'

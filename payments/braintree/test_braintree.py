@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from unittest import TestCase
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 
 from . import BraintreeProvider
 from .. import RedirectNeeded
@@ -18,8 +18,7 @@ PROCESS_DATA = {
     'cvv2': '1234'}
 
 
-class Payment(MagicMock):
-
+class Payment(Mock):
     id = 1
     variant = 'braintree'
     currency = 'USD'

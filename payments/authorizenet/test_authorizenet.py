@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from unittest import TestCase
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 
 from . import AuthorizeNetProvider
 from .. import RedirectNeeded
@@ -18,8 +18,7 @@ PROCESS_DATA = {
 STATUS_CONFIRMED = '1'
 
 
-class Payment(MagicMock):
-
+class Payment(Mock):
     id = 1
     variant = 'authorizenet'
     currency = 'USD'
