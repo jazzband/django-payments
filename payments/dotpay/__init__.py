@@ -4,7 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseForbidden
 
 from .forms import ProcessPaymentForm
-from .. import BasicProvider
+from ..core import BasicProvider
 
 CENTS = Decimal('0.01')
 

@@ -10,7 +10,8 @@ except ImportError:
 from django.http import HttpResponseRedirect
 
 from .forms import DummyForm
-from .. import BasicProvider, RedirectNeeded, PaymentError
+from .. import RedirectNeeded, PaymentError
+from ..core import BasicProvider
 
 
 class DummyProvider(BasicProvider):

@@ -9,7 +9,6 @@ from django.http import HttpResponse, HttpResponseForbidden
 from mock import MagicMock, patch
 
 from . import CoinbaseProvider
-from payments import RedirectNeeded
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
 KEY = 'abc123'

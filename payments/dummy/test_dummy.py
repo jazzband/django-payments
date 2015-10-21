@@ -10,10 +10,8 @@ try:
 except ImportError:
     from mock import MagicMock
 
-from payments import RedirectNeeded, PaymentError
-
 from . import DummyProvider
-
+from .. import RedirectNeeded, PaymentError
 
 VARIANT = 'dummy-3ds'
 

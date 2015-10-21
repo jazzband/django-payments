@@ -5,7 +5,7 @@ from Crypto.Cipher import AES
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
-from .. import BasicProvider
+from ..core import BasicProvider
 
 
 class SagepayProvider(BasicProvider):

@@ -1,4 +1,4 @@
-{% load l10n i18n %}{% load url from future %}{% localize off %}<?xml version="1.0" encoding="UTF-8" ?>
+{% load l10n i18n %}{% localize off %}<?xml version="1.0" encoding="UTF-8" ?>
 <refunds version="3">
       <sender>
             <holder>{{holder}}</holder>

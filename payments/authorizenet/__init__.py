@@ -5,7 +5,8 @@ from django.http import HttpResponseForbidden
 import requests
 
 from .forms import PaymentForm
-from .. import BasicProvider, RedirectNeeded
+from .. import RedirectNeeded
+from ..core import BasicProvider
 
 
 class AuthorizeNetProvider(BasicProvider):

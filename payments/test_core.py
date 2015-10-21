@@ -3,7 +3,7 @@ from decimal import Decimal
 from unittest import TestCase
 from mock import patch
 
-from . import provider_factory
+from .core import provider_factory
 from .forms import CreditCardPaymentFormWithName, PaymentForm
 from .models import BasePayment
 

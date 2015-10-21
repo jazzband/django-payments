@@ -5,10 +5,10 @@ from unittest import TestCase
 from mock import patch, MagicMock, Mock
 
 from django.utils import timezone
+from requests import HTTPError
 
 from . import PaypalProvider, PaypalCardProvider
 from .. import PurchasedItem, RedirectNeeded, PaymentError
-from requests import HTTPError
 
 CLIENT_ID = 'abc123'
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'

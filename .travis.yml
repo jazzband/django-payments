@@ -1,13 +1,32 @@
 language: python
-python:
-  - 2.7
-  - 3.3
-  - 3.4
+sudo: false
 install:
-  - python setup.py install
-  - pip install coverage
-  - pip install codecov
+  - pip install tox codecov
 script:
-  - coverage run setup.py test
+  - tox
+env:
+  - TOXENV=py27-django14
+  - TOXENV=py27-django18
+  - TOXENV=py27-django19
+  - TOXENV=py27-django_master
+  - TOXENV=py34-django14
+  - TOXENV=py34-django18
+  - TOXENV=py34-django19
+  - TOXENV=py34-django_master
+  - TOXENV=py35-django18
+  - TOXENV=py35-django19
+  - TOXENV=py35-django_master
+matrix:
+  allow_failures:
+    - env: TOXENV=py27-django_master
+    - env: TOXENV=py34-django_master
+    - env: TOXENV=py35-django_master
 after_success:
   - codecov
+addons:
+  apt:
+    sources:
+      - deadsnakes
+    packages:
+      - python3.5
+      - python3.5-dev

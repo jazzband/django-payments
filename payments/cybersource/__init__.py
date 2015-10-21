@@ -11,9 +11,8 @@ from suds.sudsobject import Object
 import suds.wsse
 
 from .forms import PaymentForm
-from .. import (
-    BasicProvider, ExternalPostNeeded, get_credit_card_issuer, PaymentError,
-    RedirectNeeded)
+from .. import ExternalPostNeeded, PaymentError, RedirectNeeded
+from ..core import BasicProvider, get_credit_card_issuer
 from ..forms import PaymentForm as BaseForm
 
 

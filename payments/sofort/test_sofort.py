@@ -4,7 +4,7 @@ from mock import patch, MagicMock, Mock
 import json
 
 from . import SofortProvider
-from payments import RedirectNeeded
+from .. import RedirectNeeded
 
 SECRET = 'abcd1234'
 CLIENT_ID = '1234'

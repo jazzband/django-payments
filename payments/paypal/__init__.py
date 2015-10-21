@@ -16,8 +16,8 @@ import requests
 from requests.exceptions import HTTPError
 
 from .forms import PaymentForm
-from .. import (
-    BasicProvider, get_credit_card_issuer, PaymentError, RedirectNeeded)
+from .. import PaymentError, RedirectNeeded
+from ..core import BasicProvider, get_credit_card_issuer
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
