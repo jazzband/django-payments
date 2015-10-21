@@ -6,9 +6,8 @@ from mock import patch, Mock
 from unittest import TestCase
 import stripe
 
-from payments.stripe import StripeProvider
-
-from payments import RedirectNeeded
+from . import StripeProvider
+from .. import RedirectNeeded
 
 
 SECRET_KEY = '1234abcd'

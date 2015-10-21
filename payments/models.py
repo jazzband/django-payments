@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from . import provider_factory
+from .core import provider_factory
 
 DEFAULT_PAYMENT_STATUS_CHOICES = (
     ('waiting', _('Waiting for confirmation')),

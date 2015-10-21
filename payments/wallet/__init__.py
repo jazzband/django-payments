@@ -6,7 +6,7 @@ from django.http import HttpResponseForbidden, HttpResponse
 import jwt
 
 from .forms import PaymentForm, ProcessPaymentForm
-from .. import BasicProvider
+from ..core import BasicProvider
 
 
 class GoogleWalletProvider(BasicProvider):

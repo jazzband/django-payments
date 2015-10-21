@@ -6,7 +6,7 @@ from mock import patch, MagicMock, Mock
 
 from . import CyberSourceProvider, AUTHENTICATE_REQUIRED, ACCEPTED, \
     TRANSACTION_SETTLED
-from payments import RedirectNeeded, ExternalPostNeeded, PurchasedItem
+from .. import RedirectNeeded, PurchasedItem
 
 MERCHANT_ID = 'abcd1234'
 PASSWORD = '1234abdd1234abcd'

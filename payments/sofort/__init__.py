@@ -7,7 +7,8 @@ from django.utils.translation import get_language
 import requests
 import xmltodict
 
-from .. import BasicProvider, RedirectNeeded, PaymentError
+from .. import RedirectNeeded, PaymentError
+from ..core import BasicProvider
 
 
 class SofortProvider(BasicProvider):

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from requests.exceptions import HTTPError
 
 from ..forms import CreditCardPaymentFormWithName
-from .. import get_credit_card_issuer
+from ..core import get_credit_card_issuer
 
 
 class PaymentForm(CreditCardPaymentFormWithName):

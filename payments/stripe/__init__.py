@@ -2,8 +2,10 @@ from __future__ import unicode_literals
 
 from django.core.exceptions import ImproperlyConfigured
 
-from .. import BasicProvider, RedirectNeeded
+
 from .forms import PaymentForm
+from .. import RedirectNeeded
+from ..core import BasicProvider
 
 
 class StripeProvider(BasicProvider):

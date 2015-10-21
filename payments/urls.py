@@ -14,7 +14,7 @@ except ImportError:
     def atomic(func):
         return func
 
-from . import get_payment_model, provider_factory
+from .core import get_payment_model, provider_factory
 
 
 @csrf_exempt

@@ -7,7 +7,7 @@ from django import forms
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 
-from . import get_credit_card_issuer
+from .core import get_credit_card_issuer
 from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
 
 

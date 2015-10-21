@@ -4,10 +4,10 @@ from django import forms
 from django.utils.translation import ugettext as _
 import stripe
 
+from .widgets import StripeWidget
+from .. import RedirectNeeded
 from ..forms import PaymentForm as BasePaymentForm
 from ..models import FRAUD_CHOICES
-from .widgets import StripeWidget
-from . import RedirectNeeded
 
 
 class PaymentForm(BasePaymentForm):
