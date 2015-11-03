@@ -4,13 +4,13 @@ try:
     from django.forms.utils import flatatt
 except ImportError:
     from django.forms.util import flatatt
-from django.forms.widgets import Input
+from django.forms.widgets import Input, HiddenInput
 from django.utils.html import format_html
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 
 
-class StripeWidget(Input):
+class StripeCheckoutWidget(Input):
     is_hidden = True
 
     def __init__(self, provider, payment, *args, **kwargs):
@@ -26,7 +26,7 @@ class StripeWidget(Input):
             'data-currency': payment.currency
         }
         kwargs['attrs'].update(attrs)
-        super(StripeWidget, self).__init__(*args, **kwargs)
+        super(StripeCheckoutWidget, self).__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None):
         if value is None:
@@ -38,3 +38,10 @@ class StripeWidget(Input):
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_text(self._format_value(value))
         return format_html('<script{0}></script>', flatatt(final_attrs))
+
+
+class StripeWidget(HiddenInput):
+
+    class Media:
+        js = ['https://js.stripe.com/v2/',
+              'js/payments/stripe.js']
