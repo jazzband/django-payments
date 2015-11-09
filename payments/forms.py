@@ -25,7 +25,7 @@ class PaymentForm(forms.Form):
     method = 'post'
 
     def __init__(self, data=None, action=None, method='post', provider=None,
-                 payment=None, hidden_inputs=True, autosubmit=False):
+                 payment=None, hidden_inputs=False, autosubmit=False):
         if hidden_inputs and data is not None:
             super(PaymentForm, self).__init__(auto_id=False)
             for key, val in data.items():
@@ -51,7 +51,6 @@ class CreditCardPaymentForm(PaymentForm):
             ' For American Express the four digits found on the front side.'))
 
     def __init__(self, *args, **kwargs):
-        kwargs['hidden_inputs'] = False
         super(CreditCardPaymentForm, self).__init__(*args,  **kwargs)
         if hasattr(self, 'VALID_TYPES'):
             self.fields['number'].valid_types = self.VALID_TYPES
