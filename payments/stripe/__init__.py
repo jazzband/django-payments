@@ -3,12 +3,14 @@ from __future__ import unicode_literals
 from django.core.exceptions import ImproperlyConfigured
 
 
-from .forms import PaymentForm
+from .forms import ModalPaymentForm, PaymentForm
 from .. import RedirectNeeded
 from ..core import BasicProvider
 
 
 class StripeProvider(BasicProvider):
+
+    form_class = ModalPaymentForm
 
     def __init__(self, public_key, secret_key, image='', name='', **kwargs):
         self.secret_key = secret_key
@@ -28,9 +30,14 @@ class StripeProvider(BasicProvider):
             'payment': payment,
             'provider': self,
             'hidden_inputs': False}
-        form = PaymentForm(**kwargs)
+        form = self.form_class(**kwargs)
 
         if form.is_valid():
             form.save()
             raise RedirectNeeded(payment.get_success_url())
         return form
+
+
+class StripeCardProvider(StripeProvider):
+
+    form_class = PaymentForm

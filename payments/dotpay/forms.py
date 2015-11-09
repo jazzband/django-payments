@@ -32,6 +32,7 @@ class ProcessPaymentForm(forms.Form):
     md5 = forms.CharField()
 
     def __init__(self, payment, pin, **kwargs):
+        kwargs['hidden_inputs'] = True
         super(ProcessPaymentForm, self).__init__(**kwargs)
         self.pin = pin
         self.payment = payment
