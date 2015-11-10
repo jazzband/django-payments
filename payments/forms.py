@@ -51,8 +51,8 @@ class CreditCardPaymentForm(PaymentForm):
             ' For American Express the four digits found on the front side.'))
 
     def __init__(self, *args, **kwargs):
-        kwargs['hidden_inputs'] = False
-        super(CreditCardPaymentForm, self).__init__(*args,  **kwargs)
+        super(CreditCardPaymentForm, self).__init__(
+            hidden_inputs=False, *args,  **kwargs)
         if hasattr(self, 'VALID_TYPES'):
             self.fields['number'].valid_types = self.VALID_TYPES
 

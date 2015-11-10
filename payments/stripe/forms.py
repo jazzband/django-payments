@@ -57,13 +57,13 @@ class StripeFormMixin(object):
         return data
 
     def save(self):
-        self.charge.capture()
-        # Make sure we store the info of the charge being marked as fraudulent
-        self._handle_potentially_fraudulent_charge(
-            self.charge, commit=False)
         self.payment.transaction_id = self.charge.id
-        self.payment.captured_amount = self.payment.total
-        self.payment.change_status('confirmed')
+        self.payment.attrs.charge = stripe.util.json.dumps(self.charge)
+        self.payment.change_status('preauth')
+        if self.provider._capture:
+            self.payment.capture()
+        # Make sure we store the info of the charge being marked as fraudulent
+        self._handle_potentially_fraudulent_charge(self.charge)
 
 
 class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
