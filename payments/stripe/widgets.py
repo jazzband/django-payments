@@ -45,3 +45,7 @@ class StripeWidget(HiddenInput):
     class Media:
         js = ['https://js.stripe.com/v2/',
               'js/payments/stripe.js']
+
+    def build_attrs(self, extra_attrs=None, **kwargs):
+        extra_attrs = dict(extra_attrs or {}, id='id_stripe_token')
+        return super(StripeWidget, self).build_attrs(extra_attrs, **kwargs)

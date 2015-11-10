@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    var stripeInput = document.getElementById('id_stripeToken');
+    var stripeInput = document.getElementById('id_stripe_token');
     var form = stripeInput.form;
     var publishableKey = stripeInput.attributes['data-publishable-key'].value;
     Stripe.setPublishableKey(publishableKey);
