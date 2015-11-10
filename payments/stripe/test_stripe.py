@@ -35,6 +35,11 @@ class Payment(Mock):
         self.fraud_status = status
         self.fraud_message = message
 
+    def capture(self, amount=None):
+        amount = amount or self.total
+        self.captured_amount = amount
+        self.change_status('confirmed')
+
     def get_failure_url(self):
         return 'http://cancel.com'
 
@@ -113,10 +118,11 @@ class TestStripeProvider(TestCase):
             name='Example.com store',
             secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
         data = {'stripeToken': 'abcd'}
-        with patch('stripe.Charge.create'):
-            with self.assertRaises(RedirectNeeded) as exc:
-                provider.get_form(payment, data)
-                self.assertEqual(exc.args[0], payment.get_success_url())
+        with patch('stripe.util.json.dumps'):
+            with patch('stripe.Charge.create'):
+                with self.assertRaises(RedirectNeeded) as exc:
+                    provider.get_form(payment, data)
+                    self.assertEqual(exc.args[0], payment.get_success_url())
         self.assertEqual(payment.status, 'confirmed')
         self.assertEqual(payment.captured_amount, payment.total)
 
