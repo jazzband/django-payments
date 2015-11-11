@@ -24,7 +24,7 @@ class SagepayProvider(BasicProvider):
 
     def __init__(self, vendor, encryption_key, endpoint=_action, **kwargs):
         self._vendor = vendor
-        self._enckey = encryption_key
+        self._enckey = encryption_key.encode('utf-8')
         self._action = endpoint
         super(SagepayProvider, self).__init__(**kwargs)
         if not self._capture:
@@ -41,7 +41,7 @@ class SagepayProvider(BasicProvider):
     def aes_enc(self, data):
         aes = AES.new(self._enckey, AES.MODE_CBC, self._enckey)
         data = self._aes_pad(data)
-        enc = aes.encrypt(data)
+        enc = aes.encrypt(data.encode('utf-8'))
         enc = b"@" + binascii.hexlify(enc)
         return enc
 
