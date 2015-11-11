@@ -22,7 +22,7 @@ PACKAGES = [
 REQUIREMENTS = [
     'braintree>=3.14.0',
     'Django>=1.5',
-    'pycrypto>=2.6',
+    'pycryptodome>=3.3.1',
     'PyJWT>=1.3.0',
     'requests>=1.2.0',
     'stripe>=1.9.8',
@@ -66,8 +66,8 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Framework :: Django',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules'],
