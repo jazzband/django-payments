@@ -4,23 +4,15 @@ from django import forms
 from django.utils.translation import ugettext as _
 import stripe
 
-from .widgets import StripeWidget
+from .widgets import StripeCheckoutWidget, StripeWidget
 from .. import RedirectNeeded
-from ..forms import PaymentForm as BasePaymentForm
+from ..forms import PaymentForm as BasePaymentForm, CreditCardPaymentFormWithName
 from ..models import FRAUD_CHOICES
 
 
-class PaymentForm(BasePaymentForm):
+class StripeFormMixin(object):
 
     charge = None
-
-    def __init__(self, *args, **kwargs):
-        super(PaymentForm, self).__init__(*args, **kwargs)
-        widget = StripeWidget(provider=self.provider, payment=self.payment)
-        self.fields['stripeToken'] = forms.CharField(widget=widget)
-        if self.is_bound and not self.data.get('stripeToken'):
-            self.payment.change_status('rejected')
-            raise RedirectNeeded(self.payment.get_failure_url())
 
     def _handle_potentially_fraudulent_charge(self, charge, commit=True):
         fraud_details = charge['fraud_details']
@@ -65,10 +57,37 @@ class PaymentForm(BasePaymentForm):
         return data
 
     def save(self):
-        self.charge.capture()
-        # Make sure we store the info of the charge being marked as fraudulent
-        self._handle_potentially_fraudulent_charge(
-            self.charge, commit=False)
         self.payment.transaction_id = self.charge.id
-        self.payment.captured_amount = self.payment.total
-        self.payment.change_status('confirmed')
+        self.payment.attrs.charge = stripe.util.json.dumps(self.charge)
+        self.payment.change_status('preauth')
+        if self.provider._capture:
+            self.payment.capture()
+        # Make sure we store the info of the charge being marked as fraudulent
+        self._handle_potentially_fraudulent_charge(self.charge)
+
+
+class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
+
+    def __init__(self, *args, **kwargs):
+        super(StripeFormMixin, self).__init__(hidden_inputs=False, *args, **kwargs)
+        widget = StripeCheckoutWidget(provider=self.provider, payment=self.payment)
+        self.fields['stripeToken'] = forms.CharField(widget=widget)
+        if self.is_bound and not self.data.get('stripeToken'):
+            self.payment.change_status('rejected')
+            raise RedirectNeeded(self.payment.get_failure_url())
+
+
+class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
+
+    stripeToken = forms.CharField(widget=StripeWidget())
+
+    def __init__(self, *args, **kwargs):
+        super(PaymentForm, self).__init__(*args, **kwargs)
+        stripe_attrs = self.fields['stripeToken'].widget.attrs
+        stripe_attrs['data-publishable-key'] = self.provider.public_key
+        stripe_attrs['data-address-line1'] = self.payment.billing_address_1
+        stripe_attrs['data-address-line2'] = self.payment.billing_address_2
+        stripe_attrs['data-address-city'] = self.payment.billing_city
+        stripe_attrs['data-address-state'] = self.payment.billing_country_area
+        stripe_attrs['data-address-zip'] = self.payment.billing_postcode
+        stripe_attrs['data-address-country'] = self.payment.billing_country_code

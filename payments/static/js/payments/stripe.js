@@ -1,31 +1,32 @@
-(function() {
-
-    function purchase() {
-        var stripe_input = document.getElementById('stripe-id');
-        stripe_input.value = '';
-
-        StripeCheckout.open({
-            key: stripe_input.getAttribute('data-key'),
-            address: false,
-            amount: stripe_input.getAttribute('data-amount'),
-            currency: stripe_input.getAttribute('data-currency'),
-            name: stripe_input.getAttribute('data-name'),
-            description: stripe_input.getAttribute('data-description'),
-            panelLabel: 'Checkout',
-            token: function(result) {
-                stripe_input.value = result.id;
-            },
-            closed: function() {
-                stripe_input.form.submit();
+document.addEventListener('DOMContentLoaded', function () {
+    var stripeInput = document.getElementById('id_stripe_token');
+    var form = stripeInput.form;
+    var publishableKey = stripeInput.attributes['data-publishable-key'].value;
+    Stripe.setPublishableKey(publishableKey);
+    form.addEventListener('submit', function (e) {
+        var button = this.querySelector('[type=submit]');
+        button.disabled = true;
+        Stripe.card.createToken({
+            name: this.elements['name'].value,
+            number: this.elements['number'].value,
+            cvc: this.elements['cvv2'].value,
+            exp_month: this.elements['expiration_0'].value,
+            exp_year: this.elements['expiration_1'].value,
+            address_line1: stripeInput.attributes['data-address-line1'].value,
+            address_line2: stripeInput.attributes['data-address-line2'].value,
+            address_city: stripeInput.attributes['data-address-city'].value,
+            address_state: stripeInput.attributes['data-address-state'].value,
+            address_zip: stripeInput.attributes['data-address-zip'].value,
+            address_country: stripeInput.attributes['data-address-country'].value
+        }, function (status, response) {
+            if (400 <= status && status <= 500) {
+                alert(response.error.message);
+                button.disabled = false;
+            } else {
+                stripeInput.value = response.id;
+                form.submit();
             }
         });
-    }
-
-    $ = this.jQuery || this.Zepto || this.ender || this.$;
-
-    if($) {
-        $(purchase);
-    } else {
-        window.onload = purchase;
-    }
-})();
+        e.preventDefault();
+    }, false);
+}, false);
