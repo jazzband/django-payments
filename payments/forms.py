@@ -67,6 +67,3 @@ class CreditCardPaymentFormWithName(CreditCardPaymentForm):
         fields = OrderedDict({'name': name_field})
         fields.update(self.fields)
         self.fields = fields
-        for field in self.fields.values():
-            if field.required:
-                field.widget.attrs['required'] = True
