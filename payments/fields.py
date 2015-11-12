@@ -13,7 +13,8 @@ from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
 
 class CreditCardNumberField(forms.CharField):
 
-    widget = CreditCardNumberWidget(attrs={'autocomplete': 'cc-number'})
+    widget = CreditCardNumberWidget(
+        attrs={'autocomplete': 'cc-number', 'required': 'required'})
     default_error_messages = {
         'invalid': _('Please enter a valid card number'),
         'invalid_type': _('We accept only %(valid_types)s')}
@@ -79,12 +80,14 @@ class CreditCardExpiryField(forms.MultiValueField):
                 choices=[('', _('Month'))] + self.EXP_MONTH,
                 error_messages={'invalid': errors['invalid_month']},
                 widget=forms.Select(
-                    attrs={'autocomplete': 'cc-exp-month'})),
+                    attrs={'autocomplete': 'cc-exp-month',
+                           'required': 'required'})),
             forms.ChoiceField(
                 choices=[('', _('Year'))] + self.EXP_YEAR,
                 error_messages={'invalid': errors['invalid_year']},
                 widget=forms.Select(
-                    attrs={'autocomplete': 'cc-exp-year'})),
+                    attrs={'autocomplete': 'cc-exp-year',
+                           'required': 'required'})),
         )
 
         super(CreditCardExpiryField, self).__init__(fields, *args, **kwargs)
@@ -116,7 +119,8 @@ class CreditCardExpiryField(forms.MultiValueField):
 
 class CreditCardVerificationField(forms.CharField):
 
-    widget = forms.TextInput(attrs={'autocomplete': 'cc-csc'})
+    widget = forms.TextInput(
+        attrs={'autocomplete': 'cc-csc', 'required': 'required'})
     default_error_messages = {
         'invalid': _('Enter a valid security number.')}
 
@@ -133,4 +137,5 @@ class CreditCardVerificationField(forms.CharField):
 
 class CreditCardNameField(forms.CharField):
 
-    widget = forms.TextInput(attrs={'autocomplete': 'cc-name'})
+    widget = forms.TextInput(
+        attrs={'autocomplete': 'cc-name', 'required': 'required'})
