@@ -5,11 +5,6 @@ try:
 except ImportError:
     from urllib import urlencode
     from urlparse import urljoin
-try:
-    from django.db.models import get_model
-except ImportError:
-    from django.apps import apps
-    get_model = apps.get_model
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
@@ -21,7 +16,7 @@ PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', False)
 
 if not PAYMENT_HOST:
-    if not 'django.contrib.sites' in settings.INSTALLED_APPS:
+    if 'django.contrib.sites' not in settings.INSTALLED_APPS:
         raise ImproperlyConfigured('The PAYMENT_HOST setting without '
                                    'the sites app must not be empty.')
 
@@ -115,24 +110,6 @@ def provider_factory(variant):
         class_ = getattr(module, class_name)
         PROVIDER_CACHE[variant] = class_(**config)
     return PROVIDER_CACHE[variant]
-
-
-def get_payment_model():
-    '''
-    Return the Payment model that is active in this project
-    '''
-    try:
-        app_label, model_name = settings.PAYMENT_MODEL.split('.')
-    except (ValueError, AttributeError):
-        raise ImproperlyConfigured('PAYMENT_MODEL must be of the form '
-                                   '"app_label.model_name"')
-    payment_model = get_model(app_label, model_name)
-    if payment_model is None:
-        msg = (
-            'PAYMENT_MODEL refers to model "%s" that has not been installed' %
-            settings.PAYMENT_MODEL)
-        raise ImproperlyConfigured(msg)
-    return payment_model
 
 
 CARD_TYPES = [
