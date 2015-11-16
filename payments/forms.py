@@ -18,13 +18,7 @@ class PaymentForm(forms.Form):
 
     When displaying the form remember to use *action* and *method*.
     '''
-
-    #: Form action URL for template use
-    action = ''
-    #: Form method for template use, either "get" or "post"
-    method = 'post'
-
-    def __init__(self, data=None, action=None, method='post', provider=None,
+    def __init__(self, data=None, action='', method='post', provider=None,
                  payment=None, hidden_inputs=True, autosubmit=False):
         if hidden_inputs and data is not None:
             super(PaymentForm, self).__init__(auto_id=False)
