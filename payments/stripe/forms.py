@@ -85,9 +85,3 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
         super(PaymentForm, self).__init__(*args, **kwargs)
         stripe_attrs = self.fields['stripeToken'].widget.attrs
         stripe_attrs['data-publishable-key'] = self.provider.public_key
-        stripe_attrs['data-address-line1'] = self.payment.billing_address_1
-        stripe_attrs['data-address-line2'] = self.payment.billing_address_2
-        stripe_attrs['data-address-city'] = self.payment.billing_city
-        stripe_attrs['data-address-state'] = self.payment.billing_country_area
-        stripe_attrs['data-address-zip'] = self.payment.billing_postcode
-        stripe_attrs['data-address-country'] = self.payment.billing_country_code

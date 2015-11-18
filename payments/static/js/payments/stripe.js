@@ -11,13 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
             number: this.elements['number'].value,
             cvc: this.elements['cvv2'].value,
             exp_month: this.elements['expiration_0'].value,
-            exp_year: this.elements['expiration_1'].value,
-            address_line1: stripeInput.attributes['data-address-line1'].value,
-            address_line2: stripeInput.attributes['data-address-line2'].value,
-            address_city: stripeInput.attributes['data-address-city'].value,
-            address_state: stripeInput.attributes['data-address-state'].value,
-            address_zip: stripeInput.attributes['data-address-zip'].value,
-            address_country: stripeInput.attributes['data-address-country'].value
+            exp_year: this.elements['expiration_1'].value
         }, function (status, response) {
             if (400 <= status && status <= 500) {
                 alert(response.error.message);
