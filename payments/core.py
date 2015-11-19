@@ -13,7 +13,7 @@ PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {})}
 
 PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
-PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', False)
+PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
 if not PAYMENT_HOST:
     if 'django.contrib.sites' not in settings.INSTALLED_APPS:
