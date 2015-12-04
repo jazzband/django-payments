@@ -217,7 +217,7 @@ class TestPaypalProvider(TestCase):
 class TestPaypalCardProvider(TestCase):
 
     def setUp(self):
-        self.payment = Payment()
+        self.payment = Payment(extra_data='')
         self.provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID)
 
     def test_provider_raises_redirect_needed_on_success_captured_payment(self):
@@ -227,7 +227,13 @@ class TestPaypalCardProvider(TestCase):
             data.return_value = {
                 'id': transaction_id,
                 'token_type': 'test_token_type',
-                'access_token': 'test_access_token'}
+                'access_token': 'test_access_token',
+                'transactions': [
+                    {'related_resources': [
+                        {'sale': {'links': [
+                            {'rel': 'refund', 'href': 'http://refund.com'}]}}
+                    ]}
+                ]}
             post = MagicMock()
             post.json = data
             post.status_code = 200
@@ -236,9 +242,11 @@ class TestPaypalCardProvider(TestCase):
                 self.provider.get_form(
                     payment=self.payment, data=PROCESS_DATA)
                 self.assertEqual(exc.args[0], self.payment.get_success_url())
+        links = self.provider._get_links(self.payment)
         self.assertEqual(self.payment.status, 'confirmed')
         self.assertEqual(self.payment.captured_amount, self.payment.total)
         self.assertEqual(self.payment.transaction_id, transaction_id)
+        self.assertTrue('refund' in links)
 
     def test_provider_raises_redirect_needed_on_success_preauth_payment(self):
         provider = PaypalCardProvider(
@@ -249,7 +257,14 @@ class TestPaypalCardProvider(TestCase):
             data.return_value = {
                 'id': transaction_id,
                 'token_type': 'test_token_type',
-                'access_token': 'test_access_token'}
+                'access_token': 'test_access_token',
+                'transactions': [
+                    {'related_resources': [
+                        {'authorization': {'links': [
+                            {'rel': 'refund', 'href': 'http://refund.com'},
+                            {'rel': 'capture', 'href': 'http://capture.com'}]}}
+                    ]}
+                ]}
             post = MagicMock()
             post.json = data
             post.status_code = 200
@@ -258,9 +273,12 @@ class TestPaypalCardProvider(TestCase):
                 provider.get_form(
                     payment=self.payment, data=PROCESS_DATA)
                 self.assertEqual(exc.args[0], self.payment.get_success_url())
+        links = provider._get_links(self.payment)
         self.assertEqual(self.payment.status, 'preauth')
         self.assertEqual(self.payment.captured_amount, Decimal('0'))
         self.assertEqual(self.payment.transaction_id, transaction_id)
+        self.assertTrue('capture' in links)
+        self.assertTrue('refund' in links)
 
     def test_form_shows_validation_error_message(self):
         with patch('requests.post') as mocked_post:
