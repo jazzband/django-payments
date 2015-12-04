@@ -81,7 +81,11 @@ class PaypalProvider(BasicProvider):
                     (link['rel'], link) for link in response['links'])
         payment.extra_data = json.dumps(extra_data)
 
-    def set_response_links(self, payment, links):
+    def set_response_links(self, payment, response):
+        transaction = response['transactions'][0]
+        related_resources = transaction['related_resources'][0]
+        resource_key = 'sale' if self._capture else 'authorization'
+        links = related_resources[resource_key]['links']
         extra_data = json.loads(payment.extra_data or '{}')
         extra_data['links'] = dict((link['rel'], link) for link in links)
         payment.extra_data = json.dumps(extra_data)
@@ -222,11 +226,7 @@ class PaypalProvider(BasicProvider):
             else:
                 return redirect(success_url)
         executed_payment = self.execute_payment(payment, payer_id)
-        transaction = executed_payment['transactions'][0]
-        related_resources = transaction['related_resources'][0]
-        resource_key = 'sale' if self._capture else 'authorization'
-        authorization_links = related_resources[resource_key]['links']
-        self.set_response_links(payment, authorization_links)
+        self.set_response_links(payment, executed_payment)
         payment.attrs.payer_info = executed_payment['payer']['payer_info']
         if self._capture:
             payment.captured_amount = payment.total

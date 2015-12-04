@@ -34,6 +34,7 @@ class PaymentForm(CreditCardPaymentFormWithName):
                     self.payment.change_status('error')
                 else:
                     self.payment.transaction_id = data['id']
+                    self.provider.set_response_links(self.payment, data)
                     if self.provider._capture:
                         self.payment.captured_amount = self.payment.total
                         self.payment.change_status('confirmed')
