@@ -120,7 +120,7 @@ class CreditCardExpiryField(forms.MultiValueField):
 class CreditCardVerificationField(forms.CharField):
 
     widget = forms.TextInput(
-        attrs={'autocomplete': 'cc-csc', 'required': 'required'})
+        attrs={'autocomplete': 'cc-csc'})
     default_error_messages = {
         'invalid': _('Enter a valid security number.')}
 
