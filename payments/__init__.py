@@ -16,7 +16,11 @@ class RedirectNeeded(Exception):
 
 
 class PaymentError(Exception):
-    pass
+
+    def __init__(self, message, code=None, gateway_message=None):
+        super(PaymentError, self).__init__(message)
+        self.code = code
+        self.gateway_message = gateway_message
 
 
 class ExternalPostNeeded(Exception):
