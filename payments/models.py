@@ -115,14 +115,20 @@ class BasePayment(models.Model):
         if commit:
             self.save()
 
-    def save(self, *args, **kwargs):
+    def save(self, **kwargs):
         if not self.token:
-            for _i in range(100):
-                token = str(uuid4())
-                if not type(self).objects.filter(token=token).exists():
-                    self.token = token
-                    break
-        return super(BasePayment, self).save(*args, **kwargs)
+            tries = {}  # Stores a set of tried values
+            while True:
+                token = uuid4().hex
+                if token in tries and len(tries) >= 100:  # After 100 tries we are impliying an infinite loop
+                    raise SystemExit('A possible infinite loop was detected')
+                else:
+                    if not self._default_manager.filter(token=token).exists():
+                        self.token = token
+                        break
+                tries.add(token)
+
+        return super(BasePayment, self).save(**kwargs)
 
     def __unicode__(self):
         return self.variant
