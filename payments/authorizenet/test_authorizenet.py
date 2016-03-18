@@ -16,6 +16,7 @@ PROCESS_DATA = {
     'cvv2': '123'}
 
 STATUS_CONFIRMED = '1'
+STATUS_DECLINED = '2'
 
 
 class Payment(Mock):
@@ -75,7 +76,7 @@ class TestAuthorizeNetProvider(TestCase):
 
         error_msg = 'The merchant does not accept this type of credit card.'
         response_data = [
-            '',
+            STATUS_DECLINED,
             '',
             '',
             error_msg,
@@ -85,10 +86,11 @@ class TestAuthorizeNetProvider(TestCase):
 
         with patch('requests.post') as mocked_post:
             post = MagicMock()
-            post.ok = False
+            # post.ok = False
             post.text = '|'.join(response_data)
             mocked_post.return_value = post
             form = provider.get_form(self.payment, data=PROCESS_DATA)
             self.assertEqual(form.errors['__all__'][0], error_msg)
+            self.assertFalse(form.is_valid())
         self.assertEqual(self.payment.status, 'error')
         self.assertEqual(self.payment.captured_amount, 0)
