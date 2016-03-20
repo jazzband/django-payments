@@ -33,7 +33,8 @@ class AuthorizeNetProvider(BasicProvider):
                                      payment.billing_address_2),
             'x_city': payment.billing_city,
             'x_zip': payment.billing_postcode,
-            'x_country': payment.billing_country_area
+            'x_country': payment.billing_country_area,
+            'x_customer_ip': payment.customer_ip_address
         }
         return data
 

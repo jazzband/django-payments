@@ -17,6 +17,7 @@ PROCESS_DATA = {
 
 STATUS_CONFIRMED = '1'
 STATUS_DECLINED = '2'
+ERROR_PROCESSING = '3'
 
 
 class Payment(Mock):
@@ -27,6 +28,7 @@ class Payment(Mock):
     status = 'waiting'
     transaction_id = None
     captured_amount = 0
+    message = ''
 
     def get_process_url(self):
         return 'http://example.com'
@@ -37,8 +39,9 @@ class Payment(Mock):
     def get_success_url(self):
         return 'http://success.com'
 
-    def change_status(self, status):
+    def change_status(self, status, message=''):
         self.status = status
+        self.message = message
 
 
 
@@ -76,7 +79,7 @@ class TestAuthorizeNetProvider(TestCase):
 
         error_msg = 'The merchant does not accept this type of credit card.'
         response_data = [
-            STATUS_DECLINED,
+            ERROR_PROCESSING,
             '',
             '',
             error_msg,
@@ -91,6 +94,32 @@ class TestAuthorizeNetProvider(TestCase):
             mocked_post.return_value = post
             form = provider.get_form(self.payment, data=PROCESS_DATA)
             self.assertEqual(form.errors['__all__'][0], error_msg)
-            self.assertFalse(form.is_valid())
+            self.assertFalse(form.is_valid())            
         self.assertEqual(self.payment.status, 'error')
         self.assertEqual(self.payment.captured_amount, 0)
+        self.assertEqual(self.payment.message, error_msg)
+
+    def test_provider_shows_rejection_error_message(self):
+        provider = AuthorizeNetProvider(
+            login_id=LOGIN_ID, transaction_key=TRANSACTION_KEY)
+
+        error_msg = ' This transaction has been declined.'
+        response_data = [
+            STATUS_DECLINED,
+            '',
+            '',
+            error_msg,
+            '',
+            '',
+            '1234']
+
+        with patch('requests.post') as mocked_post:
+            post = MagicMock()
+            post.text = '|'.join(response_data)
+            mocked_post.return_value = post
+            form = provider.get_form(self.payment, data=PROCESS_DATA)
+            self.assertEqual(form.errors['__all__'][0], error_msg)
+            self.assertFalse(form.is_valid())            
+        self.assertEqual(self.payment.status, 'rejected')
+        self.assertEqual(self.payment.captured_amount, 0)
+        self.assertEqual(self.payment.message, error_msg)

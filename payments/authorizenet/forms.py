@@ -21,17 +21,19 @@ class PaymentForm(CreditCardPaymentForm):
                     'x_card_code': cleaned_data.get('cvv2')}
                 response = self.provider.get_payment_response(
                     self.payment, data)
+
                 data = response.text.split('|')
                 status = 'error'
+                message = data[3]
                 if response.ok and RESPONSE_STATUS.get(data[0], False):
                     status = RESPONSE_STATUS.get(data[0], status)
                     self.payment.transaction_id = data[6]
-                    self.payment.change_status(status)
+                    self.payment.change_status(status, message=message)
                     if status == 'confirmed':
                         self.payment.captured_amount = self.payment.total                        
                         return cleaned_data
 
-                errors = [data[3]]
+                errors = [message]
                 self._errors['__all__'] = self.error_class(errors)
-                self.payment.change_status(status)
+                self.payment.change_status(status, message=message)
         return cleaned_data
