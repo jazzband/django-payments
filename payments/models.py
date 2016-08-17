@@ -123,7 +123,7 @@ class BasePayment(models.Model):
                 if token in tries and len(tries) >= 100:  # After 100 tries we are impliying an infinite loop
                     raise SystemExit('A possible infinite loop was detected')
                 else:
-                    if not self._default_manager.filter(token=token).exists():
+                    if not self.__class__._default_manager.filter(token=token).exists():
                         self.token = token
                         break
                 tries.add(token)
