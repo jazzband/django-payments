@@ -6,7 +6,6 @@ except ImportError:
     from urllib import urlencode
     from urlparse import urljoin
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 
 PAYMENT_VARIANTS = {
@@ -15,15 +14,14 @@ PAYMENT_VARIANTS = {
 PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
-if not PAYMENT_HOST:
-    if 'django.contrib.sites' not in settings.INSTALLED_APPS:
-        raise ImproperlyConfigured('The PAYMENT_HOST setting without '
-                                   'the sites app must not be empty.')
-
 
 def get_base_url():
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
     if not PAYMENT_HOST:
+        if 'django.contrib.sites' not in settings.INSTALLED_APPS:
+            raise ImproperlyConfigured('The PAYMENT_HOST setting without '
+                                       'the sites app must not be empty.')
+        from django.contrib.sites.models import Site
         current_site = Site.objects.get_current()
         domain = current_site.domain
         return '%s://%s' % (protocol, domain)
@@ -127,3 +125,4 @@ def get_credit_card_issuer(number):
         if re.match(regexp, number):
             return card_type, name
     return None, None
+
