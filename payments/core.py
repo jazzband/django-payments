@@ -98,7 +98,17 @@ def provider_factory(variant):
     '''
     Return the provider instance based on variant
     '''
-    variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
+    PROVIDER_FACTORY = getattr(
+        settings, 'PAYMENTS_ALTERNATE_PROVIDER_FACTORY', None)
+    if PROVIDER_FACTORY is None:
+        variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
+    else:
+        module_path, class_name = PROVIDER_FACTORY.rsplit('.', 1)
+        module = __import__(
+            str(module_path), globals(), locals(), [str(class_name)])
+        class_ = getattr(module, class_name)
+        return class_(variant)
+
     handler, config = variants.get(variant, (None, None))
     if not handler:
         raise ValueError('Payment variant does not exist: %s' %
