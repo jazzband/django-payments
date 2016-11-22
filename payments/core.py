@@ -12,16 +12,18 @@ PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {})}
 
 PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
+if not PAYMENT_HOST:
+    if 'django.contrib.sites' not in settings.INSTALLED_APPS:
+        raise ImproperlyConfigured('The PAYMENT_HOST setting without '
+                                   'the sites app must not be empty.')
+    from django.contrib.sites.models import Site
+
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
 
 def get_base_url():
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
     if not PAYMENT_HOST:
-        if 'django.contrib.sites' not in settings.INSTALLED_APPS:
-            raise ImproperlyConfigured('The PAYMENT_HOST setting without '
-                                       'the sites app must not be empty.')
-        from django.contrib.sites.models import Site
         current_site = Site.objects.get_current()
         domain = current_site.domain
         return '%s://%s' % (protocol, domain)
@@ -125,4 +127,3 @@ def get_credit_card_issuer(number):
         if re.match(regexp, number):
             return card_type, name
     return None, None
-
