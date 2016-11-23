@@ -6,19 +6,19 @@ except ImportError:
     from urllib import urlencode
     from urlparse import urljoin
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {})}
 
 PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
-PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
-
 if not PAYMENT_HOST:
     if 'django.contrib.sites' not in settings.INSTALLED_APPS:
         raise ImproperlyConfigured('The PAYMENT_HOST setting without '
                                    'the sites app must not be empty.')
+    from django.contrib.sites.models import Site
+
+PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
 
 def get_base_url():
