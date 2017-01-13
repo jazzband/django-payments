@@ -57,3 +57,4 @@ class StripeProvider(BasicProvider):
 
 class StripeCardProvider(StripeProvider):
     form_class = PaymentForm
+

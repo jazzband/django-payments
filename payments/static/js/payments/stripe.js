@@ -7,11 +7,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var button = this.querySelector('[type=submit]');
         button.disabled = true;
         Stripe.card.createToken({
-            name: this.elements['name'].value,
-            number: this.elements['number'].value,
-            cvc: this.elements['cvv2'].value,
-            exp_month: this.elements['expiration_0'].value,
-            exp_year: this.elements['expiration_1'].value,
+            name: this.elements.id_name.value,
+            number: this.elements.id_number.value,
+            cvc: this.elements.id_cvv2.value,
+            exp_month: this.elements.id_expiration_0.value,
+            exp_year: this.elements.id_expiration_1.value,
             address_line1: stripeInput.attributes['data-address-line1'].value,
             address_line2: stripeInput.attributes['data-address-line2'].value,
             address_city: stripeInput.attributes['data-address-city'].value,
