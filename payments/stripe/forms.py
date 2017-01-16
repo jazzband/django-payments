@@ -87,3 +87,8 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
         stripe_attrs['data-address-state'] = self.payment.billing_country_area
         stripe_attrs['data-address-zip'] = self.payment.billing_postcode
         stripe_attrs['data-address-country'] = self.payment.billing_country_code
+        for field in self.fields:
+            # All fields in this form should have disabled validation
+            # since we don't send values to the backend
+            if field != ['stripeToken']:
+                self.fields[field].required = False

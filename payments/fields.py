@@ -96,7 +96,7 @@ class CreditCardExpiryField(forms.MultiValueField):
 
     def clean(self, value):
         exp = super(CreditCardExpiryField, self).clean(value)
-        if date.today() > exp:
+        if exp and date.today() > exp:
             raise forms.ValidationError(
                 "The expiration date you entered is in the past.")
         return exp
