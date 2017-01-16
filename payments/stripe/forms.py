@@ -101,11 +101,11 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
                     SensitiveSelect(
                         attrs={'autocomplete': 'cc-exp-month',
                                'required': 'required'},
-                        choices=CreditCardExpiryField.EXP_MONTH_CHOICES),
+                        choices=CreditCardExpiryField.get_year_choices()),
                     SensitiveSelect(
                         attrs={'autocomplete': 'cc-exp-year',
                                'required': 'required'},
-                        choices=CreditCardExpiryField.EXP_YEAR_CHOICES)])
+                        choices=CreditCardExpiryField.get_year_choices())])
         }
         for field_name, widget in widget_map.items():
             self.fields[field_name].widget = widget
