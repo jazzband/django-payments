@@ -1,8 +1,9 @@
 import re
-from django.forms.utils import flatatt
 
-from django.template.loader import render_to_string
+from django import VERSION as DJANGO_VERSION
+from django.forms.utils import flatatt
 from django.forms.widgets import TextInput, MultiWidget, Select
+from django.template.loader import render_to_string
 from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -59,7 +60,10 @@ class SensitiveSelect(Select):
             value = ''
         final_attrs = self.build_attrs(attrs)
         output = [format_html('<select{}>', flatatt(final_attrs))]
-        options = self.render_options([value])
+        if DJANGO_VERSION <= (1, 10, 0):
+            options = self.render_options([], [value])
+        else:
+            options = self.render_options([value])
         if options:
             output.append(options)
         output.append('</select>')
