@@ -6,7 +6,7 @@ from mock import patch, Mock
 from unittest import TestCase
 import stripe
 
-from . import StripeProvider
+from . import StripeProvider, StripeCardProvider
 from .. import FraudStatus, PaymentStatus, RedirectNeeded
 
 
@@ -168,3 +168,15 @@ class TestStripeProvider(TestCase):
                 form = provider.get_form(payment, data=data)
                 msg = 'This payment has already been processed.'
                 self.assertEqual(form.errors['__all__'][0], msg)
+
+    def test_form_doesnt_have_name_attributes_on_fields(self):
+        payment = Payment()
+        store_name = 'Test store'
+        provider = StripeCardProvider(
+            name=store_name,
+            secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
+        form = provider.get_form(payment)
+        sensitive_fields = ['name', 'cvv2', 'expiration', 'number']
+        for field_name in sensitive_fields:
+            field = form[field_name]
+            self.assertTrue('name=' not in str(field))

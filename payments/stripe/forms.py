@@ -1,13 +1,16 @@
 from __future__ import unicode_literals
 
+import stripe
 from django import forms
 from django.utils.translation import ugettext as _
-import stripe
 
-from .widgets import StripeCheckoutWidget, StripeWidget
-from .. import RedirectNeeded
+from payments.fields import CreditCardExpiryField
+from .. import FraudStatus, PaymentStatus, RedirectNeeded
 from ..forms import PaymentForm as BasePaymentForm, CreditCardPaymentFormWithName
-from ..import FraudStatus, PaymentStatus
+from ..models import FRAUD_CHOICES
+from ..widgets import (
+    SensitiveTextInput, SensitiveSelect, CreditCardExpiryWidget)
+from .widgets import StripeCheckoutWidget, StripeWidget
 
 
 class StripeFormMixin(object):
@@ -87,8 +90,24 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
         stripe_attrs['data-address-state'] = self.payment.billing_country_area
         stripe_attrs['data-address-zip'] = self.payment.billing_postcode
         stripe_attrs['data-address-country'] = self.payment.billing_country_code
-        for field in self.fields:
-            # All fields in this form should have disabled validation
-            # since we don't send values to the backend
-            if field != ['stripeToken']:
-                self.fields[field].required = False
+        widget_map = {
+            'name': SensitiveTextInput(
+                attrs={'autocomplete': 'cc-name', 'required': 'required'}),
+            'cvv2': SensitiveTextInput(attrs={'autocomplete': 'cc-csc'}),
+            'number': SensitiveTextInput(
+                attrs={'autocomplete': 'cc-number', 'required': 'required'}),
+            'expiration': CreditCardExpiryWidget(
+                widgets=[
+                    SensitiveSelect(
+                        attrs={'autocomplete': 'cc-exp-month',
+                               'required': 'required'},
+                        choices=CreditCardExpiryField.EXP_MONTH_CHOICES),
+                    SensitiveSelect(
+                        attrs={'autocomplete': 'cc-exp-year',
+                               'required': 'required'},
+                        choices=CreditCardExpiryField.EXP_YEAR_CHOICES)])
+        }
+        for field_name, widget in widget_map.items():
+            self.fields[field_name].widget = widget
+            self.fields[field_name].required = False
+

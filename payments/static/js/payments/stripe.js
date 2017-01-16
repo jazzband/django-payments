@@ -1,16 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     var stripeInput = document.getElementById('id_stripe_token');
     var form = stripeInput.form;
-    var sensitive_fields = ["name", "expiration_0", "expiration_1", "cvv2", "number"];
-    var remove_name_from_fields = function (fields, form) {
-        var form_elements = form.elements;
-        for (var i = 0, len = form_elements.length; i < len; i++) {
-            if (fields.indexOf(form_elements[i].name) > -1){
-                form_elements[i].removeAttribute("name");
-            }
-        }
-    };
-    remove_name_from_fields(sensitive_fields, form);
     var publishableKey = stripeInput.attributes['data-publishable-key'].value;
     Stripe.setPublishableKey(publishableKey);
     form.addEventListener('submit', function (e) {

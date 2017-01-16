@@ -1,7 +1,11 @@
 import re
+from django.forms.utils import flatatt
 
 from django.template.loader import render_to_string
-from django.forms.widgets import TextInput, MultiWidget
+from django.forms.widgets import TextInput, MultiWidget, Select
+from django.utils.encoding import force_text
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 
 class CreditCardNumberWidget(TextInput):
@@ -32,3 +36,31 @@ class CreditCardExpiryWidget(MultiWidget):
     def format_output(self, rendered_widgets):
         ctx = {'month': rendered_widgets[0], 'year': rendered_widgets[1]}
         return render_to_string('payments/credit_card_expiry_widget.html', ctx)
+
+
+class SensitiveTextInput(TextInput):
+
+    def render(self, name, value, attrs=None):
+        # Explicitly skip parent implementation and exclude
+        # 'name' from attrs
+        if value is None:
+            value = ''
+        final_attrs = self.build_attrs(attrs, type=self.input_type)
+        if value != '':
+            # Only add the 'value' attribute if a value is non-empty.
+            final_attrs['value'] = force_text(self.format_value(value))
+        return format_html('<input{} />', flatatt(final_attrs))
+
+
+class SensitiveSelect(Select):
+
+    def render(self, name, value, attrs=None):
+        if value is None:
+            value = ''
+        final_attrs = self.build_attrs(attrs)
+        output = [format_html('<select{}>', flatatt(final_attrs))]
+        options = self.render_options([value])
+        if options:
+            output.append(options)
+        output.append('</select>')
+        return mark_safe('\n'.join(output))

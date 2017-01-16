@@ -66,6 +66,9 @@ class CreditCardExpiryField(forms.MultiValueField):
     EXP_YEAR = [(str(x), str(x)) for x in range(date.today().year,
                                                 date.today().year + 15)]
 
+    EXP_MONTH_CHOICES = [('', _('Month'))] + EXP_MONTH
+    EXP_YEAR_CHOICES = [('', _('Year'))] + EXP_YEAR
+
     default_error_messages = {
         'invalid_month': 'Enter a valid month.',
         'invalid_year': 'Enter a valid year.'}
@@ -77,13 +80,13 @@ class CreditCardExpiryField(forms.MultiValueField):
 
         fields = (
             forms.ChoiceField(
-                choices=[('', _('Month'))] + self.EXP_MONTH,
+                choices=self.EXP_MONTH_CHOICES,
                 error_messages={'invalid': errors['invalid_month']},
                 widget=forms.Select(
                     attrs={'autocomplete': 'cc-exp-month',
                            'required': 'required'})),
             forms.ChoiceField(
-                choices=[('', _('Year'))] + self.EXP_YEAR,
+                choices=self.EXP_YEAR_CHOICES,
                 error_messages={'invalid': errors['invalid_year']},
                 widget=forms.Select(
                     attrs={'autocomplete': 'cc-exp-year',
