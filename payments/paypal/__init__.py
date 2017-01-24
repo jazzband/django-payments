@@ -171,8 +171,19 @@ class PaypalProvider(BasicProvider):
                     'sku': purchased_item.sku}
             yield item
 
+    def get_discounts(self, payment):
+        for discount in payment.get_discounts():
+            price = -1 * discount.amount
+            price = price.quantize(CENTS, rounding=ROUND_HALF_UP)
+            item = {'name': discount.name[:127],
+                    'quantity': str(discount.quantity),
+                    'price': str(price),
+                    'currency': discount.currency}
+            yield item
+
     def get_transactions_data(self, payment):
         items = list(self.get_transactions_items(payment))
+        discounts = list(self.get_discounts(payment))
         sub_total = (
             payment.total - payment.delivery - payment.tax)
         sub_total = sub_total.quantize(CENTS, rounding=ROUND_HALF_UP)
@@ -189,7 +200,7 @@ class PaypalProvider(BasicProvider):
                     'subtotal': str(sub_total),
                     'tax': str(tax),
                     'shipping': str(delivery)}},
-                'item_list': {'items': items},
+                'item_list': {'items': items + discounts},
                 'description': payment.description}]}
         return data
 

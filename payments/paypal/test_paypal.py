@@ -8,7 +8,7 @@ from django.utils import timezone
 from requests import HTTPError
 
 from . import PaypalProvider, PaypalCardProvider
-from .. import PurchasedItem, RedirectNeeded, PaymentError
+from .. import Discount, PurchasedItem, RedirectNeeded, PaymentError
 
 CLIENT_ID = 'abc123'
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
@@ -52,6 +52,12 @@ class Payment(Mock):
 
     def get_process_url(self):
         return 'http://example.com'
+
+    def get_discounts(self):
+        return [Discount(name='bar',
+                         quantity=Decimal('1'),
+                         amount=Decimal('2'),
+                         currency='USD')]
 
     def get_purchased_items(self):
         return [

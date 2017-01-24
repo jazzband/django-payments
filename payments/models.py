@@ -140,6 +140,9 @@ class BasePayment(models.Model):
     def get_purchased_items(self):
         return []
 
+    def get_discounts(self):
+        return []
+
     def get_failure_url(self):
         raise NotImplementedError()
 
