@@ -22,6 +22,11 @@ PROCESS_DATA = {
     'expiration_1': '2020',
     'cvv2': '1234'}
 
+PURCHASED_ITEM = PurchasedItem(name='foo', quantity=Decimal('10'),
+                               price=Decimal('20'), currency='USD', sku='bar')
+
+DISCOUNT = Discount(name='bar', amount=Decimal('2'), currency='USD')
+
 
 class Payment(Mock):
     id = 1
@@ -54,15 +59,10 @@ class Payment(Mock):
         return 'http://example.com'
 
     def get_discounts(self):
-        return [Discount(name='bar',
-                         amount=Decimal('2'),
-                         currency='USD')]
+        return [DISCOUNT]
 
     def get_purchased_items(self):
-        return [
-            PurchasedItem(
-                name='foo', quantity=Decimal('10'), price=Decimal('20'),
-                currency='USD', sku='bar')]
+        return [PURCHASED_ITEM]
 
     def get_success_url(self):
         return 'http://success.com'
@@ -224,6 +224,18 @@ class TestPaypalCardProvider(TestCase):
     def setUp(self):
         self.payment = Payment(extra_data='')
         self.provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID)
+
+    def test_item_list(self):
+        data = self.provider.get_transactions_data(self.payment)
+        item, discount = data['transactions'][0]['item_list']['items']
+        item['price'] = Decimal(float(item['price']))
+        item['quantity'] = int(item['quantity'])
+        discount = Discount(amount=-Decimal(float(discount['price'])),
+                            currency=discount['currency'],
+                            name=discount['name'])
+        item = PurchasedItem(**item)
+        self.assertEqual(item, PURCHASED_ITEM)
+        self.assertEqual(discount, DISCOUNT)
 
     def test_provider_raises_redirect_needed_on_success_captured_payment(self):
         with patch('requests.post') as mocked_post:
