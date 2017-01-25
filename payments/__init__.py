@@ -10,8 +10,7 @@ from django.core.exceptions import ImproperlyConfigured
 PurchasedItem = namedtuple('PurchasedItem',
                            'name, quantity, price, currency, sku')
 
-Discount = namedtuple('Discount',
-                      'name, quantity, amount, currency')
+Discount = namedtuple('Discount', 'name, amount, currency')
 
 
 class RedirectNeeded(Exception):

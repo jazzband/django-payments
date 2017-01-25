@@ -173,10 +173,10 @@ class PaypalProvider(BasicProvider):
 
     def get_discounts(self, payment):
         for discount in payment.get_discounts():
-            price = -1 * discount.amount
+            price = -discount.amount
             price = price.quantize(CENTS, rounding=ROUND_HALF_UP)
             item = {'name': discount.name[:127],
-                    'quantity': str(discount.quantity),
+                    'quantity': '1',
                     'price': str(price),
                     'currency': discount.currency}
             yield item

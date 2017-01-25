@@ -55,7 +55,6 @@ class Payment(Mock):
 
     def get_discounts(self):
         return [Discount(name='bar',
-                         quantity=Decimal('1'),
                          amount=Decimal('2'),
                          currency='USD')]
 
