@@ -228,22 +228,6 @@ Example::
 
 This backend does not support fraud detection.
 
-
-Discount info
-"""""""""""""
-
-If you use discounts or vouchers and want to provide info about it for PayPal, override get_discounts() method in your payment class.
-
-Example::
-
-    def get_discounts(self):
-        if self.voucher is None:
-            return []
-        return [payments.Discount(name=self.voucher.name,
-                                  amount=self.voucher.amount,
-                                  currency=self.voucher.currency)]
-
-
 Sage Pay
 --------
 

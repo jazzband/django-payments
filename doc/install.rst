@@ -20,7 +20,7 @@ Installation
       # mypaymentapp/models.py
       from decimal import Decimal
 
-      from payments import PurchasedItem
+      from payments import PurchasedItem, Discount
       from payments.models import BasePayment
 
       class Payment(BasePayment):
@@ -36,7 +36,14 @@ Installation
               yield PurchasedItem(name='The Hound of the Baskervilles', sku='BSKV',
                                   quantity=9, price=Decimal(10), currency='USD')
 
+          def get_discounts(self):
+              # discounts and vouchers applied on order
+              yield Discount(name='Standard discount', amount=Decimal(1),
+                             currency='USD')
+
    The :meth:`get_purchased_items` method should return an iterable yielding instances of :class:`payments.PurchasedItem`.
+
+   The :meth:`get_discounts` method should return an iterable yielding instances of :class:`payments.Discount`.
 
 #. Write a view that will handle the payment. You can obtain a form instance by passing POST data to ``payment.get_form()``::
 
