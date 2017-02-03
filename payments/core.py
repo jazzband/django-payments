@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import re
+import importlib
 try:
     from urllib.parse import urljoin, urlencode
 except ImportError:
@@ -21,13 +22,27 @@ if not PAYMENT_HOST:
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
 
+def get_function(function_name):
+    """Imports function with given name"""
+    splitted_path = function_name.split('.')
+    module_name = '.'.join(splitted_path[:-1])
+    function_name = splitted_path[-1]
+    module = importlib.import_module(module_name)
+    return getattr(module, function_name)
+
+
 def get_base_url():
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
     if not PAYMENT_HOST:
         current_site = Site.objects.get_current()
-        domain = current_site.domain
-        return '%s://%s' % (protocol, domain)
-    return '%s://%s' % (protocol, PAYMENT_HOST)
+        return '%s://%s' % (protocol, current_site.domain)
+
+    try:
+        function = get_function(PAYMENT_HOST)
+        domain = function()
+    except (ImportError, AttributeError, TypeError, ValueError):
+        domain = PAYMENT_HOST
+    return '%s://%s' % (protocol, domain)
 
 
 class BasicProvider(object):

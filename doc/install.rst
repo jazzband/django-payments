@@ -87,3 +87,7 @@ Installation
    .. note::
 
       Variant names are used in URLs so it's best to stick to ASCII.
+
+   .. note::
+
+      PAYMENT_HOST can also be a callable object.
