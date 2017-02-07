@@ -1,20 +1,32 @@
 from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
-from mock import patch
+from mock import patch, NonCallableMock
 
-from .core import provider_factory
+from payments import core
 from .forms import CreditCardPaymentFormWithName, PaymentForm
 from .models import BasePayment
+
+
+class TestHelpers(TestCase):
+    @patch('payments.core.PAYMENT_HOST', new_callable=NonCallableMock)
+    def test_text_get_base_url(self, host):
+        host.__str__ = lambda x: "example.com/string"
+        self.assertEqual(core.get_base_url(), "https://example.com/string")
+
+    @patch('payments.core.PAYMENT_HOST')
+    def test_callable_get_base_url(self, host):
+        host.return_value = "example.com/callable"
+        self.assertEqual(core.get_base_url(), "https://example.com/callable")
 
 
 class TestProviderFactory(TestCase):
 
     def test_provider_factory(self):
-        provider_factory('default')
+        core.provider_factory('default')
 
     def test_provider_does_not_exist(self):
-        self.assertRaises(ValueError, provider_factory, 'fake_provider')
+        self.assertRaises(ValueError, core.provider_factory, 'fake_provider')
 
 
 class TestBasePayment(TestCase):

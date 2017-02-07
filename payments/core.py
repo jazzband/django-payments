@@ -7,7 +7,6 @@ except ImportError:
     from urlparse import urljoin
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.module_loading import import_string
 
 
 PAYMENT_VARIANTS = {
@@ -27,21 +26,18 @@ def get_base_url():
     """
     Returns host url according to project settings. Protocol is chosen by
     checking PAYMENT_USES_SSL variable.
-    If PAYMENT_HOST is not specified, gets domain from Sites. Otherwise,
-    checks if it's callable and returns it's result. If there is no function
-    treats it as domain.
+    If PAYMENT_HOST is not specified, gets domain from Sites. 
+    Otherwise checks if it's callable and returns it's result. If it's not a 
+    callable treats it as domain.
     """
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
     if not PAYMENT_HOST:
         current_site = Site.objects.get_current()
-        return '%s://%s' % (protocol, current_site.domain)
-
-    try:
-        function = import_string(PAYMENT_HOST)
-    except ImportError:
-        domain = PAYMENT_HOST
+        domain = current_site.domain
+    elif callable(PAYMENT_HOST):
+        domain = PAYMENT_HOST()
     else:
-        domain = function()
+        domain = PAYMENT_HOST
     return '%s://%s' % (protocol, domain)
 
 
