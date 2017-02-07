@@ -8,6 +8,7 @@ except ImportError:
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
+
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {})}
 
@@ -22,12 +23,22 @@ PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
 
 def get_base_url():
+    """
+    Returns host url according to project settings. Protocol is chosen by
+    checking PAYMENT_USES_SSL variable.
+    If PAYMENT_HOST is not specified, gets domain from Sites. 
+    Otherwise checks if it's callable and returns it's result. If it's not a 
+    callable treats it as domain.
+    """
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
     if not PAYMENT_HOST:
         current_site = Site.objects.get_current()
         domain = current_site.domain
-        return '%s://%s' % (protocol, domain)
-    return '%s://%s' % (protocol, PAYMENT_HOST)
+    elif callable(PAYMENT_HOST):
+        domain = PAYMENT_HOST()
+    else:
+        domain = PAYMENT_HOST
+    return '%s://%s' % (protocol, domain)
 
 
 class BasicProvider(object):
