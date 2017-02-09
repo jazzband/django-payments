@@ -1,0 +1,199 @@
+# Django Payments
+# Copyright (C) 2017 Mirumee Software
+# This file is distributed under the same license as the django-payments package.
+# Mirumee Software <hello@mirumee.com>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-02-09 12:27+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: payments/cybersource/__init__.py:98
+msgid "The order is marked for review by Decision Manager"
+msgstr ""
+
+#: payments/cybersource/__init__.py:103
+msgid "The order has been rejected by Decision Manager"
+msgstr ""
+
+#: payments/cybersource/__init__.py:108
+msgid "Fraud score exceeds threshold."
+msgstr ""
+
+#: payments/cybersource/__init__.py:112
+msgid "CyberSource Smart Authorization failed."
+msgstr ""
+
+#: payments/cybersource/__init__.py:117
+msgid "Card verification number (CVN) did not match."
+msgstr ""
+
+#: payments/cybersource/__init__.py:123
+msgid "CyberSource Address Verification Service failed."
+msgstr ""
+
+#: payments/cybersource/__init__.py:144
+msgid "3-D Secure verification in progress"
+msgstr ""
+
+#: payments/cybersource/__init__.py:201
+msgid ""
+"Our bank has flagged your transaction as unusually suspicious. Please "
+"contact us to resolve this issue."
+msgstr ""
+
+#: payments/cybersource/__init__.py:204
+msgid ""
+"Your bank has declined the transaction. No additional information was "
+"provided."
+msgstr ""
+
+#: payments/cybersource/__init__.py:207
+msgid ""
+"The card has either expired or you have entered an incorrect expiration date."
+msgstr ""
+
+#: payments/cybersource/__init__.py:210
+msgid ""
+"There are insufficient funds on your card or it has reached its credit limit."
+msgstr ""
+
+#: payments/cybersource/__init__.py:213
+msgid "The card you are trying to use was reported as lost or stolen."
+msgstr ""
+
+#: payments/cybersource/__init__.py:216
+msgid ""
+"Your card is either inactive or it does not permit online payments. Please "
+"contact your bank to resolve this issue."
+msgstr ""
+
+#: payments/cybersource/__init__.py:219
+msgid ""
+"Your bank has declined the transaction. Please check the verification number "
+"of your card and retry."
+msgstr ""
+
+#: payments/cybersource/__init__.py:222
+msgid ""
+"Your bank has declined the transaction. Please make sure the card number you "
+"have entered is correct and retry."
+msgstr ""
+
+#: payments/cybersource/__init__.py:225
+msgid "We are sorry but our bank cannot handle the card type you are using."
+msgstr ""
+
+#: payments/cybersource/__init__.py:229
+msgid ""
+"We were unable to verify your address. Please make sure the address you "
+"entered is correct and retry."
+msgstr ""
+
+#: payments/cybersource/__init__.py:232
+msgid "We were unable to complete the transaction. Please try again later."
+msgstr ""
+
+#: payments/cybersource/forms.py:51
+msgid "fingerprint"
+msgstr ""
+
+#: payments/cybersource/forms.py:68 payments/stripe/forms.py:54
+msgid "This payment has already been processed."
+msgstr ""
+
+#: payments/fields.py:19
+msgid "Please enter a valid card number"
+msgstr ""
+
+#: payments/fields.py:20
+#, python-format
+msgid "We accept only %(valid_types)s"
+msgstr ""
+
+#: payments/fields.py:80
+msgid "Month"
+msgstr ""
+
+#: payments/fields.py:86
+msgid "Year"
+msgstr ""
+
+#: payments/fields.py:125
+msgid "Enter a valid security number."
+msgstr ""
+
+#: payments/forms.py:39
+msgid "Card Number"
+msgstr ""
+
+#: payments/forms.py:43
+msgid "CVV2 Security Number"
+msgstr ""
+
+#: payments/forms.py:44
+msgid ""
+"Last three digits located on the back of your card. For American Express the "
+"four digits found on the front side."
+msgstr ""
+
+#: payments/forms.py:56
+msgid "Name on Credit Card"
+msgstr ""
+
+#: payments/models.py:13
+msgid "Waiting for confirmation"
+msgstr ""
+
+#: payments/models.py:14
+msgid "Pre-authorized"
+msgstr ""
+
+#: payments/models.py:15
+msgid "Confirmed"
+msgstr ""
+
+#: payments/models.py:16 payments/models.py:27
+msgid "Rejected"
+msgstr ""
+
+#: payments/models.py:17
+msgid "Refunded"
+msgstr ""
+
+#: payments/models.py:18
+msgid "Error"
+msgstr ""
+
+#: payments/models.py:19
+msgid "Input"
+msgstr ""
+
+#: payments/models.py:25
+msgid "Unknown"
+msgstr ""
+
+#: payments/models.py:26
+msgid "Passed"
+msgstr ""
+
+#: payments/models.py:28
+msgid "Review"
+msgstr ""
+
+#: payments/models.py:61
+msgid "fraud check"
+msgstr ""
+
+#: payments/stripe/widgets.py:23
+msgid "Total payment"
+msgstr ""
