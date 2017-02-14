@@ -8,7 +8,7 @@ from django.utils import timezone
 from requests import HTTPError
 
 from . import PaypalProvider, PaypalCardProvider
-from .. import PurchasedItem, RedirectNeeded, PaymentError
+from .. import Discount, PurchasedItem, RedirectNeeded, PaymentError
 
 CLIENT_ID = 'abc123'
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
@@ -21,6 +21,11 @@ PROCESS_DATA = {
     'expiration_0': '5',
     'expiration_1': '2020',
     'cvv2': '1234'}
+
+PURCHASED_ITEM = PurchasedItem(name='foo', quantity=Decimal('10'),
+                               price=Decimal('20'), currency='USD', sku='bar')
+
+DISCOUNT = Discount(name='bar', amount=Decimal('2'), currency='USD')
 
 
 class Payment(Mock):
@@ -53,11 +58,11 @@ class Payment(Mock):
     def get_process_url(self):
         return 'http://example.com'
 
+    def get_discounts(self):
+        return [DISCOUNT]
+
     def get_purchased_items(self):
-        return [
-            PurchasedItem(
-                name='foo', quantity=Decimal('10'), price=Decimal('20'),
-                currency='USD', sku='bar')]
+        return [PURCHASED_ITEM]
 
     def get_success_url(self):
         return 'http://success.com'
@@ -219,6 +224,18 @@ class TestPaypalCardProvider(TestCase):
     def setUp(self):
         self.payment = Payment(extra_data='')
         self.provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID)
+
+    def test_item_list(self):
+        data = self.provider.get_transactions_data(self.payment)
+        item, discount = data['transactions'][0]['item_list']['items']
+        item['price'] = Decimal(float(item['price']))
+        item['quantity'] = int(item['quantity'])
+        discount = Discount(amount=-Decimal(float(discount['price'])),
+                            currency=discount['currency'],
+                            name=discount['name'])
+        item = PurchasedItem(**item)
+        self.assertEqual(item, PURCHASED_ITEM)
+        self.assertEqual(discount, DISCOUNT)
 
     def test_provider_raises_redirect_needed_on_success_captured_payment(self):
         with patch('requests.post') as mocked_post:

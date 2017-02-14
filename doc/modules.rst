@@ -228,7 +228,6 @@ Example::
 
 This backend does not support fraud detection.
 
-
 Sage Pay
 --------
 
@@ -255,7 +254,7 @@ Example::
 This backend does not support fraud detection.
 
 Sofort.com
---------
+----------
 
 .. class:: payments.sofort.SofortProvider(key, id, project_id[, endpoint='https://api.sofort.com/api/xml'])
 
