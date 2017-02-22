@@ -6,7 +6,7 @@ from mock import patch, MagicMock, Mock
 
 from . import CyberSourceProvider, AUTHENTICATE_REQUIRED, ACCEPTED, \
     TRANSACTION_SETTLED
-from .. import RedirectNeeded, PurchasedItem
+from .. import PaymentStatus, PurchasedItem, RedirectNeeded
 
 MERCHANT_ID = 'abcd1234'
 PASSWORD = '1234abdd1234abcd'
@@ -26,7 +26,7 @@ class Payment(Mock):
     variant = 'cybersource'
     currency = 'USD'
     total = 100
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     transaction_id = None
     captured_amount = 0
     message = ''
@@ -73,7 +73,7 @@ class TestCybersourceProvider(TestCase):
         with self.assertRaises(RedirectNeeded) as exc:
             self.provider.get_form(
                 payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
@@ -85,7 +85,7 @@ class TestCybersourceProvider(TestCase):
         mocked_request.return_value = response
         form = self.provider.get_form(
             payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, 'waiting')
+        self.assertEqual(self.payment.status, PaymentStatus.WAITING)
         self.assertIn('PaReq', form.fields)
 
     @patch.object(CyberSourceProvider, '_make_request')
@@ -116,7 +116,7 @@ class TestCybersourceProvider(TestCase):
         response.reasonCode = TRANSACTION_SETTLED
         mocked_request.return_value = response
         self.provider.capture(self.payment)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
 
     @patch.object(CyberSourceProvider, '_make_request')
     def test_provider_refunds_payment(self, mocked_request):
@@ -159,7 +159,7 @@ class TestCybersourceProvider(TestCase):
             'cvv2': '123'
         })}
         self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
@@ -189,7 +189,7 @@ class TestCybersourceProvider(TestCase):
             'cvv2': '123'
         })}
         provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, 'preauth')
+        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
         self.assertEqual(self.payment.captured_amount, 0)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
@@ -216,6 +216,6 @@ class TestCybersourceProvider(TestCase):
             'cvv2': '123'
         })}
         self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, 'error')
+        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
         self.assertEqual(self.payment.captured_amount, 0)
         self.assertEqual(self.payment.transaction_id, transaction_id)

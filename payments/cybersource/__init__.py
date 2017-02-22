@@ -11,7 +11,9 @@ from suds.sudsobject import Object
 import suds.wsse
 
 from .forms import PaymentForm
-from .. import ExternalPostNeeded, PaymentError, RedirectNeeded
+from .. import (
+    ExternalPostNeeded, FraudStatus, PaymentError, PaymentStatus,
+    RedirectNeeded)
 from ..core import BasicProvider, get_credit_card_issuer
 from ..forms import PaymentForm as BaseForm
 
@@ -71,8 +73,8 @@ class CyberSourceProvider(BasicProvider):
         super(CyberSourceProvider, self).__init__(*args, **kwargs)
 
     def get_form(self, payment, data=None):
-        if payment.status == 'waiting':
-            payment.change_status('input')
+        if payment.status == PaymentStatus.WAITING:
+            payment.change_status(PaymentStatus.INPUT)
         form = PaymentForm(data, provider=self, payment=payment)
         try:
             if form.is_valid():
@@ -84,48 +86,48 @@ class CyberSourceProvider(BasicProvider):
     def _change_status_to_confirmed(self, payment):
         if self._capture:
             payment.captured_amount = payment.total
-            payment.change_status('confirmed')
+            payment.change_status(PaymentStatus.CONFIRMED)
         else:
-            payment.change_status('preauth')
+            payment.change_status(PaymentStatus.PREAUTH)
 
     def _set_proper_payment_status_from_reason_code(self, payment, reason_code):
         if reason_code == ACCEPTED:
-            payment.change_fraud_status('accept', commit=False)
+            payment.change_fraud_status(FraudStatus.ACCEPT, commit=False)
             self._change_status_to_confirmed(payment)
         elif reason_code == FRAUD_MANAGER_REVIEW:
             payment.change_fraud_status(
-                'review', _(
-                    'The order is marked for review by Decision Manager'),
+                FraudStatus.REVIEW,
+                _('The order is marked for review by Decision Manager'),
                 commit=False)
             self._change_status_to_confirmed(payment)
         elif reason_code == FRAUD_MANAGER_REJECT:
             payment.change_fraud_status(
-                'reject', _('The order has been rejected by Decision Manager'),
+                FraudStatus.REJECT, _('The order has been rejected by Decision Manager'),
                 commit=False)
             self._change_status_to_confirmed(payment)
         elif reason_code == FRAUD_SCORE_EXCEEDS_THRESHOLD:
             payment.change_fraud_status(
-                'reject', _('Fraud score exceeds threshold.'), commit=False)
+                FraudStatus.REJECT, _('Fraud score exceeds threshold.'), commit=False)
             self._change_status_to_confirmed(payment)
         elif reason_code == SMART_AUTHORIZATION_FAIL:
             payment.change_fraud_status(
-                'reject', _('CyberSource Smart Authorization failed.'),
+                FraudStatus.REJECT, _('CyberSource Smart Authorization failed.'),
                 commit=False)
             self._change_status_to_confirmed(payment)
         elif reason_code == CARD_VERIFICATION_NUMBER_FAIL:
             payment.change_fraud_status(
-                'reject', _('Card verification number (CVN) did not match.'),
+                FraudStatus.REJECT, _('Card verification number (CVN) did not match.'),
                 commit=False)
             self._change_status_to_confirmed(payment)
         elif reason_code == ADDRESS_VERIFICATION_SERVICE_FAIL:
             payment.change_fraud_status(
-                'reject', _(
+                FraudStatus.REJECT, _(
                     'CyberSource Address Verification Service failed.'),
                 commit=False)
             self._change_status_to_confirmed(payment)
         else:
             error = self._get_error_message(reason_code)
-            payment.change_status('error', message=error)
+            payment.change_status(PaymentStatus.ERROR, message=error)
             raise PaymentError(error)
 
     def charge(self, payment, data):
@@ -140,7 +142,7 @@ class CyberSourceProvider(BasicProvider):
             xid = response.payerAuthEnrollReply.xid
             payment.attrs.xid = xid
             payment.change_status(
-                'waiting',
+                PaymentStatus.WAITING,
                 message=_('3-D Secure verification in progress'))
             action = response.payerAuthEnrollReply.acsURL
             cc_data = dict(data)
@@ -167,7 +169,7 @@ class CyberSourceProvider(BasicProvider):
         if response.reasonCode == ACCEPTED:
             payment.transaction_id = response.requestID
         elif response.reasonCode == TRANSACTION_SETTLED:
-                payment.change_status('confirmed')
+                payment.change_status(PaymentStatus.CONFIRMED)
         else:
             payment.save()
             error = self._get_error_message(response.reasonCode)
@@ -424,7 +426,7 @@ class CyberSourceProvider(BasicProvider):
         xid = request.POST.get('MD')
         if xid != payment.attrs.xid:
             return redirect(payment.get_failure_url())
-        if payment.status in ['confirmed', 'preauth']:
+        if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return redirect(payment.get_success_url())
         cc_data = request.GET.get('token')
         try:
@@ -444,7 +446,7 @@ class CyberSourceProvider(BasicProvider):
                 payment, response.reasonCode)
         except PaymentError as e:
             pass
-        if payment.status in ['confirmed', 'preauth']:
+        if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return redirect(payment.get_success_url())
         else:
             return redirect(payment.get_failure_url())

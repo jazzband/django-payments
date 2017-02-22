@@ -16,7 +16,7 @@ import requests
 from requests.exceptions import HTTPError
 
 from .forms import PaymentForm
-from .. import PaymentError, RedirectNeeded
+from .. import PaymentError, PaymentStatus, RedirectNeeded
 from ..core import BasicProvider, get_credit_card_issuer
 
 # Get an instance of a logger
@@ -125,7 +125,7 @@ class PaypalProvider(BasicProvider):
             else:
                 logger.warning(
                     message, extra={'status_code': response.status_code})
-            payment.change_status('error', message)
+            payment.change_status(PaymentStatus.ERROR, message)
             raise PaymentError(message)
         else:
             self.set_response_data(payment, data)
@@ -211,7 +211,7 @@ class PaypalProvider(BasicProvider):
             payment.transaction_id = payment_data['id']
             links = self._get_links(payment)
             redirect_to = links['approval_url']
-        payment.change_status('waiting')
+        payment.change_status(PaymentStatus.WAITING)
         raise RedirectNeeded(redirect_to['href'])
 
     def process_data(self, payment, request):
@@ -220,8 +220,8 @@ class PaypalProvider(BasicProvider):
             return HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:
-            if payment.status != 'confirmed':
-                payment.change_status('rejected')
+            if payment.status != PaymentStatus.CONFIRMED:
+                payment.change_status(PaymentStatus.REJECTED)
                 return redirect(payment.get_failure_url())
             else:
                 return redirect(success_url)
@@ -230,9 +230,9 @@ class PaypalProvider(BasicProvider):
         payment.attrs.payer_info = executed_payment['payer']['payer_info']
         if self._capture:
             payment.captured_amount = payment.total
-            payment.change_status('confirmed')
+            payment.change_status(PaymentStatus.CONFIRMED)
         else:
-            payment.change_status('preauth')
+            payment.change_status(PaymentStatus.PREAUTH)
         return redirect(success_url)
 
     def create_payment(self, payment, extra_data=None):
@@ -274,15 +274,14 @@ class PaypalProvider(BasicProvider):
             capture = {'state': 'completed'}
         state = capture['state']
         if state == 'completed':
-            payment.change_status('confirmed')
+            payment.change_status(PaymentStatus.CONFIRMED)
             return amount
-        elif state in [
-                'partially_captured', 'partially_refunded']:
+        elif state in ['partially_captured', 'partially_refunded']:
             return amount
         elif state == 'pending':
-            payment.change_status('waiting')
+            payment.change_status(PaymentStatus.WAITING)
         elif state == 'refunded':
-            payment.change_status('refunded')
+            payment.change_status(PaymentStatus.REFUNDED)
             raise PaymentError('Payment already refunded')
 
     def release(self, payment):
@@ -298,7 +297,7 @@ class PaypalProvider(BasicProvider):
         links = self._get_links(payment)
         url = links['refund']['href']
         self.post(payment, url, data=refund_data)
-        payment.change_status('refunded')
+        payment.change_status(PaymentStatus.REFUNDED)
         return amount
 
 
@@ -308,8 +307,8 @@ class PaypalCardProvider(PaypalProvider):
     '''
 
     def get_form(self, payment, data=None):
-        if payment.status == 'waiting':
-            payment.change_status('input')
+        if payment.status == PaymentStatus.WAITING:
+            payment.change_status(PaymentStatus.INPUT)
         form = PaymentForm(data, provider=self, payment=payment)
         if form.is_valid():
             raise RedirectNeeded(payment.get_success_url())

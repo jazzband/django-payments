@@ -3,6 +3,8 @@ import hashlib
 
 from django import forms
 
+from .. import PaymentStatus
+
 
 NO_MORE_CONFIRMATION = 0
 NEW = 1
@@ -68,7 +70,7 @@ class ProcessPaymentForm(forms.Form):
         payment_status = self.payment.status
         if status == ACCEPTED:
             self.payment.captured_amount = self.payment.total
-            self.payment.change_status('confirmed')
-        elif ((status == NO_MORE_CONFIRMATION and payment_status == 'waiting')
+            self.payment.change_status(PaymentStatus.CONFIRMED)
+        elif ((status == NO_MORE_CONFIRMATION and payment_status == PaymentStatus.WAITING)
               or status == REJECTED or status == CANCELED):
-            self.payment.change_status('rejected')
+            self.payment.change_status(PaymentStatus.REJECTED)

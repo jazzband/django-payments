@@ -3,7 +3,7 @@ from unittest import TestCase
 from mock import patch, MagicMock, Mock
 
 from . import AuthorizeNetProvider
-from .. import RedirectNeeded
+from .. import PaymentStatus, RedirectNeeded
 
 
 LOGIN_ID = 'abcd1234'
@@ -23,7 +23,7 @@ class Payment(Mock):
     variant = 'authorizenet'
     currency = 'USD'
     total = 100
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     transaction_id = None
     captured_amount = 0
 
@@ -66,7 +66,7 @@ class TestAuthorizeNetProvider(TestCase):
             with self.assertRaises(RedirectNeeded) as exc:
                 provider.get_form(self.payment, data=PROCESS_DATA)
                 self.assertEqual(exc.args[0], self.payment.get_success_url())
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
 
     def test_provider_shows_validation_error_message(self):
@@ -90,5 +90,5 @@ class TestAuthorizeNetProvider(TestCase):
             mocked_post.return_value = post
             form = provider.get_form(self.payment, data=PROCESS_DATA)
             self.assertEqual(form.errors['__all__'][0], error_msg)
-        self.assertEqual(self.payment.status, 'error')
+        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
         self.assertEqual(self.payment.captured_amount, 0)

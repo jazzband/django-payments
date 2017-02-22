@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import braintree
 
 from ..forms import CreditCardPaymentFormWithName
+from .. import PaymentStatus
 
 
 class BraintreePaymentForm(CreditCardPaymentFormWithName):
@@ -26,7 +27,7 @@ class BraintreePaymentForm(CreditCardPaymentFormWithName):
                 self.transaction_id = result.transaction.id
             else:
                 self._errors['__all__'] = self.error_class([result.message])
-                self.payment.change_status('error')
+                self.payment.change_status(PaymentStatus.ERROR)
 
         return data
 
@@ -59,4 +60,4 @@ class BraintreePaymentForm(CreditCardPaymentFormWithName):
         braintree.Transaction.submit_for_settlement(self.transaction_id)
         self.payment.transaction_id = self.transaction_id
         self.payment.captured_amount = self.payment.total
-        self.payment.change_status('confirmed')
+        self.payment.change_status(PaymentStatus.CONFIRMED)

@@ -2,21 +2,20 @@ from __future__ import unicode_literals
 from django import forms
 
 from ..forms import PaymentForm
-from ..models import PAYMENT_STATUS_CHOICES, FRAUD_CHOICES
+from .. import FraudStatus, PaymentStatus
 
 
 class DummyForm(PaymentForm):
-
     RESPONSE_CHOICES = (
         ('3ds-disabled', '3DS disabled'),
         ('3ds-redirect', '3DS redirect'),
         ('failure', 'Gateway connection error'),
         ('payment-error', 'Gateway returned unsupported response')
     )
-    status = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES)
-    fraud_status = forms.ChoiceField(choices=FRAUD_CHOICES)
+    status = forms.ChoiceField(choices=PaymentStatus.CHOICES)
+    fraud_status = forms.ChoiceField(choices=FraudStatus.CHOICES)
     gateway_response = forms.ChoiceField(choices=RESPONSE_CHOICES)
-    verification_result = forms.ChoiceField(choices=PAYMENT_STATUS_CHOICES,
+    verification_result = forms.ChoiceField(choices=PaymentStatus.CHOICES,
                                             required=False)
 
     def clean(self):

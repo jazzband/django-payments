@@ -7,7 +7,7 @@ from django.utils.translation import get_language
 import requests
 import xmltodict
 
-from .. import RedirectNeeded, PaymentError
+from .. import RedirectNeeded, PaymentError, PaymentStatus
 from ..core import BasicProvider
 
 
@@ -69,11 +69,11 @@ class SofortProvider(BasicProvider):
             status = doc['transactions']['transaction_details']['status']
         except KeyError:
             # Payment Failed
-            payment.change_status('rejected')
+            payment.change_status(PaymentStatus.REJECTED)
             return redirect(payment.get_failure_url())
         else:
             payment.captured_amount = payment.total
-            payment.change_status('confirmed')
+            payment.change_status(PaymentStatus.CONFIRMED)
             payment.extra_data = json.dumps(doc)
             sender_data = doc['transactions']['transaction_details']['sender']
             holder_data = sender_data['holder']
@@ -103,5 +103,5 @@ class SofortProvider(BasicProvider):
         # to start a online transaction one needs to upload the "pain"
         # data to his bank account
         payment.message = json.dumps(doc)
-        payment.change_status('refunded')
+        payment.change_status(PaymentStatus.REFUNDED)
         return amount

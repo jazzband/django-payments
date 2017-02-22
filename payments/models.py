@@ -8,24 +8,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from .core import provider_factory
-
-DEFAULT_PAYMENT_STATUS_CHOICES = (
-    ('waiting', _('Waiting for confirmation')),
-    ('preauth', _('Pre-authorized')),
-    ('confirmed', _('Confirmed')),
-    ('rejected', _('Rejected')),
-    ('refunded', _('Refunded')),
-    ('error', _('Error')),
-    ('input', _('Input'))
-)
-PAYMENT_STATUS_CHOICES = getattr(settings, 'PAYMENT_STATUS_CHOICES',
-                                 DEFAULT_PAYMENT_STATUS_CHOICES)
-
-FRAUD_CHOICES = (
-    ('unknown', _('Unknown')),
-    ('accept', _('Passed')),
-    ('reject', _('Rejected')),
-    ('review', _('Review')))
+from . import FraudStatus, PaymentStatus
 
 
 class PaymentAttributeProxy(object):
@@ -56,10 +39,11 @@ class BasePayment(models.Model):
     variant = models.CharField(max_length=255)
     #: Transaction status
     status = models.CharField(
-        max_length=10, choices=PAYMENT_STATUS_CHOICES, default='waiting')
+        max_length=10, choices=PaymentStatus.CHOICES,
+        default=PaymentStatus.WAITING)
     fraud_status = models.CharField(
-        _('fraud check'), max_length=10, choices=FRAUD_CHOICES,
-        default='unknown')
+        _('fraud check'), max_length=10, choices=FraudStatus.CHOICES,
+        default=FraudStatus.UNKNOWN)
     fraud_message = models.TextField(blank=True, default='')
     #: Creation date and time
     created = models.DateTimeField(auto_now_add=True)
@@ -105,7 +89,7 @@ class BasePayment(models.Model):
         status_changed.send(sender=type(self), instance=self)
 
     def change_fraud_status(self, status, message='', commit=True):
-        available_statuses = [choice[0] for choice in FRAUD_CHOICES]
+        available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
         if status not in available_statuses:
             raise ValueError(
                 'Wrong status "%s", it should be one of: %s' % (
@@ -150,25 +134,25 @@ class BasePayment(models.Model):
         return reverse('process_payment', kwargs={'token': self.token})
 
     def capture(self, amount=None):
-        if self.status != 'preauth':
+        if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
                 'Only pre-authorized payments can be captured.')
         provider = provider_factory(self.variant)
         amount = provider.capture(self, amount)
         if amount:
             self.captured_amount = amount
-            self.change_status('confirmed')
+            self.change_status(PaymentStatus.CONFIRMED)
 
     def release(self):
-        if self.status != 'preauth':
+        if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
                 'Only pre-authorized payments can be released.')
         provider = provider_factory(self.variant)
         provider.release(self)
-        self.change_status('refunded')
+        self.change_status(PaymentStatus.REFUNDED)
 
     def refund(self, amount=None):
-        if self.status != 'confirmed':
+        if self.status != PaymentStatus.CONFIRMED:
             raise ValueError(
                 'Only charged payments can be refunded.')
         if amount:
@@ -178,8 +162,8 @@ class BasePayment(models.Model):
             provider = provider_factory(self.variant)
             amount = provider.refund(self, amount)
             self.captured_amount -= amount
-        if self.captured_amount == 0 and self.status != 'refunded':
-            self.change_status('refunded')
+        if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:
+            self.change_status(PaymentStatus.REFUNDED)
         self.save()
 
     @property
