@@ -8,6 +8,7 @@ from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 
 from .core import get_credit_card_issuer
+from .utils import get_month_choices, get_year_choices
 from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
 
 
@@ -60,11 +61,8 @@ class CreditCardNumberField(forms.CharField):
         return sum(digits) % 10 == 0 if digits else False
 
 
-class CreditCardExpiryField(forms.MultiValueField):
 
-    EXP_MONTH = [(str(x), '%02d' % (x,)) for x in range(1, 13)]
-    EXP_YEAR = [(str(x), str(x)) for x in range(date.today().year,
-                                                date.today().year + 15)]
+class CreditCardExpiryField(forms.MultiValueField):
 
     default_error_messages = {
         'invalid_month': 'Enter a valid month.',
@@ -77,13 +75,13 @@ class CreditCardExpiryField(forms.MultiValueField):
 
         fields = (
             forms.ChoiceField(
-                choices=[('', _('Month'))] + self.EXP_MONTH,
+                choices=get_month_choices(),
                 error_messages={'invalid': errors['invalid_month']},
                 widget=forms.Select(
                     attrs={'autocomplete': 'cc-exp-month',
                            'required': 'required'})),
             forms.ChoiceField(
-                choices=[('', _('Year'))] + self.EXP_YEAR,
+                choices=get_year_choices(),
                 error_messages={'invalid': errors['invalid_year']},
                 widget=forms.Select(
                     attrs={'autocomplete': 'cc-exp-year',
@@ -96,7 +94,7 @@ class CreditCardExpiryField(forms.MultiValueField):
 
     def clean(self, value):
         exp = super(CreditCardExpiryField, self).clean(value)
-        if date.today() > exp:
+        if exp and date.today() > exp:
             raise forms.ValidationError(
                 "The expiration date you entered is in the past.")
         return exp
