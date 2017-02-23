@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _
 from payments.fields import CreditCardExpiryField
 from .. import FraudStatus, PaymentStatus, RedirectNeeded
 from ..forms import PaymentForm as BasePaymentForm, CreditCardPaymentFormWithName
-from ..models import FRAUD_CHOICES
 from ..widgets import (
     SensitiveTextInput, SensitiveSelect, CreditCardExpiryWidget)
 from .widgets import StripeCheckoutWidget, StripeWidget
