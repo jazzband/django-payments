@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django import forms
 import jwt
 
+from ..import PaymentStatus
 from ..forms import PaymentForm as BasePaymentForm
 from .widgets import WalletWidget
 
@@ -44,5 +45,5 @@ class ProcessPaymentForm(forms.Form):
     def save(self):
         self.payment.transaction_id = self.order_id
         self.payment.captured_amount = self.payment.total
-        self.payment.change_status('confirmed')
+        self.payment.change_status(PaymentStatus.CONFIRMED)
         self.payment.save()

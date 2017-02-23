@@ -5,6 +5,7 @@ from unittest import TestCase
 from django.http import HttpResponse, HttpResponseForbidden
 from mock import MagicMock, Mock
 
+from .. import PaymentStatus
 from .forms import ACCEPTED, REJECTED
 from . import DotpayProvider
 
@@ -49,7 +50,7 @@ class Payment(Mock):
     variant = VARIANT
     currency = 'USD'
     total = 100
-    status = 'waiting'
+    status = PaymentStatus.WAITING
 
     def get_process_url(self):
         return 'http://example.com'
@@ -88,7 +89,7 @@ class TestDotpayProvider(TestCase):
         provider = DotpayProvider(**params)
         response = provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponse)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
 
     def test_process_data_payment_rejected(self):
         """DotpayProvider.process_data() returns a correct HTTP response"""
@@ -106,7 +107,7 @@ class TestDotpayProvider(TestCase):
         provider = DotpayProvider(**params)
         response = provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponse)
-        self.assertEqual(self.payment.status, 'rejected')
+        self.assertEqual(self.payment.status, PaymentStatus.REJECTED)
 
     def test_incorrect_process_data(self):
         """DotpayProvider.process_data() checks POST signature"""

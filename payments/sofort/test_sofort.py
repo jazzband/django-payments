@@ -4,7 +4,7 @@ from mock import patch, MagicMock, Mock
 import json
 
 from . import SofortProvider
-from .. import RedirectNeeded
+from .. import PaymentStatus, RedirectNeeded
 
 SECRET = 'abcd1234'
 CLIENT_ID = '1234'
@@ -16,7 +16,7 @@ class Payment(Mock):
     variant = 'sagepay'
     currency = 'USD'
     total = 100
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     transaction_id = None
     captured_amount = 0
     billing_first_name = 'John'
@@ -70,7 +70,7 @@ class TestSofortProvider(TestCase):
                         'holder': 'John Doe',
                         'country_code': 'EN'}}}}
         self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
@@ -84,7 +84,7 @@ class TestSofortProvider(TestCase):
         request.GET = {'trans': transaction_id}
         mocked_parser.return_value = {}
         self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, 'rejected')
+        self.assertEqual(self.payment.status, PaymentStatus.REJECTED)
         self.assertEqual(self.payment.captured_amount, 0)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
@@ -102,4 +102,4 @@ class TestSofortProvider(TestCase):
                         'iban': 'abcd'}}}})
         mocked_parser.return_value = {}
         self.provider.refund(self.payment)
-        self.assertEqual(self.payment.status, 'refunded')
+        self.assertEqual(self.payment.status, PaymentStatus.REFUNDED)

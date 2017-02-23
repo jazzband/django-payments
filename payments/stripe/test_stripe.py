@@ -7,7 +7,7 @@ from unittest import TestCase
 import stripe
 
 from . import StripeProvider
-from .. import RedirectNeeded
+from .. import FraudStatus, PaymentStatus, RedirectNeeded
 
 
 SECRET_KEY = '1234abcd'
@@ -20,7 +20,7 @@ class Payment(Mock):
     description = 'payment'
     currency = 'USD'
     delivery = 10
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     message = None
     tax = 10
     total = 100
@@ -38,7 +38,7 @@ class Payment(Mock):
     def capture(self, amount=None):
         amount = amount or self.total
         self.captured_amount = amount
-        self.change_status('confirmed')
+        self.change_status(PaymentStatus.CONFIRMED)
 
     def get_failure_url(self):
         return 'http://cancel.com'
@@ -110,7 +110,7 @@ class TestStripeProvider(TestCase):
         with self.assertRaises(RedirectNeeded) as exc:
             provider.get_form(payment, data)
             self.assertEqual(exc.args[0], payment.get_failure_url())
-        self.assertEqual(payment.status, 'rejected')
+        self.assertEqual(payment.status, PaymentStatus.REJECTED)
 
     def test_provider_raises_redirect_needed_on_success(self):
         payment = Payment()
@@ -123,7 +123,7 @@ class TestStripeProvider(TestCase):
                 with self.assertRaises(RedirectNeeded) as exc:
                     provider.get_form(payment, data)
                     self.assertEqual(exc.args[0], payment.get_success_url())
-        self.assertEqual(payment.status, 'confirmed')
+        self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(payment.captured_amount, payment.total)
 
     def test_provider_shows_validation_error_message(self):
@@ -138,7 +138,7 @@ class TestStripeProvider(TestCase):
             with mock_stripe_Charge_retrieve():
                 form = provider.get_form(payment, data=data)
                 self.assertEqual(form.errors['__all__'][0], error_msg)
-        self.assertEqual(payment.status, 'error')
+        self.assertEqual(payment.status, PaymentStatus.ERROR)
         self.assertEqual(payment.message, error_msg)
         self.assertEqual(payment.captured_amount, 0)
 
@@ -152,8 +152,8 @@ class TestStripeProvider(TestCase):
         with mock_stripe_Charge_create(error_msg=error_msg):
             with mock_stripe_Charge_retrieve(fraudulent=True):
                 provider.get_form(payment, data=data)
-        self.assertEqual(payment.status, 'error')
-        self.assertEqual(payment.fraud_status, 'reject')
+        self.assertEqual(payment.status, PaymentStatus.ERROR)
+        self.assertEqual(payment.fraud_status, FraudStatus.REJECT)
         self.assertEqual(payment.captured_amount, 0)
 
     def test_provider_detect_already_processed_payment(self):

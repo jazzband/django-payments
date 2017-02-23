@@ -3,7 +3,7 @@ from unittest import TestCase
 from mock import patch, MagicMock, Mock
 
 from . import BraintreeProvider
-from .. import RedirectNeeded
+from .. import PaymentStatus, RedirectNeeded
 
 
 MERCHANT_ID = 'test11'
@@ -23,7 +23,7 @@ class Payment(Mock):
     variant = 'braintree'
     currency = 'USD'
     total = 100
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     transaction_id = None
     captured_amount = 0
 
@@ -58,7 +58,7 @@ class TestBraintreeProvider(TestCase):
                     provider.get_form(self.payment, data=PROCESS_DATA)
                     url = exc.args[0]
                     self.assertEqual(url, self.payment.get_success_url())
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
@@ -73,5 +73,5 @@ class TestBraintreeProvider(TestCase):
                 mocked_sale.return_value = sale
                 form = provider.get_form(self.payment, data=PROCESS_DATA)
                 self.assertEqual(form.errors['__all__'][0], error_msg)
-        self.assertEqual(self.payment.status, 'error')
+        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
         self.assertEqual(self.payment.captured_amount, 0)

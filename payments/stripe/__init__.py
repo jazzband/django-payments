@@ -4,7 +4,7 @@ from decimal import Decimal
 import stripe
 
 from .forms import ModalPaymentForm, PaymentForm
-from .. import RedirectNeeded, PaymentError
+from .. import RedirectNeeded, PaymentError, PaymentStatus
 from ..core import BasicProvider
 
 
@@ -21,8 +21,8 @@ class StripeProvider(BasicProvider):
         super(StripeProvider, self).__init__(**kwargs)
 
     def get_form(self, payment, data=None):
-        if payment.status == 'waiting':
-            payment.change_status('input')
+        if payment.status == PaymentStatus.WAITING:
+            payment.change_status(PaymentStatus.INPUT)
         form = self.form_class(
             data=data, payment=payment, provider=self)
 
@@ -37,7 +37,7 @@ class StripeProvider(BasicProvider):
         try:
             charge.capture(amount=amount)
         except stripe.InvalidRequestError as e:
-            payment.change_status('refunded')
+            payment.change_status(PaymentStatus.REFUNDED)
             raise PaymentError('Payment already refunded')
         payment.attrs.capture = stripe.util.json.dumps(charge)
         return Decimal(amount) / 100
@@ -56,5 +56,4 @@ class StripeProvider(BasicProvider):
 
 
 class StripeCardProvider(StripeProvider):
-
     form_class = PaymentForm

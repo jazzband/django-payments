@@ -8,6 +8,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
 from ..core import BasicProvider
+from .. import PaymentStatus
 
 
 class SagepayProvider(BasicProvider):
@@ -95,15 +96,15 @@ class SagepayProvider(BasicProvider):
             k, v = kv.split('=')
             data[k] = v
         success_url = payment.get_success_url()
-        if payment.status == 'waiting':
+        if payment.status == PaymentStatus.WAITING:
             # If the payment is not in waiting state, we probably have a page reload.
             # We should neither throw 404 nor alter the payment again in such case.
             if data['Status'] == 'OK':
                 payment.captured_amount = payment.total
-                payment.change_status('confirmed')
+                payment.change_status(PaymentStatus.CONFIRMED)
                 return redirect(success_url)
             else:
                 # XXX: We should recognize AUTHENTICATED and REGISTERED in the future.
-                payment.change_status('rejected')
+                payment.change_status(PaymentStatus.REJECTED)
                 return redirect(payment.get_failure_url())
         return redirect(success_url)

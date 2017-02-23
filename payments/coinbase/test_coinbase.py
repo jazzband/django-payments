@@ -8,6 +8,7 @@ from unittest import TestCase
 from django.http import HttpResponse, HttpResponseForbidden
 from mock import MagicMock, patch
 
+from .. import PaymentStatus
 from . import CoinbaseProvider
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
@@ -28,7 +29,7 @@ class Payment(object):
     description = 'payment'
     currency = 'BTC'
     total = Decimal(100)
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     token = PAYMENT_TOKEN
     variant = VARIANT
 
@@ -65,7 +66,7 @@ class TestCoinbaseProvider(TestCase):
         request.body = json.dumps(COINBASE_REQUEST)
         response = self.provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponse)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
 
     def test_incorrect_custom_token_process_data(self):
         """

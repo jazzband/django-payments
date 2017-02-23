@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
 from ..forms import CreditCardPaymentForm
+from .. import PaymentStatus
 
 RESPONSE_STATUS = {
-    '1': 'confirmed',
-    '2': 'rejected'}
+    '1': PaymentStatus.CONFIRMED,
+    '2': PaymentStatus.REJECTED}
 
 
 class PaymentForm(CreditCardPaymentForm):
@@ -22,13 +23,13 @@ class PaymentForm(CreditCardPaymentForm):
                     self.payment, data)
                 data = response.text.split('|')
                 if response.ok and RESPONSE_STATUS.get(data[0], False):
-                    status = RESPONSE_STATUS.get(data[0], 'error')
+                    status = RESPONSE_STATUS.get(data[0], PaymentStatus.ERROR)
                     self.payment.transaction_id = data[6]
-                    if status == 'confirmed':
+                    if status == PaymentStatus.CONFIRMED:
                         self.payment.captured_amount = self.payment.total
                     self.payment.change_status(status)
                 else:
                     errors = [data[3]]
                     self._errors['__all__'] = self.error_class(errors)
-                    self.payment.change_status('error')
+                    self.payment.change_status(PaymentStatus.ERROR)
         return cleaned_data

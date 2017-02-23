@@ -7,7 +7,7 @@ import stripe
 from .widgets import StripeCheckoutWidget, StripeWidget
 from .. import RedirectNeeded
 from ..forms import PaymentForm as BasePaymentForm, CreditCardPaymentFormWithName
-from ..models import FRAUD_CHOICES
+from ..import FraudStatus, PaymentStatus
 
 
 class StripeFormMixin(object):
@@ -17,13 +17,9 @@ class StripeFormMixin(object):
     def _handle_potentially_fraudulent_charge(self, charge, commit=True):
         fraud_details = charge['fraud_details']
         if fraud_details.get('stripe_report', None) == 'fraudulent':
-            reject_fraud_choice = FRAUD_CHOICES[2][0]
-            self.payment.change_fraud_status(
-                reject_fraud_choice, commit=commit)
+            self.payment.change_fraud_status(FraudStatus.REJECT, commit=commit)
         else:
-            accept_fraud_choice = FRAUD_CHOICES[1][0]
-            self.payment.change_fraud_status(
-                accept_fraud_choice, commit=commit)
+            self.payment.change_fraud_status(FraudStatus.ACCEPT, commit=commit)
 
     def clean(self):
         data = self.cleaned_data
@@ -49,7 +45,7 @@ class StripeFormMixin(object):
                         self.charge, commit=False)
                     # The card has been declined
                     self._errors['__all__'] = self.error_class([str(e)])
-                    self.payment.change_status('error', str(e))
+                    self.payment.change_status(PaymentStatus.ERROR, str(e))
             else:
                 msg = _('This payment has already been processed.')
                 self._errors['__all__'] = self.error_class([msg])
@@ -59,7 +55,7 @@ class StripeFormMixin(object):
     def save(self):
         self.payment.transaction_id = self.charge.id
         self.payment.attrs.charge = stripe.util.json.dumps(self.charge)
-        self.payment.change_status('preauth')
+        self.payment.change_status(PaymentStatus.PREAUTH)
         if self.provider._capture:
             self.payment.capture()
         # Make sure we store the info of the charge being marked as fraudulent
@@ -73,7 +69,7 @@ class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
         widget = StripeCheckoutWidget(provider=self.provider, payment=self.payment)
         self.fields['stripeToken'] = forms.CharField(widget=widget)
         if self.is_bound and not self.data.get('stripeToken'):
-            self.payment.change_status('rejected')
+            self.payment.change_status(PaymentStatus.REJECTED)
             raise RedirectNeeded(self.payment.get_failure_url())
 
 

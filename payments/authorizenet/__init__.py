@@ -5,7 +5,7 @@ from django.http import HttpResponseForbidden
 import requests
 
 from .forms import PaymentForm
-from .. import RedirectNeeded
+from .. import PaymentStatus, RedirectNeeded
 from ..core import BasicProvider
 
 
@@ -58,8 +58,8 @@ class AuthorizeNetProvider(BasicProvider):
         return requests.post(self.endpoint, data=post)
 
     def get_form(self, payment, data=None):
-        if payment.status == 'waiting':
-            payment.change_status('input')
+        if payment.status == PaymentStatus.WAITING:
+            payment.change_status(PaymentStatus.INPUT)
         form = PaymentForm(data=data, payment=payment, provider=self)
         if form.is_valid():
             raise RedirectNeeded(payment.get_success_url())

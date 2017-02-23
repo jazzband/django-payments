@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 import requests
 
 from ..core import BasicProvider
+from .. import PaymentStatus
 
 
 class CoinbaseProvider(BasicProvider):
@@ -77,8 +78,8 @@ class CoinbaseProvider(BasicProvider):
         if results['order']['custom'] != self.get_custom_token(payment):
             return HttpResponseForbidden('FAILED')
 
-        if payment.status == 'waiting':
+        if payment.status == PaymentStatus.WAITING:
             payment.transaction_id = results['order']['transaction']['id']
-            payment.change_status('confirmed')
+            payment.change_status(PaymentStatus.CONFIRMED)
             payment.save()
         return HttpResponse('OK')

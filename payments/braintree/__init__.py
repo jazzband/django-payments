@@ -4,7 +4,7 @@ import braintree
 from django.core.exceptions import ImproperlyConfigured
 
 from .forms import BraintreePaymentForm
-from .. import RedirectNeeded
+from .. import PaymentStatus, RedirectNeeded
 from ..core import BasicProvider
 
 
@@ -29,8 +29,8 @@ class BraintreeProvider(BasicProvider):
                 'Braintree does not support pre-authorization.')
 
     def get_form(self, payment, data=None):
-        if payment.status == 'waiting':
-            payment.change_status('input')
+        if payment.status == PaymentStatus.WAITING:
+            payment.change_status(PaymentStatus.INPUT)
         form = BraintreePaymentForm(data=data, payment=payment, provider=self)
         if form.is_valid():
             form.save()

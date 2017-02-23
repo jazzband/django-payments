@@ -8,7 +8,7 @@ from django.utils import timezone
 from requests import HTTPError
 
 from . import PaypalProvider, PaypalCardProvider
-from .. import PurchasedItem, RedirectNeeded, PaymentError
+from .. import PurchasedItem, RedirectNeeded, PaymentError, PaymentStatus
 
 CLIENT_ID = 'abc123'
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
@@ -28,7 +28,7 @@ class Payment(Mock):
     description = 'payment'
     currency = 'USD'
     delivery = Decimal(10)
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     tax = Decimal(10)
     token = PAYMENT_TOKEN
     total = Decimal(100)
@@ -86,7 +86,7 @@ class TestPaypalProvider(TestCase):
             mocked_post.return_value = post
             with self.assertRaises(RedirectNeeded) as exc:
                 self.provider.get_form(payment=self.payment)
-        self.assertEqual(self.payment.status, 'waiting')
+        self.assertEqual(self.payment.status, PaymentStatus.WAITING)
         self.assertEqual(self.payment.captured_amount, Decimal('0'))
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
@@ -102,7 +102,7 @@ class TestPaypalProvider(TestCase):
         post.status_code = 200
         mocked_post.return_value = post
         self.provider.capture(self.payment)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
 
     @patch('requests.post')
     def test_provider_handles_captured_payment(self, mocked_post):
@@ -113,7 +113,7 @@ class TestPaypalProvider(TestCase):
         response.json = data
         mocked_post.side_effect = HTTPError(response=response)
         self.provider.capture(self.payment)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
 
     @patch('requests.post')
     def test_provider_refunds_payment(self, mocked_post):
@@ -126,7 +126,7 @@ class TestPaypalProvider(TestCase):
         post.status_code = 200
         mocked_post.return_value = post
         self.provider.refund(self.payment)
-        self.assertEqual(self.payment.status, 'refunded')
+        self.assertEqual(self.payment.status, PaymentStatus.REFUNDED)
 
     @patch('requests.post')
     @patch('payments.paypal.redirect')
@@ -151,7 +151,7 @@ class TestPaypalProvider(TestCase):
         request.GET = {'token': 'test', 'PayerID': '1234'}
         self.provider.process_data(self.payment, request)
 
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
 
     @patch('requests.post')
@@ -179,7 +179,7 @@ class TestPaypalProvider(TestCase):
             secret=SECRET, client_id=CLIENT_ID, capture=False)
         provider.process_data(self.payment, request)
 
-        self.assertEqual(self.payment.status, 'preauth')
+        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
         self.assertEqual(self.payment.captured_amount, Decimal('0'))
 
     @patch('payments.paypal.redirect')
@@ -188,7 +188,7 @@ class TestPaypalProvider(TestCase):
         request = MagicMock()
         request.GET = {'token': 'test', 'PayerID': None}
         self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, 'rejected')
+        self.assertEqual(self.payment.status, PaymentStatus.REJECTED)
 
     @patch('requests.post')
     def test_provider_renews_access_token(self, mocked_post):
@@ -243,7 +243,7 @@ class TestPaypalCardProvider(TestCase):
                     payment=self.payment, data=PROCESS_DATA)
                 self.assertEqual(exc.args[0], self.payment.get_success_url())
         links = self.provider._get_links(self.payment)
-        self.assertEqual(self.payment.status, 'confirmed')
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
         self.assertEqual(self.payment.transaction_id, transaction_id)
         self.assertTrue('refund' in links)
@@ -274,7 +274,7 @@ class TestPaypalCardProvider(TestCase):
                     payment=self.payment, data=PROCESS_DATA)
                 self.assertEqual(exc.args[0], self.payment.get_success_url())
         links = provider._get_links(self.payment)
-        self.assertEqual(self.payment.status, 'preauth')
+        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
         self.assertEqual(self.payment.captured_amount, Decimal('0'))
         self.assertEqual(self.payment.transaction_id, transaction_id)
         self.assertTrue('capture' in links)
@@ -291,7 +291,7 @@ class TestPaypalCardProvider(TestCase):
             mocked_post.side_effect = HTTPError(response=post)
             form = self.provider.get_form(
                 payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, 'error')
+        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
         self.assertEqual(form.errors['__all__'][0], error_message)
 
     def test_form_shows_internal_error_message(self):
@@ -309,5 +309,5 @@ class TestPaypalCardProvider(TestCase):
             with self.assertRaises(PaymentError) as exc:
                 self.provider.get_form(
                     payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, 'error')
+        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
         self.assertEqual(self.payment.message, error_message)

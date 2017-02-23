@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 import jwt
 from mock import MagicMock
 
+from .. import PaymentStatus
 from . import GoogleWalletProvider
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
@@ -36,7 +37,7 @@ class Payment(object):
     description = 'payment'
     currency = 'USD'
     delivery = Decimal(10)
-    status = 'waiting'
+    status = PaymentStatus.WAITING
     tax = Decimal(10)
     token = PAYMENT_TOKEN
     total = Decimal(100)
@@ -74,7 +75,7 @@ class TestGoogleWalletProvider(TestCase):
             seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         response = provider.process_data(payment, request)
         self.assertEqual(type(response), HttpResponse)
-        self.assertEqual(payment.status, 'confirmed')
+        self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
 
     def test_incorrect_process_data(self):
         """

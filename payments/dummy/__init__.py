@@ -10,7 +10,7 @@ except ImportError:
 from django.http import HttpResponseRedirect
 
 from .forms import DummyForm
-from .. import RedirectNeeded, PaymentError
+from .. import PaymentError, PaymentStatus, RedirectNeeded
 from ..core import BasicProvider
 
 
@@ -20,8 +20,8 @@ class DummyProvider(BasicProvider):
     '''
 
     def get_form(self, payment, data=None):
-        if payment.status == 'waiting':
-            payment.change_status('input')
+        if payment.status == PaymentStatus.WAITING:
+            payment.change_status(PaymentStatus.INPUT)
         form = DummyForm(data=data, hidden_inputs=False, provider=self,
                          payment=payment)
         if form.is_valid():
@@ -50,7 +50,7 @@ class DummyProvider(BasicProvider):
                 elif gateway_response == 'payment-error':
                     raise PaymentError('Unsupported operation')
 
-            if new_status in ['preauth', 'confirmed']:
+            if new_status in [PaymentStatus.PREAUTH, PaymentStatus.CONFIRMED]:
                 raise RedirectNeeded(payment.get_success_url())
             raise RedirectNeeded(payment.get_failure_url())
         return form
@@ -59,12 +59,12 @@ class DummyProvider(BasicProvider):
         verification_result = request.GET.get('verification_result')
         if verification_result:
             payment.change_status(verification_result)
-        if payment.status in ['confirmed', 'preauth']:
+        if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return HttpResponseRedirect(payment.get_success_url())
         return HttpResponseRedirect(payment.get_failure_url())
 
     def capture(self, payment, amount=None):
-        payment.change_status('confirmed')
+        payment.change_status(PaymentStatus.CONFIRMED)
         return amount
 
     def release(self, payment):
