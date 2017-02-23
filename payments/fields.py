@@ -8,6 +8,7 @@ from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 
 from .core import get_credit_card_issuer
+from .utils import get_month_choices, get_year_choices
 from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
 
 
@@ -74,13 +75,13 @@ class CreditCardExpiryField(forms.MultiValueField):
 
         fields = (
             forms.ChoiceField(
-                choices=CreditCardExpiryField.get_month_choices(),
+                choices=get_month_choices(),
                 error_messages={'invalid': errors['invalid_month']},
                 widget=forms.Select(
                     attrs={'autocomplete': 'cc-exp-month',
                            'required': 'required'})),
             forms.ChoiceField(
-                choices=CreditCardExpiryField.get_year_choices(),
+                choices=get_year_choices(),
                 error_messages={'invalid': errors['invalid_year']},
                 widget=forms.Select(
                     attrs={'autocomplete': 'cc-exp-year',
@@ -112,17 +113,6 @@ class CreditCardExpiryField(forms.MultiValueField):
             day = monthrange(year, month)[1]
             return date(year, month, day)
         return None
-
-    @classmethod
-    def get_month_choices(cls):
-        month_choices = [(str(x), '%02d' % (x,)) for x in range(1, 13)]
-        return [('', _('Month'))] + month_choices
-
-    @classmethod
-    def get_year_choices(cls):
-        year_choices = [(str(x), str(x)) for x in range(
-            date.today().year, date.today().year + 15)]
-        return [('', _('Year'))] + year_choices
 
 
 class CreditCardVerificationField(forms.CharField):

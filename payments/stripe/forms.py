@@ -4,9 +4,9 @@ import stripe
 from django import forms
 from django.utils.translation import ugettext as _
 
-from payments.fields import CreditCardExpiryField
 from .. import FraudStatus, PaymentStatus, RedirectNeeded
 from ..forms import PaymentForm as BasePaymentForm, CreditCardPaymentFormWithName
+from ..utils import get_month_choices, get_year_choices
 from ..widgets import (
     SensitiveTextInput, SensitiveSelect, CreditCardExpiryWidget)
 from .widgets import StripeCheckoutWidget, StripeWidget
@@ -100,13 +100,11 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
                     SensitiveSelect(
                         attrs={'autocomplete': 'cc-exp-month',
                                'required': 'required'},
-                        choices=CreditCardExpiryField.get_year_choices()),
+                        choices=get_month_choices()),
                     SensitiveSelect(
                         attrs={'autocomplete': 'cc-exp-year',
                                'required': 'required'},
-                        choices=CreditCardExpiryField.get_year_choices())])
-        }
+                        choices=get_year_choices())])}
         for field_name, widget in widget_map.items():
             self.fields[field_name].widget = widget
             self.fields[field_name].required = False
-
