@@ -1,2 +1,2 @@
 include LICENSE README.md
-recursive-include payments *.html *.js *.wsdl *.xsd *.xml
+recursive-include payments *.html *.js *.mo *.po *.wsdl *.xsd *.xml
