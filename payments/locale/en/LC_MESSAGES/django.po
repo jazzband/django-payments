@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-09 12:27+0100\n"
+"POT-Creation-Date: 2017-03-13 13:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,89 +17,144 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: payments/cybersource/__init__.py:98
+#: payments/__init__.py:25
+msgctxt "payment status"
+msgid "Waiting for confirmation"
+msgstr ""
+
+#: payments/__init__.py:26
+msgctxt "payment status"
+msgid "Pre-authorized"
+msgstr ""
+
+#: payments/__init__.py:27
+msgctxt "payment status"
+msgid "Confirmed"
+msgstr ""
+
+#: payments/__init__.py:28
+msgctxt "payment status"
+msgid "Rejected"
+msgstr ""
+
+#: payments/__init__.py:29
+msgctxt "payment status"
+msgid "Refunded"
+msgstr ""
+
+#: payments/__init__.py:30
+msgctxt "payment status"
+msgid "Error"
+msgstr ""
+
+#: payments/__init__.py:31
+msgctxt "payment status"
+msgid "Input"
+msgstr ""
+
+#: payments/__init__.py:41
+msgctxt "fraud status"
+msgid "Unknown"
+msgstr ""
+
+#: payments/__init__.py:42
+msgctxt "fraud status"
+msgid "Passed"
+msgstr ""
+
+#: payments/__init__.py:43
+msgctxt "fraud status"
+msgid "Rejected"
+msgstr ""
+
+#: payments/__init__.py:44
+msgctxt "fraud status"
+msgid "Review"
+msgstr ""
+
+#: payments/cybersource/__init__.py:100
 msgid "The order is marked for review by Decision Manager"
 msgstr ""
 
-#: payments/cybersource/__init__.py:103
+#: payments/cybersource/__init__.py:105
 msgid "The order has been rejected by Decision Manager"
 msgstr ""
 
-#: payments/cybersource/__init__.py:108
+#: payments/cybersource/__init__.py:110
 msgid "Fraud score exceeds threshold."
 msgstr ""
 
-#: payments/cybersource/__init__.py:112
+#: payments/cybersource/__init__.py:114
 msgid "CyberSource Smart Authorization failed."
 msgstr ""
 
-#: payments/cybersource/__init__.py:117
+#: payments/cybersource/__init__.py:119
 msgid "Card verification number (CVN) did not match."
 msgstr ""
 
-#: payments/cybersource/__init__.py:123
+#: payments/cybersource/__init__.py:125
 msgid "CyberSource Address Verification Service failed."
 msgstr ""
 
-#: payments/cybersource/__init__.py:144
+#: payments/cybersource/__init__.py:146
 msgid "3-D Secure verification in progress"
 msgstr ""
 
-#: payments/cybersource/__init__.py:201
+#: payments/cybersource/__init__.py:203
 msgid ""
 "Our bank has flagged your transaction as unusually suspicious. Please "
 "contact us to resolve this issue."
 msgstr ""
 
-#: payments/cybersource/__init__.py:204
+#: payments/cybersource/__init__.py:206
 msgid ""
 "Your bank has declined the transaction. No additional information was "
 "provided."
 msgstr ""
 
-#: payments/cybersource/__init__.py:207
+#: payments/cybersource/__init__.py:209
 msgid ""
 "The card has either expired or you have entered an incorrect expiration date."
 msgstr ""
 
-#: payments/cybersource/__init__.py:210
+#: payments/cybersource/__init__.py:212
 msgid ""
 "There are insufficient funds on your card or it has reached its credit limit."
 msgstr ""
 
-#: payments/cybersource/__init__.py:213
+#: payments/cybersource/__init__.py:215
 msgid "The card you are trying to use was reported as lost or stolen."
 msgstr ""
 
-#: payments/cybersource/__init__.py:216
+#: payments/cybersource/__init__.py:218
 msgid ""
 "Your card is either inactive or it does not permit online payments. Please "
 "contact your bank to resolve this issue."
 msgstr ""
 
-#: payments/cybersource/__init__.py:219
+#: payments/cybersource/__init__.py:221
 msgid ""
 "Your bank has declined the transaction. Please check the verification number "
 "of your card and retry."
 msgstr ""
 
-#: payments/cybersource/__init__.py:222
+#: payments/cybersource/__init__.py:224
 msgid ""
 "Your bank has declined the transaction. Please make sure the card number you "
 "have entered is correct and retry."
 msgstr ""
 
-#: payments/cybersource/__init__.py:225
+#: payments/cybersource/__init__.py:227
 msgid "We are sorry but our bank cannot handle the card type you are using."
 msgstr ""
 
-#: payments/cybersource/__init__.py:229
+#: payments/cybersource/__init__.py:231
 msgid ""
 "We were unable to verify your address. Please make sure the address you "
 "entered is correct and retry."
 msgstr ""
 
-#: payments/cybersource/__init__.py:232
+#: payments/cybersource/__init__.py:234
 msgid "We were unable to complete the transaction. Please try again later."
 msgstr ""
 
@@ -107,28 +162,20 @@ msgstr ""
 msgid "fingerprint"
 msgstr ""
 
-#: payments/cybersource/forms.py:68 payments/stripe/forms.py:54
+#: payments/cybersource/forms.py:68 payments/stripe/forms.py:52
 msgid "This payment has already been processed."
 msgstr ""
 
-#: payments/fields.py:19
+#: payments/fields.py:20
 msgid "Please enter a valid card number"
 msgstr ""
 
-#: payments/fields.py:20
+#: payments/fields.py:21
 #, python-format
 msgid "We accept only %(valid_types)s"
 msgstr ""
 
-#: payments/fields.py:80
-msgid "Month"
-msgstr ""
-
-#: payments/fields.py:86
-msgid "Year"
-msgstr ""
-
-#: payments/fields.py:125
+#: payments/fields.py:123
 msgid "Enter a valid security number."
 msgstr ""
 
@@ -150,50 +197,18 @@ msgstr ""
 msgid "Name on Credit Card"
 msgstr ""
 
-#: payments/models.py:13
-msgid "Waiting for confirmation"
-msgstr ""
-
-#: payments/models.py:14
-msgid "Pre-authorized"
-msgstr ""
-
-#: payments/models.py:15
-msgid "Confirmed"
-msgstr ""
-
-#: payments/models.py:16 payments/models.py:27
-msgid "Rejected"
-msgstr ""
-
-#: payments/models.py:17
-msgid "Refunded"
-msgstr ""
-
-#: payments/models.py:18
-msgid "Error"
-msgstr ""
-
-#: payments/models.py:19
-msgid "Input"
-msgstr ""
-
-#: payments/models.py:25
-msgid "Unknown"
-msgstr ""
-
-#: payments/models.py:26
-msgid "Passed"
-msgstr ""
-
-#: payments/models.py:28
-msgid "Review"
-msgstr ""
-
-#: payments/models.py:61
+#: payments/models.py:45
 msgid "fraud check"
 msgstr ""
 
 #: payments/stripe/widgets.py:23
 msgid "Total payment"
+msgstr ""
+
+#: payments/utils.py:8
+msgid "Month"
+msgstr ""
+
+#: payments/utils.py:14
+msgid "Year"
 msgstr ""
