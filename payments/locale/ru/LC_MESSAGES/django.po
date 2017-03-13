@@ -2,51 +2,108 @@
 # Copyright (C) 2017 Mirumee Software
 # This file is distributed under the same license as the django-payments package.
 # Mirumee Software <hello@mirumee.com>, 2017.
-# 
+#
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-09 12:27+0100\n"
+"POT-Creation-Date: 2017-03-13 13:12+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Andrey Kuznetsov <netcitizen@yandex.ru>, 2017\n"
-"Language-Team: Russian (Russia) (https://www.transifex.com/mirumee/teams/34782/ru_RU/)\n"
+"Last-Translator: Weronika Terpilowska <weronika@mirumee.com>, 2017\n"
+"Language-Team: Russian (https://www.transifex.com/mirumee/teams/34782/ru/)\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ru_RU\n"
-"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n"
+"%100>=11 && n%100<=14)? 2 : 3);\n"
 
-#: payments/cybersource/__init__.py:98
+#: payments/__init__.py:25
+msgctxt "payment status"
+msgid "Waiting for confirmation"
+msgstr "Ожидает подтверждения"
+
+#: payments/__init__.py:26
+msgctxt "payment status"
+msgid "Pre-authorized"
+msgstr "Авторизован"
+
+#: payments/__init__.py:27
+msgctxt "payment status"
+msgid "Confirmed"
+msgstr "Подтвержден"
+
+#: payments/__init__.py:28
+msgctxt "payment status"
+msgid "Rejected"
+msgstr "Отклонен"
+
+#: payments/__init__.py:29
+msgctxt "payment status"
+msgid "Refunded"
+msgstr "Возмещен"
+
+#: payments/__init__.py:30
+msgctxt "payment status"
+msgid "Error"
+msgstr "Ошибка"
+
+#: payments/__init__.py:31
+msgctxt "payment status"
+msgid "Input"
+msgstr "Введен"
+
+#: payments/__init__.py:41
+msgctxt "fraud status"
+msgid "Unknown"
+msgstr "Неизвестный"
+
+#: payments/__init__.py:42
+msgctxt "fraud status"
+msgid "Passed"
+msgstr "Одобрен"
+
+#: payments/__init__.py:43
+msgctxt "fraud status"
+msgid "Rejected"
+msgstr "Отклонен"
+
+#: payments/__init__.py:44
+msgctxt "fraud status"
+msgid "Review"
+msgstr "На рассмотрении"
+
+#: payments/cybersource/__init__.py:100
 msgid "The order is marked for review by Decision Manager"
 msgstr "Заказ отмечен для рассмотрения менеджером"
 
-#: payments/cybersource/__init__.py:103
+#: payments/cybersource/__init__.py:105
 msgid "The order has been rejected by Decision Manager"
 msgstr "Заказ был отклонен менеджером"
 
-#: payments/cybersource/__init__.py:108
+#: payments/cybersource/__init__.py:110
 msgid "Fraud score exceeds threshold."
 msgstr "Превышен порог риска мошенничества."
 
-#: payments/cybersource/__init__.py:112
+#: payments/cybersource/__init__.py:114
 msgid "CyberSource Smart Authorization failed."
 msgstr "Авторизация CyberSource Smart прошла неудачно."
 
-#: payments/cybersource/__init__.py:117
+#: payments/cybersource/__init__.py:119
 msgid "Card verification number (CVN) did not match."
 msgstr "Верификационный номер карты (CVN) не совпадает."
 
-#: payments/cybersource/__init__.py:123
+#: payments/cybersource/__init__.py:125
 msgid "CyberSource Address Verification Service failed."
 msgstr "Работа сервиса верификации адреса CyberSource закончилась неудачей."
 
-#: payments/cybersource/__init__.py:144
+#: payments/cybersource/__init__.py:146
 msgid "3-D Secure verification in progress"
 msgstr "Выполняется верификация 3-D Secure"
 
-#: payments/cybersource/__init__.py:201
+#: payments/cybersource/__init__.py:203
 msgid ""
 "Our bank has flagged your transaction as unusually suspicious. Please "
 "contact us to resolve this issue."
@@ -54,32 +111,30 @@ msgstr ""
 "Наш банк признал вашу транзакцию подозрительной. Пожалуйста, свяжитесь с "
 "нами для разрешения проблемы."
 
-#: payments/cybersource/__init__.py:204
+#: payments/cybersource/__init__.py:206
 msgid ""
 "Your bank has declined the transaction. No additional information was "
 "provided."
 msgstr "Ваш банк отклонил транзакцию. Другой информации не предоставлено."
 
-#: payments/cybersource/__init__.py:207
+#: payments/cybersource/__init__.py:209
 msgid ""
-"The card has either expired or you have entered an incorrect expiration "
-"date."
-msgstr "Введен не верно или истек срок действия карты."
+"The card has either expired or you have entered an incorrect expiration date."
+msgstr "Истек срок действия карты или срок указан неверно."
 
-#: payments/cybersource/__init__.py:210
+#: payments/cybersource/__init__.py:212
 msgid ""
-"There are insufficient funds on your card or it has reached its credit "
-"limit."
+"There are insufficient funds on your card or it has reached its credit limit."
 msgstr ""
 "Недостаточное количество средств на карте или вы достигли кредитный лимит."
 
-#: payments/cybersource/__init__.py:213
+#: payments/cybersource/__init__.py:215
 msgid "The card you are trying to use was reported as lost or stolen."
 msgstr ""
 "Карта которую вы пытаетесь использовать была признана потерянной или "
 "украденной."
 
-#: payments/cybersource/__init__.py:216
+#: payments/cybersource/__init__.py:218
 msgid ""
 "Your card is either inactive or it does not permit online payments. Please "
 "contact your bank to resolve this issue."
@@ -87,27 +142,27 @@ msgstr ""
 "Ваша карта либо неактивна, либо не поддерживает онлайн-платежи. Пожалуйста, "
 "свяжитесь со своим банком для разрешения этой проблемы."
 
-#: payments/cybersource/__init__.py:219
+#: payments/cybersource/__init__.py:221
 msgid ""
-"Your bank has declined the transaction. Please check the verification number"
-" of your card and retry."
+"Your bank has declined the transaction. Please check the verification number "
+"of your card and retry."
 msgstr ""
 "Ваш банк отклонил транзакцию. Пожалуйста проверьте верификационный номер "
 "вашей карты и повторите запрос."
 
-#: payments/cybersource/__init__.py:222
+#: payments/cybersource/__init__.py:224
 msgid ""
-"Your bank has declined the transaction. Please make sure the card number you"
-" have entered is correct and retry."
+"Your bank has declined the transaction. Please make sure the card number you "
+"have entered is correct and retry."
 msgstr ""
 "Ваш банк отклонил транзакцию. Пожалуйста убедитесь в том, что введенный "
 "номер карты правильный и повторите запрос."
 
-#: payments/cybersource/__init__.py:225
+#: payments/cybersource/__init__.py:227
 msgid "We are sorry but our bank cannot handle the card type you are using."
 msgstr "Извините, но наш банк не может принять используемый вами тип карты."
 
-#: payments/cybersource/__init__.py:229
+#: payments/cybersource/__init__.py:231
 msgid ""
 "We were unable to verify your address. Please make sure the address you "
 "entered is correct and retry."
@@ -115,7 +170,7 @@ msgstr ""
 "У нас не получилось проверить ваш адрес. Убедитесь, что вы ввели ваш адрес "
 "правильно и повторите запрос."
 
-#: payments/cybersource/__init__.py:232
+#: payments/cybersource/__init__.py:234
 msgid "We were unable to complete the transaction. Please try again later."
 msgstr "Мы не смогли провести транзакцию. Пожалуйста, попробуйте позже."
 
@@ -123,30 +178,22 @@ msgstr "Мы не смогли провести транзакцию. Пожал
 msgid "fingerprint"
 msgstr "отпечаток пальца"
 
-#: payments/cybersource/forms.py:68 payments/stripe/forms.py:54
+#: payments/cybersource/forms.py:68 payments/stripe/forms.py:52
 msgid "This payment has already been processed."
 msgstr "Этот платеж уже был обработан."
 
-#: payments/fields.py:19
-msgid "Please enter a valid card number"
-msgstr "Пожалуйста введите действительный номер карты"
-
 #: payments/fields.py:20
+msgid "Please enter a valid card number"
+msgstr "Пожалуйста введите правильный номер карты"
+
+#: payments/fields.py:21
 #, python-format
 msgid "We accept only %(valid_types)s"
 msgstr "Мы принимаем только %(valid_types)s"
 
-#: payments/fields.py:80
-msgid "Month"
-msgstr "Месяц"
-
-#: payments/fields.py:86
-msgid "Year"
-msgstr "Год"
-
-#: payments/fields.py:125
+#: payments/fields.py:123
 msgid "Enter a valid security number."
-msgstr "Введите действительный код безопасности"
+msgstr "Введите правильный код безопасности"
 
 #: payments/forms.py:39
 msgid "Card Number"
@@ -158,8 +205,8 @@ msgstr "Код безопасности CVV2"
 
 #: payments/forms.py:44
 msgid ""
-"Last three digits located on the back of your card. For American Express the"
-" four digits found on the front side."
+"Last three digits located on the back of your card. For American Express the "
+"four digits found on the front side."
 msgstr ""
 "Последние три цифры, находящиеся на обратной стороне карты. Для карт "
 "American Express - четыре цифры на лицевой стороне."
@@ -168,50 +215,18 @@ msgstr ""
 msgid "Name on Credit Card"
 msgstr "Имя на карте"
 
-#: payments/models.py:13
-msgid "Waiting for confirmation"
-msgstr "Ожидает подтверждения"
-
-#: payments/models.py:14
-msgid "Pre-authorized"
-msgstr "Авторизован"
-
-#: payments/models.py:15
-msgid "Confirmed"
-msgstr "Подтвержден"
-
-#: payments/models.py:16 payments/models.py:27
-msgid "Rejected"
-msgstr "Отклонен"
-
-#: payments/models.py:17
-msgid "Refunded"
-msgstr "Возмещен"
-
-#: payments/models.py:18
-msgid "Error"
-msgstr "Ошибка"
-
-#: payments/models.py:19
-msgid "Input"
-msgstr "Введен"
-
-#: payments/models.py:25
-msgid "Unknown"
-msgstr "Неизвестный"
-
-#: payments/models.py:26
-msgid "Passed"
-msgstr "Одобрен"
-
-#: payments/models.py:28
-msgid "Review"
-msgstr "На рассмотрении"
-
-#: payments/models.py:61
+#: payments/models.py:45
 msgid "fraud check"
 msgstr "проверка транзакции"
 
 #: payments/stripe/widgets.py:23
 msgid "Total payment"
 msgstr "Общая сумма"
+
+#: payments/utils.py:8
+msgid "Month"
+msgstr "Месяц"
+
+#: payments/utils.py:14
+msgid "Year"
+msgstr "Год"
