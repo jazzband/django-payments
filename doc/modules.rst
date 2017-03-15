@@ -199,7 +199,7 @@ PayPal
    :param client_id: Client ID assigned by PayPal or your email address
    :param secret: Secret assigned by PayPal
    :param endpoint: The API endpoint to use. For the production environment, use ``'https://api.paypal.com'`` instead
-   :param send_shipping_address: Whether to send a shipping address to Paypal. If `True`, add a method `get_shipping_address_for_paypal` to the `Payment` model which returns the address as a dict.
+   :param send_shipping_address: Whether to send a shipping address to Paypal. If ``True``, requires a method ``get_shipping_address_for_paypal`` on the ``Payment`` model which returns the address as a dict.
    :param capture: Whether to capture the payment automatically. See :ref:`capture-payments` for more details.
 
 
