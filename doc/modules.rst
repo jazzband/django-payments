@@ -199,6 +199,7 @@ PayPal
    :param client_id: Client ID assigned by PayPal or your email address
    :param secret: Secret assigned by PayPal
    :param endpoint: The API endpoint to use. For the production environment, use ``'https://api.paypal.com'`` instead
+   :param send_shipping_address: Whether to send a shipping address to Paypal. If `True`, add a method `get_shipping_address_for_paypal` to the `Payment` model which returns the address as a dict.
    :param capture: Whether to capture the payment automatically. See :ref:`capture-payments` for more details.
 
 
@@ -210,6 +211,7 @@ Example::
               'client_id': 'user@example.com',
               'secret': 'iseedeadpeople',
               'endpoint': 'https://api.sandbox.paypal.com',
+              'send_shipping_address': False,
               'capture': False})}
 
 .. class:: payments.paypal.PaypalCardProvider(client_id, secret[, endpoint='https://api.sandbox.paypal.com'])
@@ -264,7 +266,7 @@ Sofort.com
    :param id: Your sofort.com user id
    :param key: Your secret key
    :param project_id: Your sofort.com project id
-   :param endpoint: The API endpoint to use. 
+   :param endpoint: The API endpoint to use.
 
 Example::
 

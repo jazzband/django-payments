@@ -59,10 +59,12 @@ class PaypalProvider(BasicProvider):
     paypal.com payment provider
     '''
     def __init__(self, client_id, secret,
-                 endpoint='https://api.sandbox.paypal.com', **kwargs):
+                 endpoint='https://api.sandbox.paypal.com',
+                 send_shipping_address=False, **kwargs):
         self.secret = secret
         self.client_id = client_id
         self.endpoint = endpoint
+        self.send_shipping_address = send_shipping_address
         self.oauth2_url = self.endpoint + '/v1/oauth2/token'
         self.payments_url = self.endpoint + '/v1/payments/payment'
         self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
@@ -180,17 +182,32 @@ class PaypalProvider(BasicProvider):
         tax = payment.tax.quantize(CENTS, rounding=ROUND_HALF_UP)
         delivery = payment.delivery.quantize(
             CENTS, rounding=ROUND_HALF_UP)
+
+        if self.send_shipping_address:
+            item_list = {
+                'items': items,
+                'shipping_address': payment.get_shipping_address_for_paypal()
+            }
+        else:
+            item_list = {'items': items}
+
         data = {
             'intent': 'sale' if self._capture else 'authorize',
-            'transactions': [{'amount': {
-                'total': str(total),
-                'currency': payment.currency,
-                'details': {
-                    'subtotal': str(sub_total),
-                    'tax': str(tax),
-                    'shipping': str(delivery)}},
-                'item_list': {'items': items},
-                'description': payment.description}]}
+            'transactions': [{
+                'amount': {
+                    'total': str(total),
+                    'currency': payment.currency,
+                    'details': {
+                        'subtotal': str(sub_total),
+                        'tax': str(tax),
+                        'shipping': str(delivery)
+                    }
+                },
+                'item_list': item_list,
+                'description': payment.description
+            }]
+        }
+
         return data
 
     def get_product_data(self, payment, extra_data=None):
