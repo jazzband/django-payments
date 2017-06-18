@@ -79,7 +79,7 @@ Installation
       PAYMENT_HOST = 'localhost:8000'
       PAYMENT_USES_SSL = False
       PAYMENT_MODEL = 'mypaymentapp.Payment'
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'default': ('payments.dummy.DummyProvider', {})}
 
    Variants are named pairs of payment providers and their configuration.

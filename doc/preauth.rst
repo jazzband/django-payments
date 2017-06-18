@@ -6,7 +6,7 @@ Authorization and capture
 Some gateways offer a two-step payment method known as Authorization & Capture, which allows you to collect the payment manually after the buyer has authorized it. To enable this payment type, you have to set the ``capture`` parameter to ``False`` in the configuration of payment backend::
 
       # settings.py
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'default': ('payments.dummy.DummyProvider', {'capture': False})}
 
 

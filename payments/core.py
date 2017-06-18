@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 
-PAYMENT_VARIANTS = {
+PAYMENT_VARIANTS_API = {
     'default': ('payments.dummy.DummyProvider', {})}
 
 PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
@@ -26,8 +26,8 @@ def get_base_url():
     """
     Returns host url according to project settings. Protocol is chosen by
     checking PAYMENT_USES_SSL variable.
-    If PAYMENT_HOST is not specified, gets domain from Sites. 
-    Otherwise checks if it's callable and returns it's result. If it's not a 
+    If PAYMENT_HOST is not specified, gets domain from Sites.
+    Otherwise checks if it's callable and returns it's result. If it's not a
     callable treats it as domain.
     """
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
@@ -109,7 +109,7 @@ def provider_factory(variant):
     '''
     Return the provider instance based on variant
     '''
-    variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
+    variants = getattr(settings, 'PAYMENT_VARIANTS_API', PAYMENT_VARIANTS_API)
     handler, config = variants.get(variant, (None, None))
     if not handler:
         raise ValueError('Payment variant does not exist: %s' %
