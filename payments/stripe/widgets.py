@@ -31,8 +31,8 @@ class StripeCheckoutWidget(Input):
     def render(self, name, value, attrs=None):
         if value is None:
             value = ''
-        final_attrs = self.build_attrs(
-            attrs, src="https://checkout.stripe.com/checkout.js")
+        attrs = dict(attrs or {}, src='https://checkout.stripe.com/checkout.js')
+        final_attrs = self.build_attrs(self.attrs, attrs)
         del final_attrs['id']
         if value != '':
             # Only add the 'value' attribute if a value is non-empty.
@@ -46,6 +46,6 @@ class StripeWidget(HiddenInput):
         js = ['https://js.stripe.com/v2/',
               'js/payments/stripe.js']
 
-    def build_attrs(self, extra_attrs=None, **kwargs):
+    def build_attrs(self, base_attrs, extra_attrs=None):
         extra_attrs = dict(extra_attrs or {}, id='id_stripe_token')
-        return super(StripeWidget, self).build_attrs(extra_attrs, **kwargs)
+        return super(StripeWidget, self).build_attrs(base_attrs, extra_attrs)

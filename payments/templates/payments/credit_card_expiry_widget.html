@@ -1,3 +1,7 @@
 <span style="white-space: nowrap">
-    {{ month }} / {{ year }}
+    {% with widget.subwidgets.0 as month %}
+        {% with widget.subwidgets.1 as year %}
+            {% include month.template_name with widget=month %} / {% include year.template_name with widget=year %}
+        {% endwith %}
+    {% endwith %}
 </span>
