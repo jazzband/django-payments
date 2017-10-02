@@ -48,4 +48,4 @@ class StripeWidget(HiddenInput):
 
     def __init__(self, attrs=None):
         attrs = dict(attrs or {}, id='id_stripe_token')
-        super(StripeWidget, self).__init__(self, attrs=None)
+        super(StripeWidget, self).__init__(attrs)
