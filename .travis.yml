@@ -5,24 +5,24 @@ install:
 script:
   - tox
 env:
-  - TOXENV=py27-django18
-  - TOXENV=py27-django110
   - TOXENV=py27-django111
-  - TOXENV=py34-django18
-  - TOXENV=py34-django110
   - TOXENV=py34-django111
+  - TOXENV=py34-django20
   - TOXENV=py34-django_master
-  - TOXENV=py35-django18
-  - TOXENV=py35-django110
   - TOXENV=py35-django111
+  - TOXENV=py35-django20
   - TOXENV=py35-django_master
+  - TOXENV=py36-django111
+  - TOXENV=py36-django20
+  - TOXENV=py36-django_master
 matrix:
   allow_failures:
-    - env: TOXENV=py27-django111
-    - env: TOXENV=py34-django111
-    - env: TOXENV=py35-django111
+    - env: TOXENV=py34-django20
     - env: TOXENV=py34-django_master
+    - env: TOXENV=py35-django20
     - env: TOXENV=py35-django_master
+    - env: TOXENV=py36-django20
+    - env: TOXENV=py36-django_master
 after_success:
   - codecov
 addons:
