@@ -13,7 +13,8 @@ from ..forms import CreditCardPaymentFormWithName
 class FingerprintWidget(forms.HiddenInput):
 
     def render(self, name, value, attrs=None):
-        final_attrs = self.build_attrs(attrs, type=self.input_type, name=name)
+        final_attrs = dict(attrs or {}, type=self.input_type, name=name)
+        final_attrs.update(self.attrs)
         final_attrs['session_id'] = value
         return render_to_string(
             'payments/cybersource_fingerprint.html', final_attrs)

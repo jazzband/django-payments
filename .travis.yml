@@ -1,34 +1,33 @@
-language: python
 sudo: false
-install:
-  - pip install tox codecov
-script:
-  - tox
+language: python
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
 env:
-  - TOXENV=py27-django18
-  - TOXENV=py27-django110
-  - TOXENV=py27-django111
-  - TOXENV=py34-django18
-  - TOXENV=py34-django110
-  - TOXENV=py34-django111
-  - TOXENV=py34-django_master
-  - TOXENV=py35-django18
-  - TOXENV=py35-django110
-  - TOXENV=py35-django111
-  - TOXENV=py35-django_master
+  - DJANGO="1.11"
+  - DJANGO="2.0"
+  - DJANGO="master"
 matrix:
   allow_failures:
-    - env: TOXENV=py27-django111
-    - env: TOXENV=py34-django111
-    - env: TOXENV=py35-django111
-    - env: TOXENV=py34-django_master
-    - env: TOXENV=py35-django_master
-after_success:
-  - codecov
-addons:
-  apt:
-    sources:
-      - deadsnakes
-    packages:
-      - python3.5
-      - python3.5-dev
+    - python: "3.4"
+      env: DJANGO="2.0"
+    - python: "3.4"
+      env: DJANGO="master"
+    - python: "3.5"
+      env: DJANGO="2.0"
+    - python: "3.5"
+      env: DJANGO="master"
+    - python: "3.6"
+      env: DJANGO="2.0"
+    - python: "3.6"
+      env: DJANGO="master"
+  exclude:
+    - python: "2.7"
+      env: DJANGO="2.0"
+    - python: "2.7"
+      env: DJANGO="master"
+after_success: codecov
+install: pip install tox-travis codecov
+script: tox
