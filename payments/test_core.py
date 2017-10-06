@@ -49,7 +49,9 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
+            captured_amount = Decimal('100')
+            payment = BasePayment(variant='default', captured_amount=captured_amount,
+                                  status=PaymentStatus.PREAUTH)
             payment.capture(amount)
 
             self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
@@ -110,7 +112,7 @@ class TestBasePayment(TestCase):
             payment.refund(refund_amount)
             self.assertEqual(payment.status, status)
             self.assertEqual(payment.captured_amount, captured_amount)
-        self.assertEqual(mocked_refund_method.call_count, 0)
+        self.assertEqual(mocked_refund_method.call_count, 1)
 
     @patch('payments.dummy.DummyProvider.refund')
     def test_refund_partial_success(self, mocked_refund_method):

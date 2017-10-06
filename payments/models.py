@@ -134,16 +134,20 @@ class BasePayment(models.Model):
         return reverse('process_payment', kwargs={'token': self.token})
 
     def capture(self, amount=None, final=True):
+        ''' Capture a fraction of the total amount of a payment. Return amount captured or None '''
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
                 'Only pre-authorized payments can be captured.')
         provider = provider_factory(self.variant)
         amount = provider.capture(self, amount, final)
         if amount:
-            self.captured_amount = amount
-            self.change_status(PaymentStatus.CONFIRMED)
+            self.captured_amount -= amount
+            if final:
+                self.change_status(PaymentStatus.CONFIRMED)
+        return amount
 
     def release(self):
+        ''' Annilates captured payment '''
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
                 'Only pre-authorized payments can be released.')
@@ -152,6 +156,7 @@ class BasePayment(models.Model):
         self.change_status(PaymentStatus.REFUNDED)
 
     def refund(self, amount=None):
+        ''' Refund payment, return amount which was refunded '''
         if self.status != PaymentStatus.CONFIRMED:
             raise ValueError(
                 'Only charged payments can be refunded.')
@@ -159,12 +164,14 @@ class BasePayment(models.Model):
             if amount > self.captured_amount:
                 raise ValueError(
                     'Refund amount can not be greater then captured amount')
-            provider = provider_factory(self.variant)
-            amount = provider.refund(self, amount)
+        provider = provider_factory(self.variant)
+        amount = provider.refund(self, amount)
+        if amount:
             self.captured_amount -= amount
-        if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:
-            self.change_status(PaymentStatus.REFUNDED)
-        self.save()
+            if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:
+                self.change_status(PaymentStatus.REFUNDED)
+            self.save()
+        return amount
 
     @property
     def attrs(self):
