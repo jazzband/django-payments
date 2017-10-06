@@ -184,3 +184,6 @@ class BasePaymentWithAddress(BasePayment):
     """ Has real billing address + shippingaddress alias on billing address (alias for backward compatibility) """
     get_billing_address = getter_prefixed_address("billing")
     get_shipping_address = get_billing_address
+
+    class Meta:
+        abstract = True

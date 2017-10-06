@@ -2,56 +2,23 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 
-from mock import patch, Mock
 from unittest import TestCase
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 import stripe
 
 from . import StripeProvider, StripeCardProvider
 from .. import FraudStatus, PaymentStatus, RedirectNeeded
+from ..testcommon import create_test_payment
 
 
 SECRET_KEY = '1234abcd'
 PUBLIC_KEY = 'abcd1234'
 
 
-class Payment(Mock):
-
-    id = 1
-    description = 'payment'
-    currency = 'USD'
-    delivery = 10
-    status = PaymentStatus.WAITING
-    message = None
-    tax = 10
-    total = 100
-    captured_amount = 0
-    transaction_id = None
-
-    def change_status(self, status, message=''):
-        self.status = status
-        self.message = message
-
-    def change_fraud_status(self, status, message='', commit=True):
-        self.fraud_status = status
-        self.fraud_message = message
-
-    def capture(self, amount=None):
-        amount = amount or self.total
-        self.captured_amount = amount
-        self.change_status(PaymentStatus.CONFIRMED)
-
-    def get_failure_url(self):
-        return 'http://cancel.com'
-
-    def get_process_url(self):
-        return 'http://example.com'
-
-    def get_purchased_items(self):
-        return []
-
-    def get_success_url(self):
-        return 'http://success.com'
-
+Payment = create_test_payment()
 
 @contextmanager
 def mock_stripe_Charge_create(error_msg=None):

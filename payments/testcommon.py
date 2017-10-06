@@ -4,11 +4,13 @@ from .models import BasePaymentLogic
 from . import PaymentStatus, PurchasedItem
 from .utils import getter_prefixed_address
 from datetime import datetime
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
 
 def create_test_payment(**_kwargs):
-    class TestPayment(BasePaymentLogic):
-        def __init__(self, **kwargs):
-            self.__dict__.update(kwargs)
+    class TestPayment(Mock, BasePaymentLogic):
         id = 523
         pk = id
         description = 'payment'
@@ -17,12 +19,12 @@ def create_test_payment(**_kwargs):
         status = PaymentStatus.WAITING
         message = ""
         tax = Decimal(10)
-        token = "undefined"
+        token = "354338723"
         total = Decimal(100)
         captured_amount = Decimal("0.0")
         extra_data = ""
-        variant = "342"
-        transaction_id = ""
+        variant = "undefined"
+        transaction_id = None
         created = datetime.now()
         modified = datetime.now()
 
@@ -35,8 +37,22 @@ def create_test_payment(**_kwargs):
         billing_country_code = "US"
         billing_country_area = "Tennessee"
         billing_email = "example@example.com"
-
         customer_ip_address = "192.78.6.6"
+
+        get_billing_address = getter_prefixed_address("billing")
+        get_shipping_address = get_billing_address
+
+        def capture(self, amount=None):
+            amount = amount or self.total
+            self.captured_amount = amount
+            self.change_status(PaymentStatus.CONFIRMED)
+
+        def change_status(self, status, message=''):
+            '''
+            Updates the Payment status and sends the status_changed signal.
+            '''
+            self.status = status
+            self.message = message
 
         def get_purchased_items(self):
             return [
@@ -55,5 +71,7 @@ def create_test_payment(**_kwargs):
 
         def save(self):
             return self
-    TestPayment.__dict__.update(_kwargs)
+    # workaround limitation in python
+    for key, val in _kwargs.items():
+        setattr(TestPayment, key, val)
     return TestPayment
