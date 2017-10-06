@@ -41,20 +41,22 @@ class BraintreePaymentForm(CreditCardPaymentFormWithName):
                 'expiration_year': self.cleaned_data.get('expiration').year}
 
     def get_billing_data(self):
+        billing = self.payment.get_billing_address()
         return {
-            'first_name': self.payment.billing_first_name,
-            'last_name': self.payment.billing_last_name,
-            'street_address': self.payment.billing_address_1,
-            'extended_address': self.payment.billing_address_2,
-            'locality': self.payment.billing_city,
-            'region': self.payment.billing_country_area,
-            'postal_code': self.payment.billing_postcode,
-            'country_code_alpha2': self.payment.billing_country_code}
+            'first_name': billing["first_name"],
+            'last_name': billing["last_name"],
+            'street_address': billing["address_1"],
+            'extended_address': billing["address_2"],
+            'locality': billing["city"],
+            'region': billing["country_area"],
+            'postal_code': billing["postcode"],
+            'country_code_alpha2': billing["country_code"]}
 
     def get_customer_data(self):
+        billing = self.payment.get_billing_address()
         return {
-            'first_name': self.payment.billing_first_name,
-            'last_name': self.payment.billing_last_name}
+            'first_name': billing["first_name"],
+            'last_name': billing["last_name"]}
 
     def save(self):
         braintree.Transaction.submit_for_settlement(self.transaction_id)

@@ -23,19 +23,19 @@ class AuthorizeNetProvider(BasicProvider):
                 'Authorize.Net does not support pre-authorization.')
 
     def get_transactions_data(self, payment):
-        data = {
+        billing = payment.get_billing_address()
+        return {
             'x_amount': payment.total,
             'x_currency_code': payment.currency,
             'x_description': payment.description,
-            'x_first_name': payment.billing_first_name,
-            'x_last_name': payment.billing_last_name,
-            'x_address': "%s, %s" % (payment.billing_address_1,
-                                     payment.billing_address_2),
-            'x_city': payment.billing_city,
-            'x_zip': payment.billing_postcode,
-            'x_country': payment.billing_country_area
+            'x_first_name': billing["first_name"],
+            'x_last_name': billing["last_name"],
+            'x_address': "%s, %s" % (billing["address_1"],
+                                     billing["address_2"]),
+            'x_city': billing["city"],
+            'x_zip': billing["postcode"],
+            'x_country': billing["country_area"]
         }
-        return data
 
     def get_product_data(self, payment, extra_data=None):
         data = self.get_transactions_data(payment)
