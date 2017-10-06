@@ -49,7 +49,7 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            captured_amount = Decimal('100')
+            captured_amount = Decimal('0')
             payment = BasePayment(variant='default', captured_amount=captured_amount,
                                   status=PaymentStatus.PREAUTH)
             payment.capture(amount)
@@ -65,7 +65,7 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            captured_amount = Decimal('100')
+            captured_amount = Decimal('0')
             status = PaymentStatus.PREAUTH
             payment = BasePayment(variant='default', status=status,
                                   captured_amount=captured_amount)
