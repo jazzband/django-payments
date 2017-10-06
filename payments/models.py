@@ -133,12 +133,12 @@ class BasePayment(models.Model):
     def get_process_url(self):
         return reverse('process_payment', kwargs={'token': self.token})
 
-    def capture(self, amount=None):
+    def capture(self, amount=None, final=True):
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
                 'Only pre-authorized payments can be captured.')
         provider = provider_factory(self.variant)
-        amount = provider.capture(self, amount)
+        amount = provider.capture(self, amount, final)
         if amount:
             self.captured_amount = amount
             self.change_status(PaymentStatus.CONFIRMED)
