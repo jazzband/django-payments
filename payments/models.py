@@ -141,7 +141,7 @@ class BasePayment(models.Model):
         provider = provider_factory(self.variant)
         amount = provider.capture(self, amount, final)
         if amount:
-            self.captured_amount -= amount
+            self.captured_amount += amount
             if final:
                 self.change_status(PaymentStatus.CONFIRMED)
         return amount
