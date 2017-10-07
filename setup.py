@@ -15,6 +15,7 @@ PACKAGES = [
     'payments.dummy',
     'payments.dotpay',
     'payments.paypal',
+    'payments.paydirekt',
     'payments.sagepay',
     'payments.sofort',
     'payments.stripe',
