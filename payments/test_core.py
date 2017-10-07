@@ -60,9 +60,11 @@ class TestBasePayment(TestCase):
             mocked_signal.connect(benign_handler, sender=BasePayment)
             mocked_signal.connect(unrelated_handler, sender=UnrelatedClass)
             payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
-            with self.assertLogs("payments.models", "CRITICAL") as logs:
-                payment.change_status(PaymentStatus.WAITING, "fooo")
-            self.assertEqual(logs.output, ['CRITICAL:payments.models:Here be dragons'])
+            # python < 3.4 has no asserLogs
+            if hasattr(self, "assertLogs"):
+                with self.assertLogs("payments.models", "CRITICAL") as logs:
+                    payment.change_status(PaymentStatus.WAITING, "fooo")
+                self.assertEqual(logs.output, ['CRITICAL:payments.models:Here be dragons'])
 
     @patch('payments.dummy.DummyProvider.capture')
     def test_capture_preauth_successfully(self, mocked_capture_method):
