@@ -3,6 +3,8 @@ from decimal import Decimal
 from unittest import TestCase
 from mock import patch, NonCallableMock
 
+from django.dispatch import Signal
+
 from payments import core
 from .forms import CreditCardPaymentFormWithName, PaymentForm
 from .models import BasePayment
@@ -41,6 +43,28 @@ class TestBasePayment(TestCase):
     def test_capture_with_wrong_status(self):
         payment = BasePayment(variant='default', status=PaymentStatus.WAITING)
         self.assertRaises(ValueError, payment.capture)
+
+    @patch('payments.signals.status_changed', new_callable=Signal)
+    def test_robust_signals(self, mocked_signal):
+        with patch.object(BasePayment, 'save') as mocked_save_method:
+            mocked_save_method.return_value = None
+            def rogue_handler(sender, instance, **kwargs):
+                raise Exception("Here be dragons")
+            def benign_handler(sender, instance, **kwargs):
+                pass
+            class UnrelatedClass(object):
+                pass
+            def unrelated_handler(sender, instance, **kwargs):
+                raise Exception("Should not be called")
+            mocked_signal.connect(rogue_handler, sender=BasePayment)
+            mocked_signal.connect(benign_handler, sender=BasePayment)
+            mocked_signal.connect(unrelated_handler, sender=UnrelatedClass)
+            payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
+            # python < 3.4 has no asserLogs
+            if hasattr(self, "assertLogs"):
+                with self.assertLogs("payments.models", "CRITICAL") as logs:
+                    payment.change_status(PaymentStatus.WAITING, "fooo")
+                self.assertEqual(logs.output, ['CRITICAL:payments.models:Here be dragons'])
 
     @patch('payments.dummy.DummyProvider.capture')
     def test_capture_preauth_successfully(self, mocked_capture_method):
