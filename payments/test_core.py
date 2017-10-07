@@ -64,9 +64,6 @@ class TestBasePayment(TestCase):
                 payment.change_status(PaymentStatus.WAITING, "fooo")
             self.assertEqual(logs.output, ['CRITICAL:payments.models:Here be dragons'])
 
-
-
-
     @patch('payments.dummy.DummyProvider.capture')
     def test_capture_preauth_successfully(self, mocked_capture_method):
         amount = Decimal('20')
