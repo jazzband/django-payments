@@ -24,12 +24,13 @@ class DirectPaymentProvider(BasicProvider):
 
     '''
 
-    def __init__(self, skipform=True,
+    def __init__(self, skipform=True, confirm=False,
                  usetoken=False, prefix="", **kwargs):
         super(DirectPaymentProvider, self).__init__(**kwargs)
         self.skipform = skipform
         self.prefix = prefix
         self.usetoken = usetoken
+        self.confirm = confirm
         if not self._capture:
             raise ImproperlyConfigured(
                 'Direct Payments do not support pre-authorization.')
@@ -49,7 +50,10 @@ class DirectPaymentProvider(BasicProvider):
                                    payment=payment,
                                    provider=self,
                                    hidden_inputs=False)
-        payment.change_status(PaymentStatus.CONFIRMED)
+        if self.confirm:
+            payment.change_status(PaymentStatus.CONFIRMED)
+        else:
+            payment.change_status(PaymentStatus.WAITING)
         raise RedirectNeeded(payment.get_success_url())
 
     def refund(self, payment, amount=None):
