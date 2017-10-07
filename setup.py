@@ -14,6 +14,7 @@ PACKAGES = [
     'payments.cybersource',
     'payments.dummy',
     'payments.dotpay',
+    'payments.externalpayments',
     'payments.paypal',
     'payments.sagepay',
     'payments.sofort',
