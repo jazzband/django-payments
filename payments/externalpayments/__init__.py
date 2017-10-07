@@ -73,7 +73,7 @@ class BankTransferProvider(BasicProvider):
             set PaymentStatus to CONFIRMED after user confirms
     '''
 
-    def __init__(self, iban, bic, confirm=False
+    def __init__(self, iban, bic, confirm=False,
                  prefix="", **kwargs):
         if len(iban) <= 10 or len(bic) != 11:
             raise ImproperlyConfigured("Wrong IBAN or BIC")
