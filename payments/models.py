@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from .core import provider_factory
+from .utils import add_prefixed_address, getter_prefixed_address
 from . import FraudStatus, PaymentStatus
 
 
@@ -32,7 +33,118 @@ class PaymentAttributeProxy(object):
         self._payment.extra_data = json.dumps(data)
 
 
-class BasePayment(models.Model):
+class BasePaymentLogic(object):
+    """ Logic of a Payment object, e.g. for tests """
+
+    def change_status(self, status, message=''):
+        '''
+        Updates the Payment status and sends the status_changed signal.
+        '''
+        from .signals import status_changed
+        self.status = status
+        self.message = message
+        self.save()
+        status_changed.send(sender=type(self), instance=self)
+
+    def change_fraud_status(self, status, message='', commit=True):
+        available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
+        if status not in available_statuses:
+            raise ValueError(
+                'Wrong status "%s", it should be one of: %s' % (
+                    status, ', '.join(available_statuses)))
+        self.fraud_status = status
+        self.fraud_message = message
+        if commit:
+            self.save()
+
+    def __str__(self):
+        return self.variant
+
+    def __unicode__(self):
+        return self.variant
+
+    def get_form(self, data=None):
+        provider = provider_factory(self.variant)
+        return provider.get_form(self, data=data)
+
+    def get_purchased_items(self):
+        return []
+
+    def get_failure_url(self):
+        raise NotImplementedError()
+
+    def get_success_url(self):
+        raise NotImplementedError()
+
+    # needs to be implemented, see BasePaymentWithAddress for an example
+    def get_shipping_address(self):
+        raise NotImplementedError()
+
+    # needs to be implemented, see BasePaymentWithAddress for an example
+    def get_billing_address(self):
+        raise NotImplementedError()
+
+    def get_process_url(self):
+        return reverse('process_payment', kwargs={'token': self.token})
+
+    def capture(self, amount=None, final=True):
+        ''' Capture a fraction of the total amount of a payment. Return amount captured or None '''
+        if self.status != PaymentStatus.PREAUTH:
+            raise ValueError(
+                'Only pre-authorized payments can be captured.')
+        provider = provider_factory(self.variant)
+        amount = provider.capture(self, amount, final)
+        if amount:
+            self.captured_amount += amount
+            if final:
+                self.change_status(PaymentStatus.CONFIRMED)
+        return amount
+
+    def release(self):
+        ''' Annilates captured payment '''
+        if self.status != PaymentStatus.PREAUTH:
+            raise ValueError(
+                'Only pre-authorized payments can be released.')
+        provider = provider_factory(self.variant)
+        provider.release(self)
+        self.change_status(PaymentStatus.REFUNDED)
+
+    def refund(self, amount=None):
+        ''' Refund payment, return amount which was refunded '''
+        if self.status != PaymentStatus.CONFIRMED:
+            raise ValueError(
+                'Only charged payments can be refunded.')
+        if amount:
+            if amount > self.captured_amount:
+                raise ValueError(
+                    'Refund amount can not be greater then captured amount')
+        provider = provider_factory(self.variant)
+        amount = provider.refund(self, amount)
+        if amount:
+            self.captured_amount -= amount
+            if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:
+                self.change_status(PaymentStatus.REFUNDED)
+            self.save()
+        return amount
+
+    def create_token(self):
+        if not self.token:
+            tries = {}  # Stores a set of tried values
+            while True:
+                token = str(uuid4())
+                if token in tries and len(tries) >= 100:  # After 100 tries we are impliying an infinite loop
+                    raise SystemExit('A possible infinite loop was detected')
+                else:
+                    if not self.__class__._default_manager.filter(token=token).exists():
+                        self.token = token
+                        break
+                tries.add(token)
+
+    @property
+    def attrs(self):
+        return PaymentAttributeProxy(self)
+
+class BasePayment(models.Model, BasePaymentLogic):
     '''
     Represents a single transaction. Each instance has one or more PaymentItem.
     '''
@@ -59,14 +171,6 @@ class BasePayment(models.Model):
         max_digits=9, decimal_places=2, default='0.0')
     tax = models.DecimalField(max_digits=9, decimal_places=2, default='0.0')
     description = models.TextField(blank=True, default='')
-    billing_first_name = models.CharField(max_length=256, blank=True)
-    billing_last_name = models.CharField(max_length=256, blank=True)
-    billing_address_1 = models.CharField(max_length=256, blank=True)
-    billing_address_2 = models.CharField(max_length=256, blank=True)
-    billing_city = models.CharField(max_length=256, blank=True)
-    billing_postcode = models.CharField(max_length=256, blank=True)
-    billing_country_code = models.CharField(max_length=2, blank=True)
-    billing_country_area = models.CharField(max_length=256, blank=True)
     billing_email = models.EmailField(blank=True)
     customer_ip_address = models.GenericIPAddressField(blank=True, null=True)
     extra_data = models.TextField(blank=True, default='')
@@ -78,94 +182,15 @@ class BasePayment(models.Model):
     class Meta:
         abstract = True
 
-    def change_status(self, status, message=''):
-        '''
-        Updates the Payment status and sends the status_changed signal.
-        '''
-        from .signals import status_changed
-        self.status = status
-        self.message = message
-        self.save()
-        status_changed.send(sender=type(self), instance=self)
-
-    def change_fraud_status(self, status, message='', commit=True):
-        available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
-        if status not in available_statuses:
-            raise ValueError(
-                'Wrong status "%s", it should be one of: %s' % (
-                    status, ', '.join(available_statuses)))
-        self.fraud_status = status
-        self.fraud_message = message
-        if commit:
-            self.save()
-
     def save(self, **kwargs):
-        if not self.token:
-            tries = {}  # Stores a set of tried values
-            while True:
-                token = str(uuid4())
-                if token in tries and len(tries) >= 100:  # After 100 tries we are impliying an infinite loop
-                    raise SystemExit('A possible infinite loop was detected')
-                else:
-                    if not self.__class__._default_manager.filter(token=token).exists():
-                        self.token = token
-                        break
-                tries.add(token)
-
+        self.create_token()
         return super(BasePayment, self).save(**kwargs)
 
-    def __unicode__(self):
-        return self.variant
+@add_prefixed_address("billing")
+class BasePaymentWithAddress(BasePayment):
+    """ Has real billing address + shippingaddress alias on billing address (alias for backward compatibility) """
+    get_billing_address = getter_prefixed_address("billing")
+    get_shipping_address = get_billing_address
 
-    def get_form(self, data=None):
-        provider = provider_factory(self.variant)
-        return provider.get_form(self, data=data)
-
-    def get_purchased_items(self):
-        return []
-
-    def get_failure_url(self):
-        raise NotImplementedError()
-
-    def get_success_url(self):
-        raise NotImplementedError()
-
-    def get_process_url(self):
-        return reverse('process_payment', kwargs={'token': self.token})
-
-    def capture(self, amount=None):
-        if self.status != PaymentStatus.PREAUTH:
-            raise ValueError(
-                'Only pre-authorized payments can be captured.')
-        provider = provider_factory(self.variant)
-        amount = provider.capture(self, amount)
-        if amount:
-            self.captured_amount = amount
-            self.change_status(PaymentStatus.CONFIRMED)
-
-    def release(self):
-        if self.status != PaymentStatus.PREAUTH:
-            raise ValueError(
-                'Only pre-authorized payments can be released.')
-        provider = provider_factory(self.variant)
-        provider.release(self)
-        self.change_status(PaymentStatus.REFUNDED)
-
-    def refund(self, amount=None):
-        if self.status != PaymentStatus.CONFIRMED:
-            raise ValueError(
-                'Only charged payments can be refunded.')
-        if amount:
-            if amount > self.captured_amount:
-                raise ValueError(
-                    'Refund amount can not be greater then captured amount')
-            provider = provider_factory(self.variant)
-            amount = provider.refund(self, amount)
-            self.captured_amount -= amount
-        if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:
-            self.change_status(PaymentStatus.REFUNDED)
-        self.save()
-
-    @property
-    def attrs(self):
-        return PaymentAttributeProxy(self)
+    class Meta:
+        abstract = True

@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
-from mock import patch, NonCallableMock
+try:
+    from unittest.mock import patch, NonCallableMock
+except ImportError:
+    from mock import  patch, NonCallableMock
 
 from payments import core
 from .forms import CreditCardPaymentFormWithName, PaymentForm
@@ -49,7 +52,9 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
+            captured_amount = Decimal('0')
+            payment = BasePayment(variant='default', captured_amount=captured_amount,
+                                  status=PaymentStatus.PREAUTH)
             payment.capture(amount)
 
             self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
@@ -63,7 +68,7 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            captured_amount = Decimal('100')
+            captured_amount = Decimal('0')
             status = PaymentStatus.PREAUTH
             payment = BasePayment(variant='default', status=status,
                                   captured_amount=captured_amount)
@@ -110,7 +115,7 @@ class TestBasePayment(TestCase):
             payment.refund(refund_amount)
             self.assertEqual(payment.status, status)
             self.assertEqual(payment.captured_amount, captured_amount)
-        self.assertEqual(mocked_refund_method.call_count, 0)
+        self.assertEqual(mocked_refund_method.call_count, 1)
 
     @patch('payments.dummy.DummyProvider.refund')
     def test_refund_partial_success(self, mocked_refund_method):

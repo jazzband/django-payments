@@ -31,7 +31,7 @@ class StripeProvider(BasicProvider):
             raise RedirectNeeded(payment.get_success_url())
         return form
 
-    def capture(self, payment, amount=None):
+    def capture(self, payment, amount=None, final=True):
         amount = int((amount or payment.total) * 100)
         charge = stripe.Charge.retrieve(payment.transaction_id)
         try:

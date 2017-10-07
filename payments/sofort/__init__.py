@@ -12,7 +12,7 @@ from ..core import BasicProvider
 
 
 class SofortProvider(BasicProvider):
-    
+
     def __init__(self, *args, **kwargs):
         self.secret = kwargs.pop('key')
         self.client_id = kwargs.pop('id')
@@ -20,7 +20,7 @@ class SofortProvider(BasicProvider):
         self.endpoint = kwargs.pop(
              'endpoint', 'https://api.sofort.com/api/xml')
         super(SofortProvider, self).__init__(*args, **kwargs)
-    
+
     def post_request(self, xml_request):
         response = requests.post(
             self.endpoint,
@@ -29,7 +29,7 @@ class SofortProvider(BasicProvider):
             auth=(self.client_id, self.secret))
         doc = xmltodict.parse(response.content)
         return doc, response
-        
+
     def get_form(self, payment, data=None):
         if not payment.id:
             payment.save()
@@ -75,12 +75,13 @@ class SofortProvider(BasicProvider):
             payment.captured_amount = payment.total
             payment.change_status(PaymentStatus.CONFIRMED)
             payment.extra_data = json.dumps(doc)
-            sender_data = doc['transactions']['transaction_details']['sender']
-            holder_data = sender_data['holder']
-            first_name, last_name = holder_data.rsplit(' ', 1)
-            payment.billing_first_name = first_name
-            payment.billing_last_name = last_name
-            payment.billing_country_code = sender_data['country_code']
+            # overwriting names should not be possible
+            #sender_data = doc['transactions']['transaction_details']['sender']
+            #holder_data = sender_data['holder']
+            #first_name, last_name = holder_data.rsplit(' ', 1)
+            #payment.billing_first_name = first_name
+            #payment.billing_last_name = last_name
+            #payment.billing_country_code = sender_data['country_code']
             payment.save()
             return redirect(payment.get_success_url())
 
