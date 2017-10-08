@@ -130,6 +130,17 @@ class PaydirektProvider(BasicProvider):
         if not self.expires_in or self.expires_in >= datetime.now(timezone.utc):
             self.retrieve_oauth_token()
 
+    def _prepare_items(self, payment):
+        items = []
+        for newitem in payment.get_purchased_items():
+            items.append({
+                "name": newitem.name,
+                # limit to 2 decimal_places even 4 decimal_places should be possible
+                "price": newitem.price.quantize(Decimal('0.01')),
+                "quantity": int(newitem.quantity)
+            })
+        return items
+
     def get_form(self, payment, data=None):
         if not payment.id:
             payment.save()
@@ -143,6 +154,7 @@ class PaydirektProvider(BasicProvider):
             "shippingAmount": payment.delivery,
             "orderAmount": payment.total - payment.delivery,
             "currency": payment.currency,
+            "refundLimit": 100,
             #"items": getattr(payment, "items", None),
             #"shoppingCartType": getattr(payment, "carttype", None),
             #"deliveryType": getattr(payment, "deliverytype", None),
@@ -151,10 +163,10 @@ class PaydirektProvider(BasicProvider):
             "redirectUrlAfterSuccess": payment.get_success_url(),
             "redirectUrlAfterCancellation": payment.get_failure_url(),
             "redirectUrlAfterRejection": payment.get_failure_url(),
+            "redirectUrlAfterAgeVerificationFailure": payment.get_failure_url(),
             "callbackUrlStatusUpdates": self.get_return_url(payment),
             #"sha256hashedEmailAddress": str(urlsafe_b64encode(email_hash), 'ascii'),
             "minimumAge": getattr(payment, "minimumage", None),
-            "redirectUrlAfterAgeVerificationFailure": payment.get_failure_url(),
             #"note": payment.message[0:37]
 
         }
@@ -176,11 +188,15 @@ class PaydirektProvider(BasicProvider):
             "state": shipping["country_area"],
             "emailAddress": payment.billing_email
         }
-        #strip zeroes
+        #strip Nones
         shipping = {k: v for k, v in shipping.items() if v}
         body = {k: v for k, v in body.items() if v}
 
         body["shippingAddress"] = shipping
+
+        items = self._prepare_items(payment)
+        if len(items) > 0:
+            body["items"] = items
 
         response = requests.post(self.path_checkout.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=headers)
         json_response = json.loads(response.text, use_decimal=True)
@@ -220,11 +236,6 @@ class PaydirektProvider(BasicProvider):
                                  data=json.dumps(body, use_decimal=True), headers=header)
         json_response = json.loads(response.text, use_decimal=True)
         check_response(response, json_response)
-        if final:
-            response = requests.post(self.path_close.format(self.endpoint, payment.transaction_id), \
-                                     headers=header)
-            json_response = json.loads(response.text, use_decimal=True)
-            check_response(response, json_response)
         return amount
 
     def refund(self, payment, amount=None):
