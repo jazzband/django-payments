@@ -22,7 +22,7 @@ import time
 import logging
 
 import requests
-from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponseServerError, HttpResponse
 from django.conf import settings
 
 from .. import PaymentError, PaymentStatus, RedirectNeeded
@@ -104,7 +104,7 @@ class PaydirektProvider(BasicProvider):
         """ Retrieves oauth Token and save it as instance variable """
         token_uuid = str(uuid.uuid4()).encode("utf-8")
         nonce = urlsafe_b64encode(os.urandom(48))
-        date_now = datetime.now(utctimezone)
+        date_now = datetime.now(utctimezone())
         bytessign = token_uuid+b":"+date_now.strftime("%Y%m%d%H%M%S").encode('utf-8')+b":"+self.api_key.encode('utf-8')+b":"+nonce
         h_temp = hmac.new(urlsafe_b64decode(self.secret_b64), msg=bytessign, digestmod='sha256')
 
@@ -141,6 +141,15 @@ class PaydirektProvider(BasicProvider):
             })
         return items
 
+    def _retrieve_amount(self, url):
+        ret = requests.get(url)
+        try:
+            results = json.loads(request.text, use_decimal=True)
+        except (ValueError, TypeError):
+            logger.error("paydirekt returned unparseable object")
+            return None
+        return results.get("amount", None)
+
     def get_form(self, payment, data=None):
         if not payment.id:
             payment.save()
@@ -154,7 +163,7 @@ class PaydirektProvider(BasicProvider):
             "shippingAmount": payment.delivery,
             "orderAmount": payment.total - payment.delivery,
             "currency": payment.currency,
-            "refundLimit": 100,
+            "refundLimit": 110,
             #"items": getattr(payment, "items", None),
             #"shoppingCartType": getattr(payment, "carttype", None),
             #"deliveryType": getattr(payment, "deliverytype", None),
@@ -211,19 +220,49 @@ class PaydirektProvider(BasicProvider):
             return HttpResponseForbidden('FAILED')
         if not payment.transaction_id:
             payment.transaction_id = results["checkoutId"]
-        if results["checkoutStatus"] == "APPROVED":
-            if self._capture:
+            payment.save()
+        if "checkoutStatus" in results:
+            if results["checkoutStatus"] == "APPROVED":
+                if self._capture:
+                    payment.change_status(PaymentStatus.CONFIRMED)
+                else:
+                    payment.change_status(PaymentStatus.PREAUTH)
+            elif results["checkoutStatus"] == "CLOSED":
                 payment.change_status(PaymentStatus.CONFIRMED)
-            else:
-                payment.change_status(PaymentStatus.PREAUTH)
-        else:
-            payment.change_status(self.translate_status[results["checkoutStatus"]])
-        payment.save()
+            elif not results["checkoutStatus"] in ["OPEN", "PENDING"]:
+                payment.change_status(PaymentStatus.ERROR)
+        elif "refundStatus" in results:
+            if results["refundStatus"] == "FAILED":
+                logger.error("refund failed, try to recover")
+                amount = self._retrieve_amount("/".join(self.path_refund.format(self.endpoint, payment.transaction_id), results["transactionId"]))
+                if not amount:
+                    logger.error("refund recovery failed")
+                    payment.change_status(PaymentStatus.ERROR)
+                    return HttpResponseForbidden('FAILED')
+                logger.error("refund recovery successfull")
+                payment.captured_amount += amount
+                payment.change_status(PaymentStatus.ERROR)
+        elif "captureStatus" in results:
+            # e.g. if not enough money or capture limit reached
+            if results["captureStatus"] == "FAILED":
+                logger.error("capture failed, try to recover")
+                amount = self._retrieve_amount("/".join(self.path_capture.format(self.endpoint, payment.transaction_id), results["transactionId"]))
+                if not amount:
+                    logger.error("capture recovery failed")
+                    payment.change_status(PaymentStatus.ERROR)
+                    return HttpResponseForbidden('FAILED')
+                logger.error("capture recovery successfull")
+                payment.captured_amount -= amount
+                #payment.change_status(PaymentStatus.ERROR)
         return HttpResponse('OK')
 
     def capture(self, payment, amount=None, final=True):
         if not amount:
             amount = payment.total
+        if self.overcapture and amount > payment.total*Decimal("1.1"):
+            return None
+        elif not self.overcapture and amount > payment.total:
+            return None
         self.check_and_update_token()
         header = PaydirektProvider.header_default.copy()
         header["Authorization"] = "Bearer %s" % self.access_token
