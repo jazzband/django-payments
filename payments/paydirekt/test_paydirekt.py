@@ -231,6 +231,7 @@ class TestPaydirektProvider(TestCase):
                 raise
             return response
         mocked_post.side_effect = return_url_data
+        self.provider._capture = False
 
         with self.assertRaises(RedirectNeeded) as cm:
             self.provider.get_form(self.payment)
