@@ -1,5 +1,6 @@
-
+# coding=utf-8
 import simplejson as json
+from decimal import Decimal
 
 from unittest import TestCase
 try:
@@ -12,8 +13,8 @@ from .. import FraudStatus, PaymentError, PaymentStatus, RedirectNeeded
 from ..testcommon import create_test_payment
 
 VARIANT = 'paydirekt'
-API_KEY = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
-SECRET = '123abc'
+API_KEY = '87dbc6cd-91d2-4574-bcb5-2aaaf924386d'
+SECRET = '9Tth0qty_9zplTyY0d_QbHYvKM4iSngjoipWO6VxAao='
 
 directsale_data = {
   "checkoutId" : "6be6a80d-ef67-47c8-a5bd-2461d11da24c",
@@ -190,7 +191,7 @@ Payment = create_test_payment(variant=VARIANT, currency='EUR')
 class TestPaydirektProvider(TestCase):
 
     def setUp(self):
-        self.payment = Payment()
+        self.payment = Payment(minimumage=0)
         self.provider = PaydirektProvider(API_KEY, SECRET)
 
     def test_process_data(self):
@@ -203,10 +204,15 @@ class TestPaydirektProvider(TestCase):
     @patch("requests.post")
     def test_checkout_direct(self, mocked_post):
         def return_url_data(url, *args, **kwargs):
+            response = MagicMock()
+            response.status_code = 200
             if url == self.provider.path_token.format(self.provider.endpoint):
-                return token_retrieve
+                response.text = json.dumps(token_retrieve)
             elif url == self.provider.path_checkout.format(self.provider.endpoint):
-                return checkout_direct_sale
+                response.text = json.dumps(checkout_direct_sale)
+            else:
+                raise
+            return response
         mocked_post.side_effect = return_url_data
         with self.assertRaises(RedirectNeeded) as cm:
             self.provider.get_form(self.payment)
@@ -216,10 +222,13 @@ class TestPaydirektProvider(TestCase):
     def test_checkout_order(self, mocked_post):
         def return_url_data(url, *args, **kwargs):
             response = MagicMock()
+            response.status_code = 200
             if url == self.provider.path_token.format(self.provider.endpoint):
-                response.text = token_retrieve
+                response.text = json.dumps(token_retrieve)
             elif url == self.provider.path_checkout.format(self.provider.endpoint):
-                response.text = json.dumps(checkout_order
+                response.text = json.dumps(checkout_order)
+            else:
+                raise
             return response
         mocked_post.side_effect = return_url_data
 
@@ -235,10 +244,15 @@ class TestPaydirektProvider(TestCase):
 
         def return_url_data(url, *args, **kwargs):
             response = MagicMock()
+            response.status_code = 200
             if url == self.provider.path_token.format(self.provider.endpoint):
-                response.text = token_retrieve
+                response.text = json.dumps(token_retrieve)
             elif url == self.provider.path_capture.format(self.provider.endpoint, self.payment.transaction_id):
-                response.text = capture_response
+                response.text = json.dumps(capture_response)
+            elif url == self.provider.path_refund.format(self.provider.endpoint, self.payment.transaction_id):
+                response.text = json.dumps(refund_response)
+            else:
+                raise
             return response
         mocked_post.side_effect = return_url_data
 

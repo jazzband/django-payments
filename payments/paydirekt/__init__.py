@@ -1,21 +1,25 @@
 """ paydirekt payment provider """
 
-
 from __future__ import unicode_literals
-try:
+import six
+if six.PY3:
     # For Python 3.0 and later
     from urllib.error import URLError
     from urllib.parse import urlencode
-except ImportError:
+else:
+    # for hmac
+    import hashlib
     # Fall back to Python 2's urllib2
     from urllib2 import URLError
     from urllib import urlencode
 
 import uuid
-from datetime import datetime, tzinfo, timedelta
+from datetime import timedelta
+from datetime import datetime as dt
+
+from decimal import Decimal
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 import os
-import email.utils
 import hmac
 import simplejson as json
 import time
@@ -31,18 +35,15 @@ from ..utils import extract_streetnr
 
 logger = logging.getLogger(__name__)
 
-class utctimezone(tzinfo):
-    def __init__(self):
-        pass
-
-    def utcoffset(self, dt):
-        return timedelta(0)
-
-    def dst(self, dt):
-        return timedelta(0)
-
-    def tzname(self, dt):
-        return "UTC"
+# from email utils, for python 2+3 support
+def format_timetuple_and_zone(timetuple, zone):
+    return '%s, %02d %s %04d %02d:%02d:%02d %s' % (
+        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][timetuple[6]],
+        timetuple[2],
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][timetuple[1] - 1],
+        timetuple[0], timetuple[3], timetuple[4], timetuple[5],
+zone)
 
 def check_response(response, response_json=None):
     if response.status_code not in [200, 201]:
@@ -93,8 +94,7 @@ class PaydirektProvider(BasicProvider):
 
     def __init__(self, api_key, secret, endpoint="https://api.sandbox.paydirekt.de", \
                  overcapture=False, **kwargs):
-        if not isinstance(secret, bytes):
-            self.secret_b64 = secret.encode('utf-8')
+        self.secret_b64 = secret.encode('utf-8')
         self.api_key = api_key
         self.endpoint = endpoint
         self.overcapture = overcapture
@@ -104,19 +104,25 @@ class PaydirektProvider(BasicProvider):
         """ Retrieves oauth Token and save it as instance variable """
         token_uuid = str(uuid.uuid4()).encode("utf-8")
         nonce = urlsafe_b64encode(os.urandom(48))
-        date_now = datetime.now(utctimezone())
+        date_now = dt.utcnow()
         bytessign = token_uuid+b":"+date_now.strftime("%Y%m%d%H%M%S").encode('utf-8')+b":"+self.api_key.encode('utf-8')+b":"+nonce
-        h_temp = hmac.new(urlsafe_b64decode(self.secret_b64), msg=bytessign, digestmod='sha256')
+        if six.PY3:
+            h_temp = hmac.new(urlsafe_b64decode(self.secret_b64), msg=bytessign, digestmod="sha256")
+        else:
+            h_temp = hmac.new(urlsafe_b64decode(self.secret_b64), msg=bytessign, digestmod=hashlib.sha256)
 
         header = PaydirektProvider.header_default.copy()
         header["X-Auth-Key"] = self.api_key
         header["X-Request-ID"] = token_uuid
 
-        header["X-Auth-Code"] = str(urlsafe_b64encode(h_temp.digest()), 'ascii')
-        header["Date"] = email.utils.format_datetime(date_now, usegmt=True)
+        if six.PY3:
+            header["X-Auth-Code"] = str(urlsafe_b64encode(h_temp.digest()), 'ascii')
+        else:
+            header["X-Auth-Code"] = urlsafe_b64encode(h_temp.digest())
+        header["Date"] = format_timetuple_and_zone(date_now.utctimetuple(), "GMT")
         body = {
             "grantType" : "api_key",
-            "randomNonce" : str(nonce, "ascii")
+            "randomNonce" : str(nonce, "ascii") if six.PY3 else nonce
         }
         response = requests.post(self.path_token.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=header)
         token_raw = json.loads(response.text, use_decimal=True)
@@ -127,7 +133,7 @@ class PaydirektProvider(BasicProvider):
 
     def check_and_update_token(self):
         """ Check if token exists or has expired, renew it in this case """
-        if not self.expires_in or self.expires_in >= datetime.now(timezone.utc):
+        if not self.expires_in or self.expires_in >= dt.utcnow():
             self.retrieve_oauth_token()
 
     def _prepare_items(self, payment):
@@ -188,7 +194,7 @@ class PaydirektProvider(BasicProvider):
             "addresseeGivenName": shipping["first_name"],
             "addresseeLastName": shipping["last_name"],
             "company": shipping.get("company", None),
-            #"additionalAddressInformation": shipping["address_2"],
+            "additionalAddressInformation": shipping["address_2"],
             "street": shipping["address_1"],
             "streetNr": extract_streetnr(shipping["address_1"], "0"),
             "zip": shipping["postcode"],
@@ -209,6 +215,7 @@ class PaydirektProvider(BasicProvider):
 
         response = requests.post(self.path_checkout.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=headers)
         json_response = json.loads(response.text, use_decimal=True)
+
         check_response(response, json_response)
         raise RedirectNeeded(json_response["_links"]["approve"]["href"])
 
