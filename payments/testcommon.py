@@ -57,7 +57,7 @@ def create_test_payment(**_kwargs):
         def get_purchased_items(self):
             return [
                 PurchasedItem(
-                    name='foo', quantity=Decimal('10'), price=Decimal('20'),
+                    name='foo', quantity=10, price=Decimal('20'),
                     currency='USD', sku='bar')]
 
         def get_failure_url(self):
