@@ -17,7 +17,7 @@ def get_year_choices():
 
 _extract_streetnr = re.compile(r"([0-9]+)\s*$")
 def extract_streetnr(address, fallback=None):
-    ret = _extract_streetnr.findall(address)
+    ret = _extract_streetnr.findall(address[-15:])
     if ret:
         return ret[0]
     else:
