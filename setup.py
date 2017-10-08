@@ -28,7 +28,8 @@ REQUIREMENTS = [
     'requests>=1.2.0',
     'stripe>=1.9.8',
     'suds-jurko>=0.6',
-    'xmltodict>=0.9.2']
+    'xmltodict>=0.9.2'
+    'simplejson>=3.11']
 
 TEST_REQUIREMENTS = [
     'pytest',
