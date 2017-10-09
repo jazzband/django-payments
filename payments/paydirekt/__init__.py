@@ -317,6 +317,8 @@ class PaydirektProvider(BasicProvider):
         json_response = json.loads(response.text, use_decimal=True)
         check_response(response, json_response)
         if payment.status == PaymentStatus.PREAUTH and amount == payment.captured_amount:
+            # logic, elsewise multiple signals are emitted CONFIRMED -> REFUNDED
+            payment.change_status(PaymentStatus.REFUNDED)
             self.check_and_update_token()
             response = requests.post(self.path_close.format(self.endpoint, payment.transaction_id), \
                                  headers=header)
