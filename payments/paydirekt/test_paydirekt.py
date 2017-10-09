@@ -353,17 +353,26 @@ class TestPaydirektProvider(TestCase):
         self.assertEqual(payment.status, PaymentStatus.PREAUTH)
         self.assertEqual(payment.captured_amount, Decimal("0.0"))
 
-
+    @patch("requests.post")
     @patch("requests.get")
-    def test_refund_fail(self, mocked_get):
+    def test_refund_fail(self, mocked_get, mocked_post):
         payment = Payment(minimumage=0)
         provider = PaydirektProvider(API_KEY, SECRET, capture=False)
-        def return_url_data(url, *args, **kwargs):
+        def return_get_data(url, *args, **kwargs):
             response = MagicMock()
             response.status_code = 200
             response.text = json.dumps(get_100_refund)
             return response
-        mocked_get.side_effect = return_url_data
+        def return_post_data(url, *args, **kwargs):
+            response = MagicMock()
+            response.status_code = 200
+            if url == provider.path_token.format(provider.endpoint):
+                response.text = json.dumps(token_retrieve)
+            else:
+                raise
+            return response
+        mocked_get.side_effect = return_get_data
+        mocked_post.side_effect = return_post_data
         request = MagicMock()
         request.body = json.dumps(order_approve_data)
         provider.process_data(payment, request)
@@ -377,16 +386,27 @@ class TestPaydirektProvider(TestCase):
         self.assertEqual(payment.captured_amount, Decimal(100))
         self.assertEqual(payment.status, PaymentStatus.ERROR)
 
+    @patch("requests.post")
     @patch("requests.get")
-    def test_capture_fail(self, mocked_get):
+    def test_capture_fail(self, mocked_get, mocked_post):
         payment = Payment(minimumage=0, captured_amount=Decimal(100))
         provider = PaydirektProvider(API_KEY, SECRET, capture=False)
-        def return_url_data(url, *args, **kwargs):
+        def return_get_data(url, *args, **kwargs):
             response = MagicMock()
             response.status_code = 200
             response.text = json.dumps(get_100_capture)
             return response
-        mocked_get.side_effect = return_url_data
+
+        def return_post_data(url, *args, **kwargs):
+            response = MagicMock()
+            response.status_code = 200
+            if url == provider.path_token.format(provider.endpoint):
+                response.text = json.dumps(token_retrieve)
+            else:
+                raise
+            return response
+        mocked_get.side_effect = return_get_data
+        mocked_post.side_effect = return_post_data
         request = MagicMock()
         request.body = json.dumps(order_approve_data)
         provider.process_data(payment, request)

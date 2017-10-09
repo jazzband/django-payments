@@ -247,9 +247,9 @@ class PaydirektProvider(BasicProvider):
                 else:
                     payment.change_status(PaymentStatus.PREAUTH)
             elif results["checkoutStatus"] == "CLOSED":
-                if self.status != PaymentStatus.REFUNDED:
+                if payment.status != PaymentStatus.REFUNDED:
                     payment.change_status(PaymentStatus.CONFIRMED)
-                elif self.status == PaymentStatus.PREAUTH and payment.captured_amount == 0:
+                elif payment.status == PaymentStatus.PREAUTH and payment.captured_amount == 0:
                     payment.change_status(PaymentStatus.REFUNDED)
             elif not results["checkoutStatus"] in ["OPEN", "PENDING"]:
                 payment.change_status(PaymentStatus.ERROR)
@@ -316,7 +316,7 @@ class PaydirektProvider(BasicProvider):
                                  data=json.dumps(body, use_decimal=True), headers=header)
         json_response = json.loads(response.text, use_decimal=True)
         check_response(response, json_response)
-        if self.status == PaymentStatus.PREAUTH and amount == payment.captured_amount:
+        if payment.status == PaymentStatus.PREAUTH and amount == payment.captured_amount:
             self.check_and_update_token()
             response = requests.post(self.path_close.format(self.endpoint, payment.transaction_id), \
                                  headers=header)
