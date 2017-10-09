@@ -40,11 +40,14 @@ class BasePaymentLogic(object):
         '''
         Updates the Payment status and sends the status_changed signal.
         '''
-        from .signals import status_changed
-        self.status = status
-        self.message = message
-        self.save()
-        status_changed.send(sender=type(self), instance=self)
+        if  self.status != status:
+            from .signals import status_changed
+            self.status = status
+            self.message = message
+            self.save()
+            status_changed.send(sender=type(self), instance=self)
+        else:
+            self.save()
 
     def change_fraud_status(self, status, message='', commit=True):
         available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
