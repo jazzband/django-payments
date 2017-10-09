@@ -157,10 +157,7 @@ class PaydirektProvider(BasicProvider):
         return items
 
     def _retrieve_amount(self, url):
-        headers = {}
-        headers["Authorization"] = "Bearer %s" % self.access_token
-        self.check_and_update_token()
-        ret = requests.get(url, headers=headers)
+        ret = requests.get(url)
         try:
             results = json.loads(ret.text, use_decimal=True)
         except (ValueError, TypeError):
