@@ -24,6 +24,7 @@ import hmac
 import simplejson as json
 import time
 import logging
+import threading
 
 import requests
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponseServerError, HttpResponse
@@ -98,6 +99,7 @@ class PaydirektProvider(BasicProvider):
         self.api_key = api_key
         self.endpoint = endpoint
         self.overcapture = overcapture
+        self.updating_token_lock = threading.Lock()
         super(PaydirektProvider, self).__init__(**kwargs)
 
     def retrieve_oauth_token(self):
@@ -133,8 +135,15 @@ class PaydirektProvider(BasicProvider):
 
     def check_and_update_token(self):
         """ Check if token exists or has expired, renew it in this case """
-        if not self.expires_in or self.expires_in >= dt.utcnow():
-            self.retrieve_oauth_token()
+        self.updating_token_lock.acquire()
+        try:
+            if not self.expires_in or self.expires_in >= dt.utcnow()-timedelta(seconds=3):
+                self.retrieve_oauth_token()
+        except Exception as exc:
+            self.updating_token_lock.release()
+            raise exc
+        self.updating_token_lock.release()
+
 
     def _prepare_items(self, payment):
         items = []
@@ -148,7 +157,10 @@ class PaydirektProvider(BasicProvider):
         return items
 
     def _retrieve_amount(self, url):
-        ret = requests.get(url)
+        headers = {}
+        headers["Authorization"] = "Bearer %s" % self.access_token
+        self.check_and_update_token()
+        ret = requests.get(url, headers=headers)
         try:
             results = json.loads(ret.text, use_decimal=True)
         except (ValueError, TypeError):
@@ -235,7 +247,10 @@ class PaydirektProvider(BasicProvider):
                 else:
                     payment.change_status(PaymentStatus.PREAUTH)
             elif results["checkoutStatus"] == "CLOSED":
-                payment.change_status(PaymentStatus.CONFIRMED)
+                if self.status != PaymentStatus.REFUNDED:
+                    payment.change_status(PaymentStatus.CONFIRMED)
+                elif self.status == PaymentStatus.PREAUTH and payment.captured_amount == 0:
+                    payment.change_status(PaymentStatus.REFUNDED)
             elif not results["checkoutStatus"] in ["OPEN", "PENDING"]:
                 payment.change_status(PaymentStatus.ERROR)
         elif "refundStatus" in results:
@@ -301,4 +316,10 @@ class PaydirektProvider(BasicProvider):
                                  data=json.dumps(body, use_decimal=True), headers=header)
         json_response = json.loads(response.text, use_decimal=True)
         check_response(response, json_response)
+        if self.status == PaymentStatus.PREAUTH and amount == payment.captured_amount:
+            self.check_and_update_token()
+            response = requests.post(self.path_close.format(self.endpoint, payment.transaction_id), \
+                                 headers=header)
+            json_response = json.loads(response.text, use_decimal=True)
+            check_response(response, json_response)
         return amount
