@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import json
 from uuid import uuid4
+import logging
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -11,6 +12,8 @@ from .core import provider_factory
 from .utils import add_prefixed_address, getter_prefixed_address
 from . import FraudStatus, PaymentStatus
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 class PaymentAttributeProxy(object):
 
@@ -45,7 +48,9 @@ class BasePaymentLogic(object):
             self.status = status
             self.message = message
             self.save()
-            status_changed.send(sender=type(self), instance=self)
+            for receiver, result in status_changed.send_robust(sender=type(self), instance=self):
+                if isinstance(result, Exception):
+                    logger.critical(result)
         else:
             self.save()
 
