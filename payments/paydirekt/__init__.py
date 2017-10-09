@@ -150,7 +150,7 @@ class PaydirektProvider(BasicProvider):
     def _retrieve_amount(self, url):
         ret = requests.get(url)
         try:
-            results = json.loads(request.text, use_decimal=True)
+            results = json.loads(ret.text, use_decimal=True)
         except (ValueError, TypeError):
             logger.error("paydirekt returned unparseable object")
             return None
@@ -241,26 +241,29 @@ class PaydirektProvider(BasicProvider):
         elif "refundStatus" in results:
             if results["refundStatus"] == "FAILED":
                 logger.error("refund failed, try to recover")
-                amount = self._retrieve_amount("/".join(self.path_refund.format(self.endpoint, payment.transaction_id), results["transactionId"]))
+                amount = self._retrieve_amount("/".join([self.path_refund.format(self.endpoint, payment.transaction_id), results["transactionId"]]))
                 if not amount:
                     logger.error("refund recovery failed")
                     payment.change_status(PaymentStatus.ERROR)
                     return HttpResponseForbidden('FAILED')
                 logger.error("refund recovery successfull")
                 payment.captured_amount += amount
+                payment.save()
                 payment.change_status(PaymentStatus.ERROR)
         elif "captureStatus" in results:
             # e.g. if not enough money or capture limit reached
             if results["captureStatus"] == "FAILED":
                 logger.error("capture failed, try to recover")
-                amount = self._retrieve_amount("/".join(self.path_capture.format(self.endpoint, payment.transaction_id), results["transactionId"]))
+                amount = self._retrieve_amount("/".join([self.path_capture.format(self.endpoint, payment.transaction_id), results["transactionId"]]))
                 if not amount:
                     logger.error("capture recovery failed")
                     payment.change_status(PaymentStatus.ERROR)
                     return HttpResponseForbidden('FAILED')
                 logger.error("capture recovery successfull")
                 payment.captured_amount -= amount
-                #payment.change_status(PaymentStatus.ERROR)
+                payment.save()
+                payment.change_status(PaymentStatus.ERROR)
+        payment.save()
         return HttpResponse('OK')
 
     def capture(self, payment, amount=None, final=True):
