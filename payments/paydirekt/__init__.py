@@ -7,8 +7,6 @@ if six.PY3:
     from urllib.error import URLError
     from urllib.parse import urlencode
 else:
-    # for hmac
-    import hashlib
     # Fall back to Python 2's urllib2
     from urllib2 import URLError
     from urllib import urlencode
@@ -21,6 +19,8 @@ from decimal import Decimal
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 import os
 import hmac
+# for hmac and hashed email
+import hashlib
 import simplejson as json
 import time
 import logging
@@ -94,11 +94,12 @@ class PaydirektProvider(BasicProvider):
 
 
     def __init__(self, api_key, secret, endpoint="https://api.sandbox.paydirekt.de", \
-                 overcapture=False, **kwargs):
+                 overcapture=False, default_carttype="PHYSICAL", **kwargs):
         self.secret_b64 = secret.encode('utf-8')
         self.api_key = api_key
         self.endpoint = endpoint
         self.overcapture = overcapture
+        self.default_carttype = default_carttype
         self.updating_token_lock = threading.Lock()
         super(PaydirektProvider, self).__init__(**kwargs)
 
@@ -108,10 +109,7 @@ class PaydirektProvider(BasicProvider):
         nonce = urlsafe_b64encode(os.urandom(48))
         date_now = dt.utcnow()
         bytessign = token_uuid+b":"+date_now.strftime("%Y%m%d%H%M%S").encode('utf-8')+b":"+self.api_key.encode('utf-8')+b":"+nonce
-        if six.PY3:
-            h_temp = hmac.new(urlsafe_b64decode(self.secret_b64), msg=bytessign, digestmod="sha256")
-        else:
-            h_temp = hmac.new(urlsafe_b64decode(self.secret_b64), msg=bytessign, digestmod=hashlib.sha256)
+        h_temp = hmac.new(urlsafe_b64decode(self.secret_b64), msg=bytessign, digestmod=hashlib.sha256)
 
         header = PaydirektProvider.header_default.copy()
         header["X-Auth-Key"] = self.api_key
@@ -171,7 +169,7 @@ class PaydirektProvider(BasicProvider):
         self.check_and_update_token()
         headers = PaydirektProvider.header_default.copy()
         headers["Authorization"] = "Bearer %s" % self.access_token
-        # email_hash = sha256(payment.billing_email.encode("utf-8")).digest())
+        email_hash = hashlib.sha256(payment.billing_email.encode("utf-8")).digest()
         body = {
             "type": "ORDER" if not self._capture else "DIRECT_SALE",
             "totalAmount": payment.total,
@@ -179,22 +177,21 @@ class PaydirektProvider(BasicProvider):
             "orderAmount": payment.total - payment.delivery,
             "currency": payment.currency,
             "refundLimit": 110,
-            #"items": getattr(payment, "items", None),
-            #"shoppingCartType": getattr(payment, "carttype", None),
-            #"deliveryType": getattr(payment, "deliverytype", None),
+            "shoppingCartType": getattr(payment, "carttype", self.default_carttype),
             # payment id can repeat if different shop systems are used
-            "merchantOrderReferenceNumber": "%s:%s" % (hex(int(time.time())), payment.id),
+            "merchantOrderReferenceNumber": "%s:%s" % (hex(int(time.time()))[2:], payment.id),
             "redirectUrlAfterSuccess": payment.get_success_url(),
             "redirectUrlAfterCancellation": payment.get_failure_url(),
             "redirectUrlAfterRejection": payment.get_failure_url(),
             "redirectUrlAfterAgeVerificationFailure": payment.get_failure_url(),
             "callbackUrlStatusUpdates": self.get_return_url(payment),
-            #"sha256hashedEmailAddress": str(urlsafe_b64encode(email_hash), 'ascii'),
-            "minimumAge": getattr(payment, "minimumage", None),
-            #"note": payment.message[0:37]
-
+            # email sent anyway (shipping)
+            "sha256hashedEmailAddress": str(urlsafe_b64encode(email_hash), 'ascii'),
+            "minimumAge": getattr(payment, "minimumage", None)
         }
-        if self.overcapture and body["type"] == "ORDER":
+        if body["type"] == "DIRECT_SALE":
+            body["note"] = payment.description[:37]
+        if self.overcapture and body["type"] in ["ORDER", "ORDER_SECURED"]:
             body["overcapture"] = True
 
         shipping = payment.get_shipping_address()
@@ -234,6 +231,11 @@ class PaydirektProvider(BasicProvider):
         except (ValueError, TypeError):
             logger.error("paydirekt returned unparseable object")
             return HttpResponseForbidden('FAILED')
+        # ignore such requests
+        # they have no value and may break things
+        # they are maybe copies or existence checks
+        if not "checkoutId" in results:
+            return HttpResponse('OK')
         if not payment.transaction_id:
             payment.transaction_id = results["checkoutId"]
             payment.save()

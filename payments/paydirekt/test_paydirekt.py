@@ -16,6 +16,17 @@ VARIANT = 'paydirekt'
 API_KEY = '87dbc6cd-91d2-4574-bcb5-2aaaf924386d'
 SECRET = '9Tth0qty_9zplTyY0d_QbHYvKM4iSngjoipWO6VxAao='
 
+sample_request_paydirekt = {'refundLimit': 110, 'orderAmount': Decimal('9.00'),
+        'shippingAddress': {'addresseeGivenName': 'fooo', 'emailAddress': 'test@test.de', 'addresseeLastName': 'noch ein test', 'city': 'M\xc3\xbcnchen', 'street': 'fooo 23', 'zip': '23233', 'streetNr': '23', 'countryCode': 'DE'},
+        'type': 'DIRECT_SALE',
+        'callbackUrlStatusUpdates': 'https://example.com/payments/process/13119ad6-1df2-49e1-a719-a26225b9bc44/',
+        'currency': 'EUR', 'totalAmount': Decimal('9.00'),
+        'merchantOrderReferenceNumber': '59dbfc86:35',
+        'redirectUrlAfterRejection': 'https://example.com/failure/',
+        'redirectUrlAfterAgeVerificationFailure': 'https://example.com/failure/',
+        'redirectUrlAfterSuccess': 'https://example.com/success/',
+        'redirectUrlAfterCancellation': 'https://example.com/failure/'}
+
 directsale_open_data = {
   "checkoutId" : "6be6a80d-ef67-47c8-a5bd-2461d11da24c",
   "merchantOrderReferenceNumber" : "order-A12223412",
@@ -257,7 +268,7 @@ get_100_refund = {
   }
 }
 
-Payment = create_test_payment(variant=VARIANT, currency='EUR')
+Payment = create_test_payment(variant=VARIANT, currency='EUR', carttype=None)
 
 
 class TestPaydirektProvider(TestCase):
@@ -268,6 +279,11 @@ class TestPaydirektProvider(TestCase):
         provider = PaydirektProvider(API_KEY, SECRET)
 
         request = MagicMock()
+        # real request (private data replaced) encountered, should not error and still be in waiting state
+        request.body = json.dumps(sample_request_paydirekt)
+        response = provider.process_data(payment, request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payment.status, PaymentStatus.WAITING)
         request.body = json.dumps(directsale_open_data)
         response = provider.process_data(payment, request)
         self.assertEqual(response.status_code, 200)
