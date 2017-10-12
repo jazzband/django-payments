@@ -283,6 +283,7 @@ class PaydirektProvider(BasicProvider):
     def capture(self, payment, amount=None, final=True):
         if not amount:
             amount = payment.total
+        if not amount: raise Exception(self.total)
         if self.overcapture and amount > payment.total*Decimal("1.1"):
             return None
         elif not self.overcapture and amount > payment.total:

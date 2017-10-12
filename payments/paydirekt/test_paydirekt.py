@@ -338,8 +338,7 @@ class TestPaydirektProvider(TestCase):
         self.assertEqual(cm.exception.args[0], "https://paydirekt.de/checkout/#/checkout/6be6a80d-ef67-47c8-a5bd-2461d11da24c")
 
     @patch("requests.post")
-    @patch("payments.core.provider_factory")
-    def test_capture_refund(self, mocked_post, mocked_factory):
+    def test_capture_refund(self, mocked_post):
         payment = Payment(minimumage=0)
         provider = PaydirektProvider(API_KEY, SECRET, capture=False)
         request = MagicMock()
@@ -361,17 +360,17 @@ class TestPaydirektProvider(TestCase):
                 raise Exception(url)
             return response
         mocked_post.side_effect = return_url_data
-        mocked_factory.side_effect = lambda x: provider
 
-        ret = payment.capture()
+        ret = provider.capture(payment)
         self.assertEqual(ret, Decimal(100))
         self.assertEqual(payment.status, PaymentStatus.PREAUTH)
-        self.assertEqual(payment.captured_amount, Decimal("100.0"))
-
-        ret = payment.refund()
-        self.assertEqual(ret, Decimal(0))
-        self.assertEqual(payment.status, PaymentStatus.PREAUTH)
         self.assertEqual(payment.captured_amount, Decimal("0.0"))
+
+        payment.captured_amount = Decimal(100)
+        ret = provider.refund(payment)
+        self.assertEqual(ret, Decimal(100))
+        self.assertEqual(payment.status, PaymentStatus.REFUNDED)
+        self.assertEqual(payment.captured_amount, Decimal("100.0"))
 
     @patch("requests.post")
     @patch("requests.get")
