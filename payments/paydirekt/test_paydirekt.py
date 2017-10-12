@@ -17,7 +17,7 @@ API_KEY = '87dbc6cd-91d2-4574-bcb5-2aaaf924386d'
 SECRET = '9Tth0qty_9zplTyY0d_QbHYvKM4iSngjoipWO6VxAao='
 
 sample_request_paydirekt = {'refundLimit': 110, 'orderAmount': Decimal('9.00'),
-        'shippingAddress': {'addresseeGivenName': 'fooo', 'emailAddress': 'test@test.de', 'addresseeLastName': 'noch ein test', 'city': 'M\xc3\xbcnchen', 'street': 'fooo 23', 'zip': '23233', 'streetNr': '23', 'countryCode': 'DE'},
+        'shippingAddress': {'addresseeGivenName': 'fooo', 'emailAddress': 'test@test.de', 'addresseeLastName': 'noch ein test', 'city': 'München', 'street': 'fooo 23', 'zip': '23233', 'streetNr': '23', 'countryCode': 'DE'},
         'type': 'DIRECT_SALE',
         'callbackUrlStatusUpdates': 'https://example.com/payments/process/13119ad6-1df2-49e1-a719-a26225b9bc44/',
         'currency': 'EUR', 'totalAmount': Decimal('9.00'),
