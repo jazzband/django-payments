@@ -282,7 +282,7 @@ class TestPaydirektProvider(TestCase):
         # real request (private data replaced) encountered, should not error and still be in waiting state
         request.body = json.dumps(sample_request_paydirekt)
         response = provider.process_data(payment, request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 500)
         self.assertEqual(payment.status, PaymentStatus.WAITING)
         request.body = json.dumps(directsale_open_data)
         response = provider.process_data(payment, request)
@@ -338,7 +338,8 @@ class TestPaydirektProvider(TestCase):
         self.assertEqual(cm.exception.args[0], "https://paydirekt.de/checkout/#/checkout/6be6a80d-ef67-47c8-a5bd-2461d11da24c")
 
     @patch("requests.post")
-    def test_capture_refund(self, mocked_post):
+    @patch("payments.core.provider_factory")
+    def test_capture_refund(self, mocked_post, mocked_factory):
         payment = Payment(minimumage=0)
         provider = PaydirektProvider(API_KEY, SECRET, capture=False)
         request = MagicMock()
@@ -354,18 +355,21 @@ class TestPaydirektProvider(TestCase):
                 response.text = json.dumps(capture_response)
             elif url == provider.path_refund.format(provider.endpoint, payment.transaction_id):
                 response.text = json.dumps(refund_response)
+            elif url == provider.path_close.format(provider.endpoint, payment.transaction_id):
+                response.text = json.dumps(order_close_data)
             else:
-                raise
+                raise Exception(url)
             return response
         mocked_post.side_effect = return_url_data
+        mocked_factory.side_effect = lambda x: provider
 
-        ret = provider.capture(payment)
+        ret = payment.capture()
         self.assertEqual(ret, Decimal(100))
         self.assertEqual(payment.status, PaymentStatus.PREAUTH)
-        self.assertEqual(payment.captured_amount, Decimal("0.0"))
+        self.assertEqual(payment.captured_amount, Decimal("100.0"))
 
-        ret = provider.refund(payment)
-        self.assertEqual(ret, Decimal(100))
+        ret = payment.refund()
+        self.assertEqual(ret, Decimal(0))
         self.assertEqual(payment.status, PaymentStatus.PREAUTH)
         self.assertEqual(payment.captured_amount, Decimal("0.0"))
 
