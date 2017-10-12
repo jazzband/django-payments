@@ -90,8 +90,8 @@ class PaydirektProvider(BasicProvider):
         if not payment.id:
             payment.save()
         # email_hash = sha256(payment.billing_email.encode("utf-8")).digest())
-        street, streetnr = split_streetnr(shipping["address_1"], "0")
         shipping = payment.get_shipping_address()
+        street, streetnr = split_streetnr(shipping["address_1"], "0")
         # payment id can repeat if different shop systems are used, so add projectId
         payment.attrs.MerchantTxId = "{}-{}".format(self.projectId, payment.id)
         body = {
