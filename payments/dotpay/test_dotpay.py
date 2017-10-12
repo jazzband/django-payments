@@ -3,11 +3,15 @@ import hashlib
 from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
-from mock import MagicMock, Mock
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 from .. import PaymentStatus
 from .forms import ACCEPTED, REJECTED
 from . import DotpayProvider
+from ..testcommon import create_test_payment
 
 VARIANT = 'dotpay'
 PIN = '123'
@@ -45,24 +49,7 @@ def get_post_with_md5(post):
     return post
 
 
-class Payment(Mock):
-    id = 1
-    variant = VARIANT
-    currency = 'USD'
-    total = 100
-    status = PaymentStatus.WAITING
-
-    def get_process_url(self):
-        return 'http://example.com'
-
-    def get_failure_url(self):
-        return 'http://cancel.com'
-
-    def get_success_url(self):
-        return 'http://success.com'
-
-    def change_status(self, status):
-        self.status = status
+Payment = create_test_payment(variant=VARIANT, id=1, currency='USD')
 
 
 class TestDotpayProvider(TestCase):

@@ -1,37 +1,21 @@
 from __future__ import unicode_literals
-from unittest import TestCase
-from mock import patch, MagicMock, Mock
 import json
+from unittest import TestCase
+try:
+    from unittest.mock import patch, MagicMock
+except ImportError:
+    from mock import patch, MagicMock
 
 from . import SofortProvider
 from .. import PaymentStatus, RedirectNeeded
+from ..testcommon import create_test_payment
 
 SECRET = 'abcd1234'
 CLIENT_ID = '1234'
 PROJECT_ID = 'abcd'
 
 
-class Payment(Mock):
-    id = 1
-    variant = 'sagepay'
-    currency = 'USD'
-    total = 100
-    status = PaymentStatus.WAITING
-    transaction_id = None
-    captured_amount = 0
-    billing_first_name = 'John'
-
-    def get_process_url(self):
-        return 'http://example.com'
-
-    def get_failure_url(self):
-        return 'http://cancel.com'
-
-    def get_success_url(self):
-        return 'http://success.com'
-
-    def change_status(self, status):
-        self.status = status
+Payment = create_test_payment()
 
 
 class TestSofortProvider(TestCase):

@@ -1,14 +1,18 @@
 from __future__ import unicode_literals
 import time
 from decimal import Decimal
-from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
 import jwt
-from mock import MagicMock
+from unittest import TestCase
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 from .. import PaymentStatus
 from . import GoogleWalletProvider
+from ..testcommon import create_test_payment
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
 SELLER_ID = 'abc123'
@@ -31,35 +35,7 @@ JWT_DATA = {
         'orderId': '1234567890'}}
 
 
-class Payment(object):
-
-    id = 1
-    description = 'payment'
-    currency = 'USD'
-    delivery = Decimal(10)
-    status = PaymentStatus.WAITING
-    tax = Decimal(10)
-    token = PAYMENT_TOKEN
-    total = Decimal(100)
-    variant = VARIANT
-
-    def change_status(self, status):
-        self.status = status
-
-    def get_failure_url(self):
-        return 'http://cancel.com'
-
-    def get_process_url(self):
-        return 'http://example.com'
-
-    def get_purchased_items(self):
-        return []
-
-    def save(self):
-        return self
-
-    def get_success_url(self):
-        return 'http://success.com'
+Payment = create_test_payment(variant=VARIANT, token=PAYMENT_TOKEN)
 
 
 class TestGoogleWalletProvider(TestCase):
