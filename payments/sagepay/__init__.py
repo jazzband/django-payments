@@ -60,6 +60,8 @@ class SagepayProvider(BasicProvider):
     def get_hidden_fields(self, payment):
         payment.save()
         return_url = self.get_return_url(payment)
+        _billing_address = payment.get_billing_address()
+        _shipping_address = payment.get_billing_address()
         data = {
             'VendorTxCode': payment.pk,
             'Amount': "%.2f" % (payment.total,),
@@ -67,23 +69,24 @@ class SagepayProvider(BasicProvider):
             'Description': "Payment #%s" % (payment.pk,),
             'SuccessURL': return_url,
             'FailureURL': return_url,
-            'BillingSurname': payment.billing_last_name,
-            'BillingFirstnames': payment.billing_first_name,
-            'BillingAddress1': payment.billing_address_1,
-            'BillingAddress2': payment.billing_address_2,
-            'BillingCity': payment.billing_city,
-            'BillingPostCode': payment.billing_postcode,
-            'BillingCountry': payment.billing_country_code,
-            'DeliverySurname': payment.billing_last_name,
-            'DeliveryFirstnames': payment.billing_first_name,
-            'DeliveryAddress1': payment.billing_address_1,
-            'DeliveryAddress2': payment.billing_address_2,
-            'DeliveryCity': payment.billing_city,
-            'DeliveryPostCode': payment.billing_postcode,
-            'DeliveryCountry': payment.billing_country_code}
-        if payment.billing_country_code == 'US':
-            data['BillingState'] = payment.billing_country_area
-            data['DeliveryState'] = payment.billing_country_area
+            'BillingSurname': _billing_address["last_name"],
+            'BillingFirstnames': _billing_address["first_name"],
+            'BillingAddress1': _billing_address["address_1"],
+            'BillingAddress2': _billing_address["address_2"],
+            'BillingCity': _billing_address["city"],
+            'BillingPostCode': _billing_address["postcode"],
+            'BillingCountry': _billing_address["country_code"],
+            'DeliverySurname': _shipping_address["last_name"],
+            'DeliveryFirstnames': _shipping_address["first_name"],
+            'DeliveryAddress1': _shipping_address["address_1"],
+            'DeliveryAddress2': _shipping_address["address_2"],
+            'DeliveryCity': _shipping_address["city"],
+            'DeliveryPostCode': _shipping_address["postcode"],
+            'DeliveryCountry': _shipping_address["country_code"]}
+        if _billing_address["country_code"] == 'US':
+            data['BillingState'] = _billing_address["country_area"]
+        if _shipping_address["country_code"] == 'US':
+            data['DeliveryState'] = _shipping_address["country_area"]
         udata = "&".join("%s=%s" % kv for kv in data.items())
         crypt = self.aes_enc(udata)
         return {'VPSProtocol': self._version, 'TxType': 'PAYMENT',

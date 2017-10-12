@@ -2,11 +2,16 @@ from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
 from django.core import signing
-from mock import patch, MagicMock, Mock
+try:
+    from unittest.mock import patch, MagicMock
+except ImportError:
+    from mock import patch, MagicMock
 
 from . import CyberSourceProvider, AUTHENTICATE_REQUIRED, ACCEPTED, \
     TRANSACTION_SETTLED
 from .. import PaymentStatus, PurchasedItem, RedirectNeeded
+
+from ..testcommon import create_test_payment
 
 MERCHANT_ID = 'abcd1234'
 PASSWORD = '1234abdd1234abcd'
@@ -20,40 +25,13 @@ PROCESS_DATA = {
     'cvv2': '1234',
     'fingerprint': 'abcd1234'}
 
-
-class Payment(Mock):
-    id = 1
-    variant = 'cybersource'
-    currency = 'USD'
-    total = 100
-    status = PaymentStatus.WAITING
-    transaction_id = None
-    captured_amount = 0
-    message = ''
-
+_Payment = create_test_payment()
+class Payment(_Payment):
+    # MagicMock is not serializable so overwrite attrs Proxy
     class attrs(object):
         fingerprint_session_id = 'fake'
         merchant_defined_data = {}
-
-    def get_process_url(self):
-        return 'http://example.com'
-
-    def get_failure_url(self):
-        return 'http://cancel.com'
-
-    def get_success_url(self):
-        return 'http://success.com'
-
-    def change_status(self, status, message=''):
-        self.status = status
-        self.message = message
-
-    def get_purchased_items(self):
-        return [
-            PurchasedItem(
-                name='foo', quantity=Decimal('10'), price=Decimal('20'),
-                currency='USD', sku='bar')]
-
+        capture = {}
 
 class TestCybersourceProvider(TestCase):
 

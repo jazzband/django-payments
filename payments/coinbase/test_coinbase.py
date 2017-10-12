@@ -4,12 +4,16 @@ import hashlib
 import json
 from decimal import Decimal
 from unittest import TestCase
+try:
+    from unittest.mock import patch, MagicMock
+except ImportError:
+    from mock import patch, MagicMock
 
 from django.http import HttpResponse, HttpResponseForbidden
-from mock import MagicMock, patch
 
 from .. import PaymentStatus
 from . import CoinbaseProvider
+from ..testcommon import create_test_payment
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
 KEY = 'abc123'
@@ -23,34 +27,7 @@ COINBASE_REQUEST = {
             PAYMENT_TOKEN, KEY)).encode('utf-8')).hexdigest()}}
 
 
-class Payment(object):
-
-    id = 1
-    description = 'payment'
-    currency = 'BTC'
-    total = Decimal(100)
-    status = PaymentStatus.WAITING
-    token = PAYMENT_TOKEN
-    variant = VARIANT
-
-    def change_status(self, status):
-        self.status = status
-
-    def get_failure_url(self):
-        return 'http://cancel.com'
-
-    def get_process_url(self):
-        return 'http://example.com'
-
-    def get_purchased_items(self):
-        return []
-
-    def save(self):
-        return self
-
-    def get_success_url(self):
-        return 'http://success.com'
-
+Payment = create_test_payment(variant=VARIANT, token=PAYMENT_TOKEN, description='payment', currency='BTC', total=Decimal(100))
 
 class TestCoinbaseProvider(TestCase):
 

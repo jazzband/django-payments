@@ -26,8 +26,8 @@ def get_base_url():
     """
     Returns host url according to project settings. Protocol is chosen by
     checking PAYMENT_USES_SSL variable.
-    If PAYMENT_HOST is not specified, gets domain from Sites. 
-    Otherwise checks if it's callable and returns it's result. If it's not a 
+    If PAYMENT_HOST is not specified, gets domain from Sites.
+    Otherwise checks if it's callable and returns it's result. If it's not a
     callable treats it as domain.
     """
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
@@ -92,13 +92,16 @@ class BasicProvider(object):
             return url + '?' + qs
         return url
 
-    def capture(self, payment, amount=None):
+    def capture(self, payment, amount=None, final=True):
+        ''' Capture a fraction of the total amount of a payment. Return amount captured or None '''
         raise NotImplementedError()
 
     def release(self, payment):
+        ''' Annilates captured payment '''
         raise NotImplementedError()
 
     def refund(self, payment, amount=None):
+        ''' Refund payment, return amount which was refunded '''
         raise NotImplementedError()
 
 
