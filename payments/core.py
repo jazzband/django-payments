@@ -101,7 +101,7 @@ class BasicProvider(object):
         raise NotImplementedError()
 
     def refund(self, payment, amount=None):
-        ''' Refund payment, return amount which was refunded '''
+        ''' Refund payment, return amount which was refunded or None '''
         raise NotImplementedError()
 
 

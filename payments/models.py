@@ -164,7 +164,7 @@ class BasePayment(models.Model):
         self.change_status(PaymentStatus.REFUNDED)
 
     def refund(self, amount=None):
-        ''' Refund payment, return amount which was refunded '''
+        ''' Refund payment, return amount which was refunded or None '''
         if self.status != PaymentStatus.CONFIRMED:
             raise ValueError(
                 'Only charged payments can be refunded.')
