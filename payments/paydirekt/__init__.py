@@ -194,8 +194,8 @@ class PaydirektProvider(BasicProvider):
         if self.overcapture and body["type"] in ["ORDER", "ORDER_SECURED"]:
             body["overcapture"] = True
 
-        street, streetnr = split_streetnr(shipping["address_1"], "0")
         shipping = payment.get_shipping_address()
+        street, streetnr = split_streetnr(shipping["address_1"], "0")
 
         shipping = {
             "addresseeGivenName": shipping["first_name"],
