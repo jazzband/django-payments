@@ -303,7 +303,7 @@ class PaydirektProvider(BasicProvider):
 
     def refund(self, payment, amount=None):
         if not amount:
-            amount = payment.total
+            amount = payment.captured_amount
         self.check_and_update_token()
         header = PaydirektProvider.header_default.copy()
         header["Authorization"] = "Bearer %s" % self.access_token
