@@ -282,7 +282,7 @@ class TestPaydirektProvider(TestCase):
         # real request (private data replaced) encountered, should not error and still be in waiting state
         request.body = json.dumps(sample_request_paydirekt)
         response = provider.process_data(payment, request)
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(payment.status, PaymentStatus.WAITING)
         request.body = json.dumps(directsale_open_data)
         response = provider.process_data(payment, request)

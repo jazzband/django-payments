@@ -224,6 +224,7 @@ class PaydirektProvider(BasicProvider):
 
         check_response(response, json_response)
         payment.transaction_id = json_response["checkoutId"]
+        #payment.attrs = json_response["_links"]
         payment.save()
         raise RedirectNeeded(json_response["_links"]["approve"]["href"])
 
@@ -233,10 +234,10 @@ class PaydirektProvider(BasicProvider):
         except (ValueError, TypeError):
             logger.error("paydirekt returned unparseable object")
             return HttpResponseForbidden('FAILED')
+        # ignore invalid requests
+        if not "checkoutId" in results:
+            return HttpResponse('OK')
         if not payment.transaction_id:
-            # delay
-            if not "checkoutId" in results:
-                return HttpResponseServerError('no transaction_id')
             payment.transaction_id = results["checkoutId"]
             payment.save()
         if "checkoutStatus" in results:
