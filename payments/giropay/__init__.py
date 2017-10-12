@@ -28,7 +28,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from .. import PaymentError, PaymentStatus, RedirectNeeded
 from ..core import BasicProvider
-from ..utils import extract_streetnr
+from ..utils import split_streetnr
 
 
 def check_response(response, response_json):
@@ -90,6 +90,7 @@ class PaydirektProvider(BasicProvider):
         if not payment.id:
             payment.save()
         # email_hash = sha256(payment.billing_email.encode("utf-8")).digest())
+        street, streetnr = split_streetnr(shipping["address_1"], "0")
         shipping = payment.get_shipping_address()
         # payment id can repeat if different shop systems are used, so add projectId
         payment.attrs.MerchantTxId = "{}-{}".format(self.projectId, payment.id)
@@ -103,8 +104,8 @@ class PaydirektProvider(BasicProvider):
             "shippingAddresseLastName": shipping["last_name"],
             "shippingCompany": shipping.get("company", None),
             "shippingAdditionalAddressInformation": shipping["address_2"],
-            "shippingStreet": shipping["address_1"],
-            "shippingStreetNumber": extract_streetnr(shipping["address_1"], "0"),
+            "shippingStreet": street,
+            "shippingStreetNumber": streetnr,
             "shippingZipCode": shipping["postcode"],
             "shippingCity": shipping["city"],
             "shippingCountry": shipping["country_code"],
