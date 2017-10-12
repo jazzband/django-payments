@@ -32,7 +32,7 @@ from django.conf import settings
 
 from .. import PaymentError, PaymentStatus, RedirectNeeded
 from ..core import BasicProvider
-from ..utils import extract_streetnr
+from ..utils import split_streetnr
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +194,7 @@ class PaydirektProvider(BasicProvider):
         if self.overcapture and body["type"] in ["ORDER", "ORDER_SECURED"]:
             body["overcapture"] = True
 
+        street, streetnr = split_streetnr(shipping["address_1"], "0")
         shipping = payment.get_shipping_address()
 
         shipping = {
@@ -201,8 +202,8 @@ class PaydirektProvider(BasicProvider):
             "addresseeLastName": shipping["last_name"],
             "company": shipping.get("company", None),
             "additionalAddressInformation": shipping["address_2"],
-            "street": shipping["address_1"],
-            "streetNr": extract_streetnr(shipping["address_1"], "0"),
+            "street": street,
+            "streetNr": streetnr,
             "zip": shipping["postcode"],
             "city": shipping["city"],
             "countryCode": shipping["country_code"],
