@@ -16,12 +16,12 @@ def get_year_choices():
     return [('', _('Year'))] + year_choices
 
 _extract_streetnr = re.compile(r"([0-9]+)\s*$")
-def extract_streetnr(address, fallback=None):
-    ret = _extract_streetnr.findall(address[-15:])
+def split_streetnr(address, fallback=None):
+    ret = _extract_streetnr.search(address[-15:])
     if ret:
-        return ret[0]
+        return address[:(ret.start()-15)].strip(), ret.group(0)
     else:
-        return fallback
+        return address.strip(), fallback
 
 def getter_prefixed_address(prefix):
     """ create getter for prefixed address format """
