@@ -176,7 +176,7 @@ class PaydirektProvider(BasicProvider):
             "shippingAmount": payment.delivery,
             "orderAmount": payment.total - payment.delivery,
             "currency": payment.currency,
-            "refundLimit": 110,
+            "refundLimit": 100,
             "shoppingCartType": getattr(payment, "carttype", self.default_carttype),
             # payment id can repeat if different shop systems are used
             "merchantOrderReferenceNumber": "%s:%s" % (hex(int(time.time()))[2:], payment.id),
