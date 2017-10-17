@@ -27,6 +27,7 @@ import logging
 import threading
 
 import requests
+from requests.exceptions import Timeout
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponseServerError, HttpResponse
 from django.conf import settings
 
@@ -124,19 +125,27 @@ class PaydirektProvider(BasicProvider):
             "grantType" : "api_key",
             "randomNonce" : str(nonce, "ascii") if six.PY3 else nonce
         }
-        response = requests.post(self.path_token.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=header)
+        response = requests.post(self.path_token.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
         token_raw = json.loads(response.text, use_decimal=True)
         check_response(response, token_raw)
 
         self.access_token = token_raw["access_token"]
         self.expires_in = date_now+timedelta(seconds=token_raw["expires_in"])
 
-    def check_and_update_token(self):
+    def check_and_update_token(self, times=0):
         """ Check if token exists or has expired, renew it in this case """
         self.updating_token_lock.acquire()
         try:
             if not self.expires_in or self.expires_in >= dt.utcnow()-timedelta(seconds=3):
                 self.retrieve_oauth_token()
+        except Timeout:
+            if times < 3:
+                self.updating_token_lock.release()
+                time.sleep(3)
+                return self.check_and_update_token(times+1)
+            else:
+                self.updating_token_lock.release()
+                raise PaymentError("Timeout")
         except Exception as exc:
             self.updating_token_lock.release()
             raise exc
@@ -158,6 +167,9 @@ class PaydirektProvider(BasicProvider):
         ret = requests.get(url)
         try:
             results = json.loads(ret.text, use_decimal=True)
+        except Timeout:
+            logger.error("paydirekt had timeout")
+            return None
         except (ValueError, TypeError):
             logger.error("paydirekt returned unparseable object")
             return None
@@ -220,7 +232,10 @@ class PaydirektProvider(BasicProvider):
         if len(items) > 0:
             body["items"] = items
 
-        response = requests.post(self.path_checkout.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=headers)
+        try:
+            response = requests.post(self.path_checkout.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=headers, timeout=20)
+        except Timeout:
+            raise PaymentError("Timeout")
         json_response = json.loads(response.text, use_decimal=True)
 
         check_response(response, json_response)
@@ -298,8 +313,11 @@ class PaydirektProvider(BasicProvider):
             "finalCapture": final,
             "callbackUrlStatusUpdates": self.get_return_url(payment)
         }
-        response = requests.post(self.path_capture.format(self.endpoint, payment.transaction_id), \
-                                 data=json.dumps(body, use_decimal=True), headers=header)
+        try:
+            response = requests.post(self.path_capture.format(self.endpoint, payment.transaction_id), \
+                                     data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
+        except Timeout:
+            raise PaymentError("Timeout")
         json_response = json.loads(response.text, use_decimal=True)
         check_response(response, json_response)
         return amount
@@ -314,8 +332,11 @@ class PaydirektProvider(BasicProvider):
             "amount": amount,
             "callbackUrlStatusUpdates": self.get_return_url(payment)
         }
-        response = requests.post(self.path_refund.format(self.endpoint, payment.transaction_id), \
-                                 data=json.dumps(body, use_decimal=True), headers=header)
+        try:
+            response = requests.post(self.path_refund.format(self.endpoint, payment.transaction_id), \
+                                     data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
+        except Timeout:
+            raise PaymentError("Timeout")
         json_response = json.loads(response.text, use_decimal=True)
         check_response(response, json_response)
         if payment.status == PaymentStatus.PREAUTH and amount == payment.captured_amount:
