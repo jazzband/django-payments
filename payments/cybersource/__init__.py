@@ -161,7 +161,7 @@ class CyberSourceProvider(BasicProvider):
             self._set_proper_payment_status_from_reason_code(
                 payment, response.reasonCode)
 
-    def capture(self, payment, amount=None):
+    def capture(self, payment, amount=None, final=True):
         if amount is None:
             amount = payment.total
         params = self._prepare_capture(payment, amount=amount)
@@ -366,15 +366,16 @@ class CyberSourceProvider(BasicProvider):
         return card
 
     def _prepare_billing_data(self, payment):
+        _billing_address = payment.get_billing_address()
         billing = self.client.factory.create('data:BillTo')
-        billing.firstName = payment.billing_first_name
-        billing.lastName = payment.billing_last_name
-        billing.street1 = payment.billing_address_1
-        billing.street2 = payment.billing_address_2
-        billing.city = payment.billing_city
-        billing.postalCode = payment.billing_postcode
-        billing.country = payment.billing_country_code
-        billing.state = payment.billing_country_area
+        billing.firstName = _billing_address["first_name"]
+        billing.lastName = _billing_address["last_name"]
+        billing.street1 = _billing_address["address_1"]
+        billing.street2 = _billing_address["address_2"]
+        billing.city = _billing_address["city"]
+        billing.postalCode = _billing_address["postcode"]
+        billing.country = _billing_address["country_code"]
+        billing.state = _billing_address["country_area"]
         billing.email = payment.billing_email
         billing.ipAddress = payment.customer_ip_address
         return billing

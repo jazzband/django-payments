@@ -29,6 +29,7 @@ class StripeFormMixin(object):
         if not self.errors:
             if not self.payment.transaction_id:
                 stripe.api_key = self.provider.secret_key
+                _billing_address = self.payment.get_billing_address()
                 try:
                     self.charge = stripe.Charge.create(
                         capture=False,
@@ -36,8 +37,8 @@ class StripeFormMixin(object):
                         currency=self.payment.currency,
                         card=data['stripeToken'],
                         description='%s %s' % (
-                            self.payment.billing_last_name,
-                            self.payment.billing_first_name))
+                            _billing_address["last_name"],
+                            _billing_address["first_name"]))
                 except stripe.CardError as e:
                     # Making sure we retrieve the charge
                     charge_id = e.json_body['error']['charge']
@@ -81,14 +82,15 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
 
     def __init__(self, *args, **kwargs):
         super(PaymentForm, self).__init__(*args, **kwargs)
+        _billing_address = self.payment.get_billing_address()
         stripe_attrs = self.fields['stripeToken'].widget.attrs
         stripe_attrs['data-publishable-key'] = self.provider.public_key
-        stripe_attrs['data-address-line1'] = self.payment.billing_address_1
-        stripe_attrs['data-address-line2'] = self.payment.billing_address_2
-        stripe_attrs['data-address-city'] = self.payment.billing_city
-        stripe_attrs['data-address-state'] = self.payment.billing_country_area
-        stripe_attrs['data-address-zip'] = self.payment.billing_postcode
-        stripe_attrs['data-address-country'] = self.payment.billing_country_code
+        stripe_attrs['data-address-line1'] = _billing_address["address_1"]
+        stripe_attrs['data-address-line2'] = _billing_address["address_2"]
+        stripe_attrs['data-address-city'] = _billing_address["city"]
+        stripe_attrs['data-address-state'] = _billing_address["country_area"]
+        stripe_attrs['data-address-zip'] = _billing_address["postcode"]
+        stripe_attrs['data-address-country'] = _billing_address["country_code"]
         widget_map = {
             'name': SensitiveTextInput(
                 attrs={'autocomplete': 'cc-name', 'required': 'required'}),

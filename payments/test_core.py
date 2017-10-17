@@ -1,7 +1,12 @@
 from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
-from mock import patch, NonCallableMock
+try:
+    from unittest.mock import patch, NonCallableMock
+except ImportError:
+    from mock import  patch, NonCallableMock
+
+from django.dispatch import Signal
 
 from payments import core
 from .forms import CreditCardPaymentFormWithName, PaymentForm
@@ -42,6 +47,28 @@ class TestBasePayment(TestCase):
         payment = BasePayment(variant='default', status=PaymentStatus.WAITING)
         self.assertRaises(ValueError, payment.capture)
 
+    @patch('payments.signals.status_changed', new_callable=Signal)
+    def test_robust_signals(self, mocked_signal):
+        with patch.object(BasePayment, 'save') as mocked_save_method:
+            mocked_save_method.return_value = None
+            def rogue_handler(sender, instance, **kwargs):
+                raise Exception("Here be dragons")
+            def benign_handler(sender, instance, **kwargs):
+                pass
+            class UnrelatedClass(object):
+                pass
+            def unrelated_handler(sender, instance, **kwargs):
+                raise Exception("Should not be called")
+            mocked_signal.connect(rogue_handler, sender=BasePayment)
+            mocked_signal.connect(benign_handler, sender=BasePayment)
+            mocked_signal.connect(unrelated_handler, sender=UnrelatedClass)
+            payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
+            # python < 3.4 has no asserLogs
+            if hasattr(self, "assertLogs"):
+                with self.assertLogs("payments.models", "CRITICAL") as logs:
+                    payment.change_status(PaymentStatus.WAITING, "fooo")
+                self.assertEqual(logs.output, ['CRITICAL:payments.models:Here be dragons'])
+
     @patch('payments.dummy.DummyProvider.capture')
     def test_capture_preauth_successfully(self, mocked_capture_method):
         amount = Decimal('20')
@@ -49,7 +76,9 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
+            captured_amount = Decimal('0')
+            payment = BasePayment(variant='default', captured_amount=captured_amount,
+                                  status=PaymentStatus.PREAUTH)
             payment.capture(amount)
 
             self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
@@ -63,7 +92,7 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            captured_amount = Decimal('100')
+            captured_amount = Decimal('0')
             status = PaymentStatus.PREAUTH
             payment = BasePayment(variant='default', status=status,
                                   captured_amount=captured_amount)
@@ -110,7 +139,7 @@ class TestBasePayment(TestCase):
             payment.refund(refund_amount)
             self.assertEqual(payment.status, status)
             self.assertEqual(payment.captured_amount, captured_amount)
-        self.assertEqual(mocked_refund_method.call_count, 0)
+        self.assertEqual(mocked_refund_method.call_count, 1)
 
     @patch('payments.dummy.DummyProvider.refund')
     def test_refund_partial_success(self, mocked_refund_method):
