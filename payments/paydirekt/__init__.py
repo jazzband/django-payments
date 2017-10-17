@@ -130,13 +130,14 @@ class PaydirektProvider(BasicProvider):
         check_response(response, token_raw)
 
         self.access_token = token_raw["access_token"]
-        self.expires_in = date_now+timedelta(seconds=token_raw["expires_in"])
+        # expires_in with 5 seconds less, enough time for next command
+        self.expires_in = date_now+timedelta(seconds=token_raw["expires_in"]-5)
 
     def check_and_update_token(self, times=0):
         """ Check if token exists or has expired, renew it in this case """
         self.updating_token_lock.acquire()
         try:
-            if not self.expires_in or self.expires_in <= dt.utcnow()-timedelta(seconds=3):
+            if not self.expires_in or self.expires_in <= dt.utcnow():
                 self.retrieve_oauth_token()
         except Timeout:
             if times < 3:
@@ -164,12 +165,13 @@ class PaydirektProvider(BasicProvider):
         return items
 
     def _retrieve_amount(self, url):
-        ret = requests.get(url)
         try:
-            results = json.loads(ret.text, use_decimal=True)
+            ret = requests.get(url, timeout=20)
         except Timeout:
             logger.error("paydirekt had timeout")
             return None
+        try:
+            results = json.loads(ret.text, use_decimal=True)
         except (ValueError, TypeError):
             logger.error("paydirekt returned unparseable object")
             return None
@@ -178,7 +180,6 @@ class PaydirektProvider(BasicProvider):
     def get_form(self, payment, data=None):
         if not payment.id:
             payment.save()
-        self.check_and_update_token()
         headers = PaydirektProvider.header_default.copy()
         headers["Authorization"] = "Bearer %s" % self.access_token
         email_hash = hashlib.sha256(payment.billing_email.encode("utf-8")).digest()
@@ -232,6 +233,7 @@ class PaydirektProvider(BasicProvider):
         if len(items) > 0:
             body["items"] = items
 
+        self.check_and_update_token()
         try:
             response = requests.post(self.path_checkout.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=headers, timeout=20)
         except Timeout:
@@ -305,7 +307,6 @@ class PaydirektProvider(BasicProvider):
             return None
         elif not self.overcapture and amount > payment.total:
             return None
-        self.check_and_update_token()
         header = PaydirektProvider.header_default.copy()
         header["Authorization"] = "Bearer %s" % self.access_token
         body = {
@@ -313,6 +314,7 @@ class PaydirektProvider(BasicProvider):
             "finalCapture": final,
             "callbackUrlStatusUpdates": self.get_return_url(payment)
         }
+        self.check_and_update_token()
         try:
             response = requests.post(self.path_capture.format(self.endpoint, payment.transaction_id), \
                                      data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
@@ -325,13 +327,13 @@ class PaydirektProvider(BasicProvider):
     def refund(self, payment, amount=None):
         if not amount:
             amount = payment.captured_amount
-        self.check_and_update_token()
         header = PaydirektProvider.header_default.copy()
         header["Authorization"] = "Bearer %s" % self.access_token
         body = {
             "amount": amount,
             "callbackUrlStatusUpdates": self.get_return_url(payment)
         }
+        self.check_and_update_token()
         try:
             response = requests.post(self.path_refund.format(self.endpoint, payment.transaction_id), \
                                      data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
