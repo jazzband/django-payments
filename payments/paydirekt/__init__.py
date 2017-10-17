@@ -24,7 +24,6 @@ import hashlib
 import simplejson as json
 import time
 import logging
-import threading
 
 import requests
 from requests.exceptions import Timeout
@@ -101,7 +100,6 @@ class PaydirektProvider(BasicProvider):
         self.endpoint = endpoint
         self.overcapture = overcapture
         self.default_carttype = default_carttype
-        self.updating_token_lock = threading.Lock()
         super(PaydirektProvider, self).__init__(**kwargs)
 
     def retrieve_oauth_token(self):
@@ -125,33 +123,15 @@ class PaydirektProvider(BasicProvider):
             "grantType" : "api_key",
             "randomNonce" : str(nonce, "ascii") if six.PY3 else nonce
         }
-        response = requests.post(self.path_token.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
+        try:
+            response = requests.post(self.path_token.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
+        except Timeout:
+            raise PaymentError("Timeout")
+
         token_raw = json.loads(response.text, use_decimal=True)
         check_response(response, token_raw)
 
-        self.access_token = token_raw["access_token"]
-        # expires_in with 5 seconds less, enough time for next command
-        self.expires_in = date_now+timedelta(seconds=token_raw["expires_in"]-5)
-
-    def check_and_update_token(self, times=0):
-        """ Check if token exists or has expired, renew it in this case """
-        self.updating_token_lock.acquire()
-        try:
-            if not self.expires_in or self.expires_in <= dt.utcnow():
-                self.retrieve_oauth_token()
-        except Timeout:
-            if times < 3:
-                self.updating_token_lock.release()
-                time.sleep(3)
-                return self.check_and_update_token(times+1)
-            else:
-                self.updating_token_lock.release()
-                raise PaymentError("Timeout")
-        except Exception as exc:
-            self.updating_token_lock.release()
-            raise exc
-        self.updating_token_lock.release()
-
+        return token_raw["access_token"]
 
     def _prepare_items(self, payment):
         items = []
@@ -181,7 +161,7 @@ class PaydirektProvider(BasicProvider):
         if not payment.id:
             payment.save()
         headers = PaydirektProvider.header_default.copy()
-        headers["Authorization"] = "Bearer %s" % self.access_token
+        headers["Authorization"] = "Bearer %s" % self.retrieve_oauth_token()
         email_hash = hashlib.sha256(payment.billing_email.encode("utf-8")).digest()
         body = {
             "type": "ORDER" if not self._capture else "DIRECT_SALE",
@@ -233,7 +213,6 @@ class PaydirektProvider(BasicProvider):
         if len(items) > 0:
             body["items"] = items
 
-        self.check_and_update_token()
         try:
             response = requests.post(self.path_checkout.format(self.endpoint), data=json.dumps(body, use_decimal=True), headers=headers, timeout=20)
         except Timeout:
@@ -308,13 +287,12 @@ class PaydirektProvider(BasicProvider):
         elif not self.overcapture and amount > payment.total:
             return None
         header = PaydirektProvider.header_default.copy()
-        header["Authorization"] = "Bearer %s" % self.access_token
+        header["Authorization"] = "Bearer %s" % self.retrieve_oauth_token()
         body = {
             "amount": amount,
             "finalCapture": final,
             "callbackUrlStatusUpdates": self.get_return_url(payment)
         }
-        self.check_and_update_token()
         try:
             response = requests.post(self.path_capture.format(self.endpoint, payment.transaction_id), \
                                      data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
@@ -328,12 +306,11 @@ class PaydirektProvider(BasicProvider):
         if not amount:
             amount = payment.captured_amount
         header = PaydirektProvider.header_default.copy()
-        header["Authorization"] = "Bearer %s" % self.access_token
+        header["Authorization"] = "Bearer %s" % self.retrieve_oauth_token()
         body = {
             "amount": amount,
             "callbackUrlStatusUpdates": self.get_return_url(payment)
         }
-        self.check_and_update_token()
         try:
             response = requests.post(self.path_refund.format(self.endpoint, payment.transaction_id), \
                                      data=json.dumps(body, use_decimal=True), headers=header, timeout=20)
@@ -344,9 +321,9 @@ class PaydirektProvider(BasicProvider):
         if payment.status == PaymentStatus.PREAUTH and amount == payment.captured_amount:
             # logic, elsewise multiple signals are emitted CONFIRMED -> REFUNDED
             payment.change_status(PaymentStatus.REFUNDED)
-            self.check_and_update_token()
-            response = requests.post(self.path_close.format(self.endpoint, payment.transaction_id), \
-                                 headers=header)
-            json_response = json.loads(response.text, use_decimal=True)
-            check_response(response, json_response)
+            try:
+                response = requests.post(self.path_close.format(self.endpoint, payment.transaction_id), \
+                                         headers=header)
+            except Timeout:
+                logger.error("Closing order failed")
         return amount
