@@ -136,7 +136,7 @@ class PaydirektProvider(BasicProvider):
         """ Check if token exists or has expired, renew it in this case """
         self.updating_token_lock.acquire()
         try:
-            if not self.expires_in or self.expires_in >= dt.utcnow()-timedelta(seconds=3):
+            if not self.expires_in or self.expires_in <= dt.utcnow()-timedelta(seconds=3):
                 self.retrieve_oauth_token()
         except Timeout:
             if times < 3:
