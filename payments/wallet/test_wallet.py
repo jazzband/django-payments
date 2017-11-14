@@ -70,7 +70,7 @@ class TestGoogleWalletProvider(TestCase):
         """
         payment = Payment()
         request = MagicMock()
-        request.POST = {'jwt': jwt.encode(JWT_DATA, SELLER_SECRET)}
+        request.POST = {'jwt': jwt.encode(JWT_DATA, SELLER_SECRET).decode()}
         provider = GoogleWalletProvider(
             seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         response = provider.process_data(payment, request)
@@ -84,7 +84,7 @@ class TestGoogleWalletProvider(TestCase):
         data = dict(JWT_DATA, aud='wrong seller id')
         payment = Payment()
         request = MagicMock()
-        payload = jwt.encode(data, SELLER_SECRET)
+        payload = jwt.encode(data, SELLER_SECRET).decode()
         request.POST = {'jwt': payload}
         provider = GoogleWalletProvider(
             seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
@@ -93,7 +93,7 @@ class TestGoogleWalletProvider(TestCase):
 
     def test_provider_request_payment_token(self):
         request = MagicMock()
-        request.POST = {'jwt': jwt.encode(JWT_DATA, SELLER_SECRET)}
+        request.POST = {'jwt': jwt.encode(JWT_DATA, SELLER_SECRET).decode()}
         provider = GoogleWalletProvider(
             seller_id=SELLER_ID, seller_secret=SELLER_SECRET)
         token = provider.get_token_from_request(None, request)

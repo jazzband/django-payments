@@ -1,14 +1,14 @@
 from __future__ import unicode_literals
+
 import json
 from uuid import uuid4
 
-from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from .core import provider_factory
 from . import FraudStatus, PaymentStatus
+from .core import provider_factory
 
 
 class PaymentAttributeProxy(object):
