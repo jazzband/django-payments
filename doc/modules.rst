@@ -255,7 +255,7 @@ Example::
 This backend does not support fraud detection.
 
 Sofort.com
---------
+----------
 
 .. class:: payments.sofort.SofortProvider(key, id, project_id[, endpoint='https://api.sofort.com/api/xml'])
 
@@ -301,3 +301,30 @@ Example::
 
 
 This backend does not support fraud detection.
+
+Taler
+-----
+
+.. class:: payments.taler.TalerProvider(self, backend_url, address, name, jurisdiction, instance=None)
+
+   This backend implements payments using `Taler <https://taler/net/>`_.
+
+   :param backend_url: Backend's base URL.
+   :param instance: Merchant instance.
+   :param address: Merchant physical address.
+   :param name: Merchant/shop name.
+   :param jurisdiction: Jurisdiction where the merchant operates.
+
+Example::
+
+    PAYMENT_VARIANTS = {
+        'taler': ('payments.taler.TalerProvider',
+            {'backend_url': 'http://backend.test.taler.net/',
+             'address': 'US',
+             'jurisdiction': 'US',
+             'name': 'Taler tester shop'})
+    }
+
+.. This backend does not report fraud to Saleor, as fraud in
+   the classical sense is not possible with Taler.  Naturally,
+   protocol failures are detected and reported (to the wallet).

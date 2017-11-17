@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-13 13:13+0100\n"
+"POT-Creation-Date: 2017-10-20 14:17+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Marco Badan <marco.badan@gmail.com>, 2017\n"
 "Language-Team: Italian (https://www.transifex.com/mirumee/teams/34782/it/)\n"
@@ -177,11 +177,11 @@ msgstr ""
 msgid "We were unable to complete the transaction. Please try again later."
 msgstr "Non siamo riusciti a completare la transazione. Riprova più tardi."
 
-#: payments/cybersource/forms.py:51
+#: payments/cybersource/forms.py:52
 msgid "fingerprint"
 msgstr "fingerprint"
 
-#: payments/cybersource/forms.py:68 payments/stripe/forms.py:52
+#: payments/cybersource/forms.py:69 payments/stripe/forms.py:52
 msgid "This payment has already been processed."
 msgstr "Questo pagamento è già stato processato."
 
@@ -225,6 +225,24 @@ msgstr "controllo frode"
 #: payments/stripe/widgets.py:23
 msgid "Total payment"
 msgstr "Totale pagamento"
+
+#: payments/taler/__init__.py:89
+msgid ""
+"Taler wallet disabled, please go back and either enable the wallet or pick "
+"another payment method.  Please keep the wallet enabled if you pick Taler "
+"again!"
+msgstr ""
+
+#: payments/taler/__init__.py:117
+msgid ""
+"Your wallet seems to have been disabled while processing this payment; your "
+"coins didn't get spent though.  Please go back in the checkout page and "
+"restart the payment with the method  you desire."
+msgstr ""
+
+#: payments/templates/payments/taler_fallback.html:5
+msgid "Payment unsuccessful"
+msgstr ""
 
 #: payments/utils.py:8
 msgid "Month"
