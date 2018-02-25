@@ -6,3 +6,8 @@
 *.py[co]
 *~
 *\.egg*
+
+dist/
+build/*
+build/lib
+build/lib/payments/*
