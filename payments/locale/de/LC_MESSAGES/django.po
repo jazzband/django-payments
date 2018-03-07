@@ -1,0 +1,230 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-03-06 19:26+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: payments/__init__.py:25
+msgctxt "payment status"
+msgid "Waiting for confirmation"
+msgstr "Zahlungsstatus"
+
+#: payments/__init__.py:26
+msgctxt "payment status"
+msgid "Pre-authorized"
+msgstr "Zahlungsstatus"
+
+#: payments/__init__.py:27
+msgctxt "payment status"
+msgid "Confirmed"
+msgstr "Bestätigt"
+
+#: payments/__init__.py:28
+msgctxt "payment status"
+msgid "Rejected"
+msgstr "Zurückgewiesen"
+
+#: payments/__init__.py:29
+msgctxt "payment status"
+msgid "Refunded"
+msgstr "Rückerstattet"
+
+#: payments/__init__.py:30
+msgctxt "payment status"
+msgid "Error"
+msgstr "Fehler"
+
+#: payments/__init__.py:31
+msgctxt "payment status"
+msgid "Input"
+msgstr "Eingabe"
+
+#: payments/__init__.py:41
+msgctxt "fraud status"
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: payments/__init__.py:42
+msgctxt "fraud status"
+msgid "Passed"
+msgstr "Bestanden"
+
+#: payments/__init__.py:43
+msgctxt "fraud status"
+msgid "Rejected"
+msgstr "Zurückgewiesen"
+
+#: payments/__init__.py:44
+msgctxt "fraud status"
+msgid "Review"
+msgstr "Überprüfung"
+
+#: payments/cybersource/__init__.py:100
+msgid "The order is marked for review by Decision Manager"
+msgstr "Die Bestellung die ist zur Überprüfung vorgemerkt"
+
+#: payments/cybersource/__init__.py:105
+msgid "The order has been rejected by Decision Manager"
+msgstr "Die Bestellung wurde zurückgewiesen"
+
+#: payments/cybersource/__init__.py:110
+msgid "Fraud score exceeds threshold."
+msgstr "Betrugsbewertung überschreitet den Grenzwert"
+
+#: payments/cybersource/__init__.py:114
+msgid "CyberSource Smart Authorization failed."
+msgstr "CyberSource Smart Ermächtigung gescheitert"
+
+#: payments/cybersource/__init__.py:119
+msgid "Card verification number (CVN) did not match."
+msgstr "Karten Prüfnummer (CVN) stimmt nicht überein"
+
+#: payments/cybersource/__init__.py:125
+msgid "CyberSource Address Verification Service failed."
+msgstr "CyberSource Adressüberprüfung gescheitert"
+
+#: payments/cybersource/__init__.py:146
+msgid "3-D Secure verification in progress"
+msgstr "3-D Sicherheitüberprüfung in Bearbeitung"
+
+#: payments/cybersource/__init__.py:203
+msgid ""
+"Our bank has flagged your transaction as unusually suspicious. Please "
+"contact us to resolve this issue."
+msgstr "" 
+"Unsere Bank hat ihre Transaktion as verdächtigt gekennzeichnet."
+" Bitte kontaktieren Sie uns."
+
+#: payments/cybersource/__init__.py:206
+msgid ""
+"Your bank has declined the transaction. No additional information was "
+"provided."
+msgstr ""
+"Ihre Bank hat die Transaktion verweigert. Es wurden keine "
+"weiteren Details angegeben."
+
+#: payments/cybersource/__init__.py:209
+msgid ""
+"The card has either expired or you have entered an incorrect expiration date."
+msgstr ""
+"Die Karte ist entweder abgelaufen oder Sie haben eine falsches Ablaufdatum eingegeben"
+
+#: payments/cybersource/__init__.py:212
+msgid ""
+"There are insufficient funds on your card or it has reached its credit limit."
+msgstr ""
+"Es ist nicht genug Guthaben auf Ihrer Karte oder Sie haben das Kartenlimit erreicht."
+
+#: payments/cybersource/__init__.py:215
+msgid "The card you are trying to use was reported as lost or stolen."
+msgstr "Die angegebene Karte wurde als gestohlen gemeldet."
+
+#: payments/cybersource/__init__.py:218
+msgid ""
+"Your card is either inactive or it does not permit online payments. Please "
+"contact your bank to resolve this issue."
+msgstr ""
+"Ihre Karte iste entweder inaktiv oder sie erlaubt keine Onleihnzahlungen. "
+"Bitte kontaktieren Sie ihre Bank um das Problem zu beheben."
+
+#: payments/cybersource/__init__.py:221
+msgid ""
+"Your bank has declined the transaction. Please check the verification number "
+"of your card and retry."
+msgstr ""
+"Ihre Bank hat die Transaktion abgelehnt. Bitte überprüfen Sie die Verifikationnummer "
+"Ihrer Karte und versuchen Sie es erneut." 
+
+#: payments/cybersource/__init__.py:224
+msgid ""
+"Your bank has declined the transaction. Please make sure the card number you "
+"have entered is correct and retry."
+msgstr ""
+"Ihre Bank hat die Transaktion abgelehnt. Bitte überprüfen Sie die angegebene "
+"Kartennummer"
+
+#: payments/cybersource/__init__.py:227
+msgid "We are sorry but our bank cannot handle the card type you are using."
+msgstr "Es tut uns Leid aber unsere Bank akzeptiert den angegeben Kartentyp nicht."
+
+#: payments/cybersource/__init__.py:231
+msgid ""
+"We were unable to verify your address. Please make sure the address you "
+"entered is correct and retry."
+msgstr ""
+"Wir können ihre Adresse nicht verifizieren. Bitte überprüfen Sie ihre "
+"Eingabe."
+
+#: payments/cybersource/__init__.py:234
+msgid "We were unable to complete the transaction. Please try again later."
+msgstr "Wir können die Transaktion nicht abschließen. Bitte versuchen Sie es später nochmal."
+
+#: payments/cybersource/forms.py:52
+msgid "fingerprint"
+msgstr "Fingerabdruck"
+
+#: payments/cybersource/forms.py:69 payments/stripe/forms.py:52
+msgid "This payment has already been processed."
+msgstr "Die Bezahlung wurde bereits verarbeitet."
+
+#: payments/fields.py:20
+msgid "Please enter a valid card number"
+msgstr "Bitte geben Sie eine gültige Kartennummer ein."
+
+#: payments/fields.py:21
+#, python-format
+msgid "We accept only %(valid_types)s"
+msgstr "Wir akzeptieren nur %(valid_types)"
+
+#: payments/fields.py:123
+msgid "Enter a valid security number."
+msgstr "Geben Sie eine gültige Sicherheitsnummber ein."
+
+#: payments/forms.py:39
+msgid "Card Number"
+msgstr "Kartennummer"
+
+#: payments/forms.py:43
+msgid "CVV2 Security Number"
+msgstr "CVV2 Sicherheitsnummer"
+
+#: payments/forms.py:44
+msgid ""
+"Last three digits located on the back of your card. For American Express the "
+"four digits found on the front side."
+msgstr ""
+"Drei letzten Stellen der Verifikationsnummer. Diese befindet sich auf der "
+"Rückseite ihrer Karte. Für American Express vier Stellen, welche sich auf der Kartenvorderseite befinden."
+
+#: payments/forms.py:56
+msgid "Name on Credit Card"
+msgstr "Name der Kreditkarte"
+
+#: payments/models.py:45
+msgid "fraud check"
+msgstr "Betrugscheck"
+
+#: payments/stripe/widgets.py:23
+msgid "Total payment"
+msgstr "Gesamtsumme"
+
+#: payments/utils.py:8
+msgid "Month"
+msgstr "Monat"
+
+#: payments/utils.py:14
+msgid "Year"
+msgstr "Jahr"
