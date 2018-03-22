@@ -116,3 +116,18 @@ class TestDotpayProvider(TestCase):
         provider = DotpayProvider(seller_id='123', pin=PIN)
         response = provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponseForbidden)
+
+    def test_uses_channel_groups_when_set(self):
+        channel_groups = 'K,T'
+        params = {
+            'seller_id': 123,
+            'pin': PIN,
+            'endpoint': 'test.endpoint.com',
+            'channel': 1,
+            'channel_groups': channel_groups,
+            'lang': 'en',
+            'lock': True}
+        provider = DotpayProvider(**params)
+        hidden_fields = provider.get_hidden_fields(self.payment)
+        self.assertEqual(hidden_fields['channel_groups'], channel_groups)
+        self.assertIsNone(hidden_fields.get('channel'))
