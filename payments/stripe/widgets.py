@@ -8,6 +8,7 @@ from django.forms.widgets import Input, HiddenInput
 from django.utils.html import format_html
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
+import django
 
 
 class StripeCheckoutWidget(Input):
@@ -36,7 +37,10 @@ class StripeCheckoutWidget(Input):
         del final_attrs['id']
         if value != '':
             # Only add the 'value' attribute if a value is non-empty.
-            final_attrs['value'] = force_text(self.format_value(value))
+            if django.VERSION[0] >= 2:
+                final_attrs['value'] = force_text(self.format_value(value))
+            else:
+                final_attrs['value'] = _force_text(self.format_value(value))
         return format_html('<script{0}></script>', flatatt(final_attrs))
 
 
