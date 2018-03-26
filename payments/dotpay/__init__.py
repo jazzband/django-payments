@@ -28,13 +28,17 @@ class DotpayProvider(BasicProvider):
 
     def __init__(self, seller_id, pin,
                  endpoint='https://ssl.dotpay.pl/test_payment/',
-                 channel=0, lang='pl', lock=False, **kwargs):
+                 channel=0, channel_groups=None, ignore_last_payment_channel=False,
+                 lang='pl', lock=False, type=2, **kwargs):
         self.seller_id = seller_id
         self.pin = pin
         self.endpoint = endpoint
         self.channel = channel
+        self.channel_groups = channel_groups
+        self.ignore_last_payment_channel = ignore_last_payment_channel
         self.lang = lang
         self.lock = lock
+        self.type = type
         super(DotpayProvider, self).__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
@@ -54,11 +58,16 @@ class DotpayProvider(BasicProvider):
             'currency': payment.currency,
             'description': payment.description,
             'lang': self.lang,
-            'channel': str(self.channel),
+            'ignore_last_payment_channel':
+                '1' if self.ignore_last_payment_channel else '0',
             'ch_lock': '1' if self.lock else '0',
             'URL': payment.get_success_url(),
             'URLC': self.get_return_url(payment),
-            'type': '1'}
+            'type': str(self.type)}
+        if self.channel_groups:
+            data['channel_groups'] = self.channel_groups
+        else:
+            data['channel'] = str(self.channel)
         return data
 
     def process_data(self, payment, request):
