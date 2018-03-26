@@ -6,6 +6,14 @@ from django import forms
 from .. import PaymentStatus
 
 
+NEW = 'new'
+PROCESSING = 'processing'
+COMPLETED = 'completed'
+REJECTED = 'rejected'
+PROCESSING_REALIZATION_WAITING = 'processing_realization_waiting'
+PROCESSING_REALIZATION = 'processing_realization'
+
+
 class ProcessPaymentForm(forms.Form):
 
     id = forms.CharField(required=False)
@@ -86,8 +94,8 @@ class ProcessPaymentForm(forms.Form):
         status = self.cleaned_data['operation_status']
         self.payment.transaction_id = self.cleaned_data['operation_number']
         self.payment.save()
-        if status == 'completed':
+        if status == COMPLETED:
             self.payment.captured_amount = self.payment.total
             self.payment.change_status(PaymentStatus.CONFIRMED)
-        elif status == 'rejected':
+        elif status == REJECTED:
             self.payment.change_status(PaymentStatus.REJECTED)
