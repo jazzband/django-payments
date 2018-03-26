@@ -40,7 +40,7 @@ class StripeCheckoutWidget(Input):
             if django.VERSION[0] >= 2:
                 final_attrs['value'] = force_text(self.format_value(value))
             else:
-                final_attrs['value'] = _force_text(self.format_value(value))
+                final_attrs['value'] = force_text(self._format_value(value))
         return format_html('<script{0}></script>', flatatt(final_attrs))
 
 
