@@ -262,7 +262,7 @@ Sofort.com
 
 .. class:: payments.sofort.SofortProvider(key, id, project_id[, endpoint='https://api.sofort.com/api/xml'])
 
-   This backend implements payments using `sofort.com <https://www.sofort.com/>` API.
+   This backend implements payments using `sofort.com <https://www.sofort.com/>`_ API.
 
    :param id: Your sofort.com user id
    :param key: Your secret key
