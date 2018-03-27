@@ -6,42 +6,54 @@ from django.http import HttpResponse, HttpResponseForbidden
 from mock import MagicMock, Mock
 
 from .. import PaymentStatus
-from .forms import ACCEPTED, REJECTED
+from .forms import COMPLETED, REJECTED
 from . import DotpayProvider
 
 VARIANT = 'dotpay'
 PIN = '123'
 PROCESS_POST = {
-    'status': 'OK',
-    'id': '111',
+    'id': '123',
+    'operation_number': 'MI-5',
+    'operation_type': 'payment',
+    'operation_status': COMPLETED,
+    'operation_amount': '212.35',
+    'operation_currency': 'PLN',
+    'operation_original_amount': '58.07',
+    'operation_original_currency': 'USD',
+    'operation_datetime': '2018-02-28 12:00:00',
     'control': '1',
-    't_id': 't111',
-    'amount': '100.0',
-    'email': 'chf@o2.pl',
-    't_status': str(ACCEPTED),
-    'description': 'description',
-    'md5': '?'}
+    'description': 'Order #1',
+    'email': 'user@example.org',
+    'p_info': 'John Doe (seller@example.com)',
+    'p_email': 'seller@example.com',
+    'channel': '1'
+}
 
 
-def get_post_with_md5(post):
+def get_post_with_sha256(post):
     post = post.copy()
-    key_vars = (
-        PIN,
-        post['id'],
-        post['control'],
-        post['t_id'],
-        post['amount'],
-        post.get('email', ''),
-        '',  # service
-        '',  # code
-        '',  # username
-        '',  # password
-        post['t_status'])
-    key = ':'.join(key_vars)
-    md5 = hashlib.md5()
-    md5.update(key.encode('utf-8'))
-    key_hash = md5.hexdigest()
-    post['md5'] = key_hash
+    post['pin'] = '123'
+    keys = ['pin',
+            'id',
+            'operation_number',
+            'operation_type',
+            'operation_status',
+            'operation_amount',
+            'operation_currency',
+            'operation_original_amount',
+            'operation_original_currency',
+            'operation_datetime',
+            'control',
+            'description',
+            'email',
+            'p_info',
+            'p_email',
+            'channel']
+    key = ''.join([post[key] for key in keys])
+    sha256 = hashlib.sha256()
+    sha256.update(key.encode('utf-8'))
+    key_hash = sha256.hexdigest()
+    post['signature'] = key_hash
     return post
 
 
@@ -78,7 +90,7 @@ class TestDotpayProvider(TestCase):
     def test_process_data_payment_accepted(self):
         """DotpayProvider.process_data() returns a correct HTTP response"""
         request = MagicMock()
-        request.POST = get_post_with_md5(PROCESS_POST)
+        request.POST = get_post_with_sha256(PROCESS_POST)
         params = {
             'seller_id': 123,
             'pin': PIN,
@@ -94,9 +106,9 @@ class TestDotpayProvider(TestCase):
     def test_process_data_payment_rejected(self):
         """DotpayProvider.process_data() returns a correct HTTP response"""
         data = dict(PROCESS_POST)
-        data.update({'t_status': str(REJECTED)})
+        data.update({'operation_status': REJECTED})
         request = MagicMock()
-        request.POST = get_post_with_md5(data)
+        request.POST = get_post_with_sha256(data)
         params = {
             'seller_id': 123,
             'pin': PIN,
