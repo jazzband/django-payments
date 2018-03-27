@@ -185,3 +185,26 @@ class TestPaymentForm(TestCase):
         form = PaymentForm(data=data, hidden_inputs=True)
         self.assertEqual(len(form.fields), len(data))
         self.assertEqual(form.fields['field1'].initial, 'value1')
+
+class TestCardIssuer(TestCase):
+    def test_mastercard(self):
+        self.assertEqual(core.get_credit_card_issuer("2720999018275485"), ('mastercard', 'MasterCard'))
+        self.assertEqual(core.get_credit_card_issuer("5101395940513451"), ('mastercard', 'MasterCard'))
+        self.assertEqual(core.get_credit_card_issuer("5469166706524768"), ('mastercard', 'MasterCard'))
+
+    def test_visa(self):
+        self.assertEqual(core.get_credit_card_issuer("4929299255922609"), ('visa', 'VISA'))
+        self.assertEqual(core.get_credit_card_issuer("4539883983691685"), ('visa', 'VISA'))
+        self.assertEqual(core.get_credit_card_issuer("4916396455393611281"), ('visa', 'VISA'),"19 digit Visa Card")
+
+    def test_discover(self):
+        self.assertEqual(core.get_credit_card_issuer("6011281400356614"), ('discover', 'Discover'))
+        self.assertEqual(core.get_credit_card_issuer("6011223438090674"), ('discover', 'Discover'))
+        self.assertEqual(core.get_credit_card_issuer("6011509478386387430"), ('discover', 'Discover'),"19 digit Discover Card")
+
+    def test_amex(self):
+        self.assertEqual(core.get_credit_card_issuer("341841172626538"), ('amex', 'American Express'))
+        self.assertEqual(core.get_credit_card_issuer("348710065929999"), ('amex', 'American Express'))
+        self.assertEqual(core.get_credit_card_issuer("341473920579841"), ('amex', 'American Express'))
+
+    
