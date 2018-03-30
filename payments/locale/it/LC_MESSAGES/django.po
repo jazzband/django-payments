@@ -2,7 +2,7 @@
 # Copyright (C) 2017 Mirumee Software
 # This file is distributed under the same license as the django-payments package.
 # Mirumee Software <hello@mirumee.com>, 2017.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
@@ -12,16 +12,16 @@ msgstr ""
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Marco Badan <marco.badan@gmail.com>, 2017\n"
 "Language-Team: Italian (https://www.transifex.com/mirumee/teams/34782/it/)\n"
-"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: payments/__init__.py:25
 msgctxt "payment status"
 msgid "Waiting for confirmation"
-msgstr "In attesa di conferna"
+msgstr "In attesa di conferma"
 
 #: payments/__init__.py:26
 msgctxt "payment status"
@@ -71,7 +71,7 @@ msgstr "Rifiutato"
 #: payments/__init__.py:44
 msgctxt "fraud status"
 msgid "Review"
-msgstr "Revisione"
+msgstr "In revisione"
 
 #: payments/cybersource/__init__.py:100
 msgid "The order is marked for review by Decision Manager"
@@ -91,7 +91,7 @@ msgstr "Autorizzazione CyberSource Smart fallita."
 
 #: payments/cybersource/__init__.py:119
 msgid "Card verification number (CVN) did not match."
-msgstr "Numero di verifica della carta (CVN) non corrisponde."
+msgstr "Il Numero di verifica della carta (CVN) non corrisponde."
 
 #: payments/cybersource/__init__.py:125
 msgid "CyberSource Address Verification Service failed."
@@ -119,14 +119,16 @@ msgstr ""
 
 #: payments/cybersource/__init__.py:209
 msgid ""
-"The card has either expired or you have entered an incorrect expiration date."
+"The card has either expired or you have entered an incorrect expiration "
+"date."
 msgstr "La carta è scaduta o hai inserito una data di scadenza non corretta."
 
 #: payments/cybersource/__init__.py:212
 msgid ""
-"There are insufficient funds on your card or it has reached its credit limit."
+"There are insufficient funds on your card or it has reached its credit "
+"limit."
 msgstr ""
-"Non ci sono fondi sufficienti nella tua carta o hai raggiunto il tuo limite "
+"Non ci sono fondi sufficienti nella tua carta o hai raggiunto il suo limite "
 "di credito."
 
 #: payments/cybersource/__init__.py:215
@@ -145,33 +147,33 @@ msgstr ""
 
 #: payments/cybersource/__init__.py:221
 msgid ""
-"Your bank has declined the transaction. Please check the verification number "
-"of your card and retry."
+"Your bank has declined the transaction. Please check the verification number"
+" of your card and retry."
 msgstr ""
-"La banca ha rifiutato la transazione. Controlla il codice di verifica della "
-"tua carta e riprova."
+"La tua banca ha rifiutato la transazione. Controlla il codice di verifica "
+"della tua carta e riprova."
 
 #: payments/cybersource/__init__.py:224
 msgid ""
-"Your bank has declined the transaction. Please make sure the card number you "
-"have entered is correct and retry."
+"Your bank has declined the transaction. Please make sure the card number you"
+" have entered is correct and retry."
 msgstr ""
 "La tua banca ha rifiutato la transazione. Assicurati che il numero della "
-"carta di credito inserito sia corretto"
+"carta di credito inserito sia corretto e riprova."
 
 #: payments/cybersource/__init__.py:227
 msgid "We are sorry but our bank cannot handle the card type you are using."
 msgstr ""
-"Siamo spiacenti ma la banca non può gestire questa tipologia di carta che "
-"stai usando"
+"Siamo spiacenti ma la nostra banca non può gestire la tipologia di carta che"
+" stai utilizzando."
 
 #: payments/cybersource/__init__.py:231
 msgid ""
 "We were unable to verify your address. Please make sure the address you "
 "entered is correct and retry."
 msgstr ""
-"Non siamo riusciti a verificare il tuo indirizzo. Fai in modo che "
-"l'indirizzo inserito sia corretto e riprova."
+"Non siamo riusciti a verificare il tuo indirizzo. Verifica che l'indirizzo "
+"che hai inserito sia corretto e riprova."
 
 #: payments/cybersource/__init__.py:234
 msgid "We were unable to complete the transaction. Please try again later."
@@ -192,7 +194,7 @@ msgstr "Inserisci un numero di carta di credito valido"
 #: payments/fields.py:21
 #, python-format
 msgid "We accept only %(valid_types)s"
-msgstr "Accettiamo solo  %(valid_types)s"
+msgstr "Accettiamo solo %(valid_types)s"
 
 #: payments/fields.py:123
 msgid "Enter a valid security number."
@@ -200,7 +202,7 @@ msgstr "Inserisci un codice di verifica valido."
 
 #: payments/forms.py:39
 msgid "Card Number"
-msgstr "Numero Carta di credito"
+msgstr "Numero carta di credito"
 
 #: payments/forms.py:43
 msgid "CVV2 Security Number"
@@ -208,15 +210,15 @@ msgstr "Codice di sicurezza CVV2"
 
 #: payments/forms.py:44
 msgid ""
-"Last three digits located on the back of your card. For American Express the "
-"four digits found on the front side."
+"Last three digits located on the back of your card. For American Express the"
+" four digits found on the front side."
 msgstr ""
 "Le ultime 3 cifre situate sul retro della carta. Per American Express le "
 "quattro cifre si trovano sul lato anteriore."
 
 #: payments/forms.py:56
 msgid "Name on Credit Card"
-msgstr "Nome sulla Carta di Credito"
+msgstr "Nome sulla carta di credito"
 
 #: payments/models.py:45
 msgid "fraud check"
