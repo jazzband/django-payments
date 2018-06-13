@@ -1,5 +1,5 @@
 from payments.core import BasicProvider
-from payments import PaymentStatus
+from payments import PaymentStatus, RedirectNeeded
 from payments.forms import PaymentForm
 
 from django.shortcuts import redirect
@@ -23,7 +23,6 @@ class ZarinpalProvider(BasicProvider):
                 'Sagepay does not support pre-authorization.')
 
     def get_form(self, payment, data=None):
-        # print("::::::::::::::enter form:::::::::::::")
         client = Client(self._web_service)
         # converting rial to tooman
         amount = payment.total / 10
@@ -35,14 +34,8 @@ class ZarinpalProvider(BasicProvider):
                                                #    mobile,
                                                Description=description,
                                                CallbackURL=CallbackURL)
-        # print("::::::::::::::get pay url:::::::::::::")
         if result.Status == 100:
             payment.changestatus(PaymentStatus.INPUT)
-            # print("::::::::::::REDIRECT::::::::::::::;")
-            # return redirect('https://www.zarinpal.com/pg/StartPay/' + result.Authority)
-        # else:
-        #     return {}
-        #     return HttpResponse('Error')
 
         form = PaymentForm(data=data, payment=payment, provider=self)
 
@@ -50,27 +43,6 @@ class ZarinpalProvider(BasicProvider):
             raise RedirectNeeded(payment.get_success_url())
         return form
 
-    # def get_hidden_fields(self, payment):
-    #     print("::::::::::::::enter payment:::::::::::::")
-    #     client = Client(self._web_service)
-    #     print("::::::::::::::enter payment:::::::::::::")
-    #     # converting rial to tooman
-    #     amount = payment.total / 10
-    #     description = "صفحه ی خرید"
-    #     CallbackURL = "https://arput.com"
-    #     result = client.service.PaymentRequest(self._merchant_code,
-    #                                            amount,
-    #                                            description,
-    #                                            #    email,
-    #                                            #    mobile,
-    #                                            CallbackURL)
-    #     if result.Status == 100:
-    #         payment.changestatus(PaymentStatus.WAITING)
-    #         print("::::::::::::REDIRECT::::::::::::::;")
-    #         return redirect('https://www.zarinpal.com/pg/StartPay/' + result.Authority)
-    #     else:
-    #         return {}
-    #         # return HttpResponse('Error')
 
     def get_action(self, payment, request):
         # print(":::::::::::::verify payment:::::::::")
