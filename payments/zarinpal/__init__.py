@@ -30,6 +30,7 @@ class ZarinpalProvider(BasicProvider):
     def get_form(self, payment, data=None):
         client = Client(self._web_service)
         # converting rial to tooman
+
         amount = int(payment.total // 10)
         
         description = payment.description
@@ -53,6 +54,7 @@ class ZarinpalProvider(BasicProvider):
     def process_data(self, payment, request, **kwargs):
         # Verifying the payment
         amount = int(payment.total // 10)
+
         pay = payment.change_status(PaymentStatus.CONFIRMED)
         client = Client(self._web_service)
         if request.GET.get('Status') == 'OK':
