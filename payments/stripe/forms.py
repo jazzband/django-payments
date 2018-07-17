@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django import forms
 from django.utils.translation import ugettext as _
 import stripe
+import json
 
 from .widgets import StripeCheckoutWidget, StripeWidget
 from .. import RedirectNeeded
@@ -29,7 +30,7 @@ class StripeFormMixin(object):
         data = self.cleaned_data
 
         if not self.errors:
-            if not self.payment.transaction_id:
+            if not self.payment.transaction_id:utils
                 stripe.api_key = self.provider.secret_key
                 try:
                     self.charge = stripe.Charge.create(
@@ -58,7 +59,7 @@ class StripeFormMixin(object):
 
     def save(self):
         self.payment.transaction_id = self.charge.id
-        self.payment.attrs.charge = stripe.util.json.dumps(self.charge)
+        self.payment.attrs.charge = json.dumps(self.charge)
         self.payment.change_status('preauth')
         if self.provider._capture:
             self.payment.capture()
