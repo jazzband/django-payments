@@ -30,7 +30,7 @@ class StripeFormMixin(object):
         data = self.cleaned_data
 
         if not self.errors:
-            if not self.payment.transaction_id:utils
+            if not self.payment.transaction_id:
                 stripe.api_key = self.provider.secret_key
                 try:
                     self.charge = stripe.Charge.create(
