@@ -18,7 +18,8 @@ PACKAGES = [
     'payments.sagepay',
     'payments.sofort',
     'payments.stripe',
-    'payments.wallet']
+    'payments.wallet',
+    'payments.razorpay']
 
 REQUIREMENTS = [
     'braintree>=3.14.0',
@@ -28,7 +29,8 @@ REQUIREMENTS = [
     'requests>=1.2.0',
     'stripe>=1.9.8',
     'suds-jurko>=0.6',
-    'xmltodict>=0.9.2']
+    'xmltodict>=0.9.2',
+    'razorpay>=1.1.1']
 
 
 class PyTest(TestCommand):
