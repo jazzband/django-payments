@@ -62,7 +62,7 @@ def mock_stripe_Charge_create(error_msg=None):
     }
     with patch('stripe.Charge.create') as mocked_charge_create:
         if error_msg:
-            mocked_charge_create.side_effect = stripe.CardError(
+            mocked_charge_create.side_effect = stripe.error.CardError(
                 error_msg, param=None, code=None, json_body=json_body)
         else:
             mocked_charge_create.side_effect = lambda **kwargs: {}
@@ -118,7 +118,7 @@ class TestStripeProvider(TestCase):
             name='Example.com store',
             secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
         data = {'stripeToken': 'abcd'}
-        with patch('stripe.util.json.dumps'):
+        with patch('json.dumps'):
             with patch('stripe.Charge.create'):
                 with self.assertRaises(RedirectNeeded) as exc:
                     provider.get_form(payment, data)
