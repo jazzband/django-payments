@@ -42,7 +42,7 @@ class StripeFormMixin(object):
                             self.payment.billing_last_name,
                             self.payment.billing_first_name),
                     metadata={'Job Board Order#':str(self.payment.order.id)})
-                except stripe.CardError as e:
+                except stripe.error.CardError as e:
                     # Making sure we retrieve the charge
                     charge_id = e.json_body['error']['charge']
                     self.charge = stripe.Charge.retrieve(charge_id)
