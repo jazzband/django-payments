@@ -28,7 +28,7 @@ class StripeCheckoutWidget(Input):
         kwargs['attrs'].update(attrs)
         super(StripeCheckoutWidget, self).__init__(*args, **kwargs)
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         if value is None:
             value = ''
         final_attrs = dict(attrs or {}, src='https://checkout.stripe.com/checkout.js')
