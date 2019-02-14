@@ -28,7 +28,7 @@ class StripeCheckoutWidget(Input):
         kwargs['attrs'].update(attrs)
         super(StripeCheckoutWidget, self).__init__(*args, **kwargs)
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         if value is None:
             value = ''
         final_attrs = dict(attrs or {}, src='https://checkout.stripe.com/checkout.js')
@@ -36,7 +36,7 @@ class StripeCheckoutWidget(Input):
         del final_attrs['id']
         if value != '':
             # Only add the 'value' attribute if a value is non-empty.
-            final_attrs['value'] = force_text(self._format_value(value))
+            final_attrs['value'] = force_text(self.format_value(value))
         return format_html('<script{0}></script>', flatatt(final_attrs))
 
 

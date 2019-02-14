@@ -132,10 +132,13 @@ Dotpay
 
    :param seller_id: Seller ID assigned by Dotpay
    :param pin: PIN assigned by Dotpay
-   :param channel: Default payment channel (consult reference guide)
+   :param channel: Default payment channel (consult reference guide). Ignored if channel_groups is set.
+   :param channel_groups: Payment channels to choose from (consult reference guide). Overrides channel.
    :param lang: UI language
    :param lock: Whether to disable channels other than the default selected above
    :param endpoint: The API endpoint to use. For the production environment, use ``'https://ssl.dotpay.pl/'`` instead
+   :param ignore_last_payment_channel: Display default channel or channel groups instead of last used channel.
+   :param type: Determines what should be displayed after payment is completed (consult reference guide).
 
 Example::
 
@@ -259,12 +262,12 @@ Sofort.com
 
 .. class:: payments.sofort.SofortProvider(key, id, project_id[, endpoint='https://api.sofort.com/api/xml'])
 
-   This backend implements payments using `sofort.com <https://www.sofort.com/>` API.
+   This backend implements payments using `sofort.com <https://www.sofort.com/>`_ API.
 
    :param id: Your sofort.com user id
    :param key: Your secret key
    :param project_id: Your sofort.com project id
-   :param endpoint: The API endpoint to use. 
+   :param endpoint: The API endpoint to use.
 
 Example::
 

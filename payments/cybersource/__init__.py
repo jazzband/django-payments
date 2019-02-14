@@ -350,8 +350,12 @@ class CyberSourceProvider(BasicProvider):
             return '002'
         elif card_type == 'amex':
             return '003'
-        elif card_type == 'jcb':
+        elif card_type == 'discover':
             return '004'
+        elif card_type =='diners':
+            return'005'
+        elif card_type == 'jcb':
+            return '007'
         elif card_type == 'maestro':
             return '042'
 

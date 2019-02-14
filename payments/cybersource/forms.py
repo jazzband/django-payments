@@ -12,7 +12,7 @@ from ..forms import CreditCardPaymentFormWithName
 
 class FingerprintWidget(forms.HiddenInput):
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         final_attrs = dict(attrs or {}, type=self.input_type, name=name)
         final_attrs.update(self.attrs)
         final_attrs['session_id'] = value

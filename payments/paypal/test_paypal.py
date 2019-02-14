@@ -31,7 +31,7 @@ class Payment(Mock):
     status = PaymentStatus.WAITING
     tax = Decimal(10)
     token = PAYMENT_TOKEN
-    total = Decimal(100)
+    total = Decimal(220)
     captured_amount = Decimal(0)
     variant = VARIANT
     transaction_id = None
@@ -56,7 +56,7 @@ class Payment(Mock):
     def get_purchased_items(self):
         return [
             PurchasedItem(
-                name='foo', quantity=Decimal('10'), price=Decimal('20'),
+                name='foo', quantity=10, price=Decimal('20'),
                 currency='USD', sku='bar')]
 
     def get_success_url(self):

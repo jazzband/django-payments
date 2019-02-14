@@ -8,248 +8,237 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-20 14:17+0200\n"
+"POT-Creation-Date: 2017-03-13 13:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Marco Badan <marco.badan@gmail.com>, 2017\n"
-"Language-Team: Italian (https://www.transifex.com/mirumee/teams/34782/it/)\n"
+"Last-Translator: Rapahel Wierscher <rapwie@gmail.com>, 2017\n"
+"Language-Team: German (https://www.transifex.com/mirumee/teams/34782/de/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: it\n"
+"Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: payments/__init__.py:25
 msgctxt "payment status"
 msgid "Waiting for confirmation"
-msgstr "In attesa di conferma"
+msgstr "Warten auf Bestätigung"
 
 #: payments/__init__.py:26
 msgctxt "payment status"
 msgid "Pre-authorized"
-msgstr "Pre-autorizzato"
+msgstr "Vor-authorisiert"
 
 #: payments/__init__.py:27
 msgctxt "payment status"
 msgid "Confirmed"
-msgstr "Confermato"
+msgstr "Bestätigt"
 
 #: payments/__init__.py:28
 msgctxt "payment status"
 msgid "Rejected"
-msgstr "Rifiutato"
+msgstr "Abgelehnt"
 
 #: payments/__init__.py:29
 msgctxt "payment status"
 msgid "Refunded"
-msgstr "Rimborsato"
+msgstr "Erstattet"
 
 #: payments/__init__.py:30
 msgctxt "payment status"
 msgid "Error"
-msgstr "Errore"
+msgstr "Fehler"
 
 #: payments/__init__.py:31
 msgctxt "payment status"
 msgid "Input"
-msgstr "Inserimento dati"
+msgstr "Eingabe"
 
 #: payments/__init__.py:41
 msgctxt "fraud status"
 msgid "Unknown"
-msgstr "Sconosciuto"
+msgstr "Unbekannt"
 
 #: payments/__init__.py:42
 msgctxt "fraud status"
 msgid "Passed"
-msgstr "Passato"
+msgstr "Erledigt"
 
 #: payments/__init__.py:43
 msgctxt "fraud status"
 msgid "Rejected"
-msgstr "Rifiutato"
+msgstr "Abgelehnt"
 
 #: payments/__init__.py:44
 msgctxt "fraud status"
 msgid "Review"
-msgstr "In revisione"
+msgstr "Überprüfung"
 
 #: payments/cybersource/__init__.py:100
 msgid "The order is marked for review by Decision Manager"
-msgstr "L'ordine è stato contrassegnato per la revisione dal Decision Manager"
+msgstr ""
+"Die Bestellung wurde von einem Entscheidungsträger zur Überprüfung markiert"
 
 #: payments/cybersource/__init__.py:105
 msgid "The order has been rejected by Decision Manager"
-msgstr "L'ordine è stato rifiutato dal Decision Manager"
+msgstr "Die Bestellung wurde von einem Entscheidungsträger angelehnt"
 
 #: payments/cybersource/__init__.py:110
 msgid "Fraud score exceeds threshold."
-msgstr "il punteggio frode supera la soglia."
+msgstr ""
+"Missbrauchs-Wahrscheinlichkeit überschreitet den vorgegebenen Grenzwert."
 
 #: payments/cybersource/__init__.py:114
 msgid "CyberSource Smart Authorization failed."
-msgstr "Autorizzazione CyberSource Smart fallita."
+msgstr "CyberSource Smart Authorisiserung gescheitert."
 
 #: payments/cybersource/__init__.py:119
 msgid "Card verification number (CVN) did not match."
-msgstr "Il Numero di verifica della carta (CVN) non corrisponde."
+msgstr "Card verification number (CVN) stimmt nicht überein."
 
 #: payments/cybersource/__init__.py:125
 msgid "CyberSource Address Verification Service failed."
-msgstr "Servizio CyberSource di verifica indirizzo non riuscito."
+msgstr "CyberSource Address Verification Service fehlgeschlagen."
 
 #: payments/cybersource/__init__.py:146
 msgid "3-D Secure verification in progress"
-msgstr "Verifica 3D Secure in corso"
+msgstr "3-D Secure Verifizierung in Bearbeitung"
 
 #: payments/cybersource/__init__.py:203
 msgid ""
 "Our bank has flagged your transaction as unusually suspicious. Please "
 "contact us to resolve this issue."
 msgstr ""
-"La nostra banca ha segnalato la transazione come sospetta. Contattaci per "
-"risolvere questo problema."
+"Unsere Bank hat Ihre Transaktion als ungewöhnlich verdächtig markiert. Bitte"
+" kontaktieren Sie uns, um dieses Problem zu lösen."
 
 #: payments/cybersource/__init__.py:206
 msgid ""
 "Your bank has declined the transaction. No additional information was "
 "provided."
 msgstr ""
-"La banca ha rifiutato la transazione. Non ci è stata fornita nessun altra "
-"informazione ."
+"Ihre Bank hat die Transaktion abgelehnt. Es stehen keine weiteren "
+"Informationen zur Verfügung"
 
 #: payments/cybersource/__init__.py:209
 msgid ""
 "The card has either expired or you have entered an incorrect expiration "
 "date."
-msgstr "La carta è scaduta o hai inserito una data di scadenza non corretta."
+msgstr ""
+"Die Karte ist entweder abgelaufen, oder Sie haben ein falsches Ablaufdatum "
+"angegeben."
 
 #: payments/cybersource/__init__.py:212
 msgid ""
 "There are insufficient funds on your card or it has reached its credit "
 "limit."
 msgstr ""
-"Non ci sono fondi sufficienti nella tua carta o hai raggiunto il suo limite "
-"di credito."
+"Es sind unzureichende Mittel auf Ihrer Karte, oder sie hat ihr Kreditlimit "
+"erreicht."
 
 #: payments/cybersource/__init__.py:215
 msgid "The card you are trying to use was reported as lost or stolen."
 msgstr ""
-"La carta che stai tentando di utilizzare è stata segnalata come persa o "
-"rubata."
+"Die Karte die Sie versuchen zu verwenden wurde als verloren oder gestohlen "
+"gemeldet."
 
 #: payments/cybersource/__init__.py:218
 msgid ""
 "Your card is either inactive or it does not permit online payments. Please "
 "contact your bank to resolve this issue."
 msgstr ""
-"La tua carta o è inattiva o non permette pagamenti online. Contatta la tua "
-"banca per risolvere questo problema."
+"Ihre Karte ist entweder inaktiv, oder nicht für Onlinezahlungen zugelassen."
 
 #: payments/cybersource/__init__.py:221
 msgid ""
 "Your bank has declined the transaction. Please check the verification number"
 " of your card and retry."
 msgstr ""
-"La tua banca ha rifiutato la transazione. Controlla il codice di verifica "
-"della tua carta e riprova."
+"Ihre Bank hat die Transaktion abgelehnt. Bitte überprüfen Sie die "
+"Kartenprüfnummer und versuchen Sie es erneut."
 
 #: payments/cybersource/__init__.py:224
 msgid ""
 "Your bank has declined the transaction. Please make sure the card number you"
 " have entered is correct and retry."
 msgstr ""
-"La tua banca ha rifiutato la transazione. Assicurati che il numero della "
-"carta di credito inserito sia corretto e riprova."
+"Ihre Bank hat die Transaktion abgelehnt. Bitte stellen Sic sicher, dass die "
+"Kartennummer die Sie eingegeben haben korrekt ist, und versuchen Sie es "
+"erneut."
 
 #: payments/cybersource/__init__.py:227
 msgid "We are sorry but our bank cannot handle the card type you are using."
 msgstr ""
-"Siamo spiacenti ma la nostra banca non può gestire la tipologia di carta che"
-" stai utilizzando."
+"Es tut uns leid, aber unsere Bank kann den Kartentyp, den Sie verwenden, "
+"nicht verarbeiten."
 
 #: payments/cybersource/__init__.py:231
 msgid ""
 "We were unable to verify your address. Please make sure the address you "
 "entered is correct and retry."
 msgstr ""
-"Non siamo riusciti a verificare il tuo indirizzo. Verifica che l'indirizzo "
-"che hai inserito sia corretto e riprova."
+"Es war uns leider nicht möglich Ihre Adresse zu Verifizieren. Bitter stellen"
+" Sie daher sicher, dass die Adresse welche Sie eingegeben haben korrekt ist,"
+" und versuchen Sie es erneut."
 
 #: payments/cybersource/__init__.py:234
 msgid "We were unable to complete the transaction. Please try again later."
-msgstr "Non siamo riusciti a completare la transazione. Riprova più tardi."
+msgstr ""
+"Es war uns leider nicht möglich Ihre Transaktion abzuschließen. Bitte "
+"versuchern sie später erneut."
 
-#: payments/cybersource/forms.py:52
+#: payments/cybersource/forms.py:51
 msgid "fingerprint"
-msgstr "fingerprint"
+msgstr "Fingerabdruck"
 
-#: payments/cybersource/forms.py:69 payments/stripe/forms.py:52
+#: payments/cybersource/forms.py:68 payments/stripe/forms.py:52
 msgid "This payment has already been processed."
-msgstr "Questo pagamento è già stato processato."
+msgstr "Diese Zahlung wurde bereits Verarbeitet."
 
 #: payments/fields.py:20
 msgid "Please enter a valid card number"
-msgstr "Inserisci un numero di carta di credito valido"
+msgstr "Bitte geben Sie eine gültige Kartennummer ein."
 
 #: payments/fields.py:21
 #, python-format
 msgid "We accept only %(valid_types)s"
-msgstr "Accettiamo solo %(valid_types)s"
+msgstr "Wir akzeptieren nur %(valid_types)s"
 
 #: payments/fields.py:123
 msgid "Enter a valid security number."
-msgstr "Inserisci un codice di verifica valido."
+msgstr "Geben Sie eine gültige Katenprüfnummer ein."
 
 #: payments/forms.py:39
 msgid "Card Number"
-msgstr "Numero carta di credito"
+msgstr "Kartennummer"
 
 #: payments/forms.py:43
 msgid "CVV2 Security Number"
-msgstr "Codice di sicurezza CVV2"
+msgstr "CVV2 Kartenprüfnummer"
 
 #: payments/forms.py:44
 msgid ""
 "Last three digits located on the back of your card. For American Express the"
 " four digits found on the front side."
 msgstr ""
-"Le ultime 3 cifre situate sul retro della carta. Per American Express le "
-"quattro cifre si trovano sul lato anteriore."
+"Die letzten drei Zahlen auf der Kartenrückseite. Bei American Express die "
+"vier Zahlen auf der Vorderseite."
 
 #: payments/forms.py:56
 msgid "Name on Credit Card"
-msgstr "Nome sulla carta di credito"
+msgstr "Name auf der Kreditkarte"
 
 #: payments/models.py:45
 msgid "fraud check"
-msgstr "controllo frode"
+msgstr "Betrugsüberwachung"
 
 #: payments/stripe/widgets.py:23
 msgid "Total payment"
-msgstr "Totale pagamento"
-
-#: payments/taler/__init__.py:89
-msgid ""
-"Taler wallet disabled, please go back and either enable the wallet or pick "
-"another payment method.  Please keep the wallet enabled if you pick Taler "
-"again!"
-msgstr ""
-
-#: payments/taler/__init__.py:117
-msgid ""
-"Your wallet seems to have been disabled while processing this payment; your "
-"coins didn't get spent though.  Please go back in the checkout page and "
-"restart the payment with the method  you desire."
-msgstr ""
-
-#: payments/templates/payments/taler_fallback.html:5
-msgid "Payment unsuccessful"
-msgstr ""
+msgstr "Gesamtbetrag"
 
 #: payments/utils.py:8
 msgid "Month"
-msgstr "Mese"
+msgstr "Monat"
 
 #: payments/utils.py:14
 msgid "Year"
-msgstr "Anno"
+msgstr "Jahr"
