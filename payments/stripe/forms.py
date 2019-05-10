@@ -31,14 +31,25 @@ class StripeFormMixin(object):
             if not self.payment.transaction_id:
                 stripe.api_key = self.provider.secret_key
                 try:
-                    self.charge = stripe.Charge.create(
-                        capture=False,
-                        amount=int(self.payment.total * 100),
-                        currency=self.payment.currency,
-                        card=data['stripeToken'],
-                        description='%s %s' % (
+                    charge_data = {
+                        "capture": False,
+                        "amount": int(self.payment.total * 100),
+                        "currency": self.payment.currency,
+                        "card": data['stripeToken'],
+                        "description": '%s %s' % (
                             self.payment.billing_last_name,
-                            self.payment.billing_first_name))
+                            self.payment.billing_first_name
+                        ),
+                    }
+
+                    # Patch charge with billing email if exists
+                    if self.payment.billing_email:
+                        charge_data.update({
+                            "receipt_email": self.payment.billing_email,
+                        })
+
+                    self.charge = stripe.Charge.create(**charge_data)
+
                 except stripe.error.CardError as e:
                     # Making sure we retrieve the charge
                     charge_id = e.json_body['error']['charge']
