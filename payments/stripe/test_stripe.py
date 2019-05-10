@@ -26,6 +26,7 @@ class Payment(Mock):
     total = 100
     captured_amount = 0
     transaction_id = None
+    billing_email = "john@doe.com"
 
     def change_status(self, status, message=''):
         self.status = status
