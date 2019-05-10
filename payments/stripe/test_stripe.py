@@ -96,8 +96,8 @@ class TestStripeProvider(TestCase):
         form = provider.get_form(payment)
         self.assertTrue(
             '<script class="stripe-button" data-amount="10000" '
-            'data-currency="USD" data-description="payment" data-image="" '
-            'data-key="%s" data-name="%s" '
+            'data-currency="USD" data-description="payment" data-email="john@doe.com" '
+            'data-image="" data-key="%s" data-name="%s" '
             'src="https://checkout.stripe.com/checkout.js"></script>' % (
                 PUBLIC_KEY, store_name)
             in str(form))
