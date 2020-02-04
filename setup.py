@@ -52,7 +52,7 @@ class PyTest(TestCommand):
 
 
 setup(
-    name='django-payments',
+    name='django-payments-pr213',
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',

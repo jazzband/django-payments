@@ -22,18 +22,21 @@ if not PAYMENT_HOST:
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
 
-def get_base_url():
+def get_base_url(request=None):
     """
     Returns host url according to project settings. Protocol is chosen by
     checking PAYMENT_USES_SSL variable.
-    If PAYMENT_HOST is not specified, gets domain from Sites. 
-    Otherwise checks if it's callable and returns it's result. If it's not a 
+    If PAYMENT_HOST is not specified, gets domain from Sites.
+    Otherwise checks if it's callable and returns it's result. If it's not a
     callable treats it as domain.
     """
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
     if not PAYMENT_HOST:
-        current_site = Site.objects.get_current()
-        domain = current_site.domain
+        try:
+            current_site = Site.objects.get_current(request)
+            domain = current_site.domain
+        except Site.DoesNotExist:
+            domain = request.get_host()
     elif callable(PAYMENT_HOST):
         domain = PAYMENT_HOST()
     else:
@@ -84,9 +87,9 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_return_url(self, payment, extra_data=None):
+    def get_return_url(self, payment, extra_data=None, request=None):
         payment_link = payment.get_process_url()
-        url = urljoin(get_base_url(), payment_link)
+        url = urljoin(get_base_url(request), payment_link)
         if extra_data:
             qs = urlencode(extra_data)
             return url + '?' + qs
