@@ -36,7 +36,10 @@ def get_base_url(request=None):
             current_site = Site.objects.get_current(request)
             domain = current_site.domain
         except Site.DoesNotExist:
-            domain = request.get_host()
+            if request:
+                domain = request.get_host()
+            else:
+                raise
     elif callable(PAYMENT_HOST):
         domain = PAYMENT_HOST()
     else:
