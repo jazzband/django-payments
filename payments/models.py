@@ -133,6 +133,68 @@ class BasePayment(models.Model):
     def get_process_url(self):
         return reverse('process_payment', kwargs={'token': self.token})
 
+    def get_payment_url(self):
+        """
+        Get the url the view that handles the payment (payment_details() in documentation)
+        For now used only by PayU provider to redirect users back to CVV2 form
+        """
+        raise NotImplementedError()
+
+    def get_user(self):
+        """ Get the user asociated with this payment """
+        raise NotImplementedError()
+
+    def get_user_email(self):
+        """ Get user email """
+        try:
+            return self.get_user().email
+        except AttributeError:
+            return None
+
+    def get_user_first_name(self):
+        """
+        Get user first name
+        Used only by PayU provider for now
+        """
+        try:
+            return self.get_user().first_name
+        except AttributeError:
+            return None
+
+    def get_user_last_name(self):
+        """
+        Get user last name
+        Used only by PayU provider for now
+        """
+        try:
+            return self.get_user().last_name
+        except AttributeError:
+            return None
+
+    def get_renew_token(self):
+        """
+        Get the recurring payments renew token for user of this payment
+        Used only by PayU provider for now
+        """
+        raise NotImplementedError()
+
+    def set_renew_token(self, token, card_expire_year=None, card_expire_month=None):
+        """
+        Store the recurring payments renew token for user of this payment
+        The renew token is string defined by the provider
+        Used only by PayU provider for now
+        """
+        raise NotImplementedError()
+
+    def auto_complete_recurring(self):
+        """
+        Complete the payment by automatically recurring token.
+        Used only by PayU provider for now
+        Can throw UserActionRequired exception if there is need of user action.
+        """
+        provider = provider_factory(self.variant)
+        return provider.auto_complete_recurring(self)
+
     def capture(self, amount=None):
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
