@@ -1,5 +1,7 @@
+import enum
 import json
 from typing import Iterable
+from typing import Optional
 from typing import Union
 from uuid import uuid4
 
@@ -34,6 +36,60 @@ class PaymentAttributeProxy:
             data = {}
         data[key] = value
         self._payment.extra_data = json.dumps(data)
+
+
+class BaseSubscription(models.Model):
+    token = models.CharField(
+        _("subscription token/id"),
+        help_text=_("Token/id used to identify subscription by provider"),
+        max_length=255,
+        default=None,
+        null=True,
+        blank=True,
+    )
+    payment_provider = models.CharField(
+        _('payment provider'),
+        help_text=_('Provider variant, that will be used for payment renewal'),
+        max_length=255,
+        default=None,
+        null=True,
+        blank=True,
+    )
+
+    class TimeUnit(enum.Enum):
+        year = "year"
+        month = "month"
+        day = "day"
+
+    def get_token(self) -> str:
+        return self.token
+
+    def set_recurrence(self, token: str, **kwargs):
+        """
+        Sets token and other values associated with subscription recurrence
+        Kwargs can contain provider-specific values
+        """
+        self.token = token
+
+    def get_period(self) -> int:
+        raise NotImplementedError()
+
+    def get_unit(self) -> TimeUnit:
+        raise NotImplementedError()
+
+    def cancel(self):
+        """
+        Cancel the subscription by provider
+        Used by providers, that use provider initiated subscription workflow
+        Implementer is responsible for cancelling the subscription model
+
+        Raises PaymentError if the cancellation didn't pass through
+        """
+        provider = provider_factory(self.variant)
+        provider.cancel_subscription(self)
+
+    class Meta:
+        abstract = True
 
 
 class BasePayment(models.Model):
@@ -143,6 +199,33 @@ class BasePayment(models.Model):
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
+
+    def get_payment_url(self) -> str:
+        """
+        Get the url the view that handles the payment (payment_details() in documentation)
+        For now used only by PayU provider to redirect users back to CVV2 form
+        """
+        raise NotImplementedError()
+
+    def get_subscription(self) -> Optional[BaseSubscription]:
+        """
+        Returns subscription object associated with this payment
+        or None if the payment is not recurring
+        """
+        return None
+
+    def is_recurring(self) -> bool:
+        return self.get_subscription() is not None
+
+    def autocomplete_with_subscription(self):
+        """
+        Complete the payment with subscription
+        Used by providers, that use server initiated subscription workflow
+
+        Throws RedirectNeeded if there is problem with the payment that needs to be solved by user
+        """
+        provider = provider_factory(self.variant)
+        provider.autocomplete_with_subscription(self)
 
     def capture(self, amount=None):
         if self.status != PaymentStatus.PREAUTH:

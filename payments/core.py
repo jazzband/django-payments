@@ -119,6 +119,22 @@ class BasicProvider:
             return url + "?" + qs
         return url
 
+    def autocomplete_with_subscription(self, payment):
+        """
+        Complete the payment with subscription
+        Used by providers, that use server initiated subscription workflow
+
+        Throws RedirectNeeded if there is problem with the payment that needs to be solved by user
+        """
+        raise NotImplementedError()
+
+    def cancel_subscription(self, subscription):
+        """
+        Cancel subscription
+        Used by providers, that use provider initiated subscription workflow
+        """
+        raise NotImplementedError()
+
     def capture(self, payment, amount=None):
         raise NotImplementedError()
 
