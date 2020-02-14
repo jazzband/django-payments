@@ -51,8 +51,9 @@ class BasicProvider(object):
     def get_action(self, payment):
         return self.get_return_url(payment)
 
-    def __init__(self, capture=True):
+    def __init__(self, capture=True, label=""):
         self._capture = capture
+        self._label = label
 
     def get_hidden_fields(self, payment):
         '''
