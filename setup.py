@@ -31,6 +31,11 @@ REQUIREMENTS = [
     'xmltodict>=0.9.2']
 
 
+# Braintree does not support Python 2 from version 4.0.0
+if sys.version_info[0] <= 2:
+    REQUIREMENTS[0] = 'braintree>=3.14.0,<4.0.0'
+
+
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
     test_args = []
