@@ -19,5 +19,8 @@ class WalletWidget(HiddenInput):
     @property
     def media(self):
         media = super(WalletWidget, self).media
-        media._js = self.js
+        try:  # Django < 2.2
+            media._js = self.js
+        except AttributeError:
+            media._js_lists = [self.js]
         return media
