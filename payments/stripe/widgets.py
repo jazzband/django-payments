@@ -20,6 +20,7 @@ class StripeCheckoutWidget(Input):
             'data-key': provider.public_key,
             'data-image': provider.image,
             'data-name': provider.name,
+            'data-email': payment.billing_email,
             'data-description': payment.description or _('Total payment'),
             # Stripe accepts cents
             'data-amount': int(payment.total * 100),

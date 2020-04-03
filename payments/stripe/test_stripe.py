@@ -26,6 +26,7 @@ class Payment(Mock):
     total = 100
     captured_amount = 0
     transaction_id = None
+    billing_email = "john@doe.com"
 
     def change_status(self, status, message=''):
         self.status = status
@@ -95,8 +96,30 @@ class TestStripeProvider(TestCase):
         form = provider.get_form(payment)
         self.assertTrue(
             '<script class="stripe-button" data-amount="10000" '
-            'data-currency="USD" data-description="payment" data-image="" '
-            'data-key="%s" data-name="%s" '
+            'data-currency="USD" data-description="payment" data-email="john@doe.com" '
+            'data-image="" data-key="%s" data-name="%s" '
+            'src="https://checkout.stripe.com/checkout.js"></script>' % (
+                PUBLIC_KEY, store_name)
+            in str(form))
+
+    def test_form_contains_stripe_script_withou_billing_email(self):
+        """
+        If billing email is not set, it should generate the script as expected
+        """
+        payment = Payment()
+        store_name = 'Test store'
+        provider = StripeProvider(
+            name=store_name,
+            secret_key=SECRET_KEY, public_key=PUBLIC_KEY)
+
+        form = provider.get_form(payment)
+
+        payment.billing_email = None
+        form = provider.get_form(payment)
+        self.assertTrue(
+            '<script class="stripe-button" data-amount="10000" '
+            'data-currency="USD" data-description="payment" '
+            'data-image="" data-key="%s" data-name="%s" '
             'src="https://checkout.stripe.com/checkout.js"></script>' % (
                 PUBLIC_KEY, store_name)
             in str(form))
