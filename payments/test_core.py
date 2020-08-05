@@ -151,7 +151,7 @@ class TestCreditCardPaymentForm(TestCase):
             'name': 'John Doe',
             'number': '4716124728800975',
             'expiration_0': '5',
-            'expiration_1': '2020',
+            'expiration_1': '2023',
             'cvv2': '123'}
 
     def test_form_verifies_card_number(self):

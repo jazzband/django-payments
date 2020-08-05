@@ -16,7 +16,7 @@ PROCESS_DATA = {
     'name': 'John Doe',
     'number': '371449635398431',
     'expiration_0': '5',
-    'expiration_1': '2020',
+    'expiration_1': '2023',
     'cvv2': '1234',
     'fingerprint': 'abcd1234'}
 
@@ -153,7 +153,7 @@ class TestCybersourceProvider(TestCase):
         request = MagicMock()
         request.POST = {'MD': xid}
         request.GET = {'token': signing.dumps({
-            'expiration': {'year': 2020, 'month': 9},
+            'expiration': {'year': 2023, 'month': 9},
             'name': 'John Doe',
             'number': '371449635398431',
             'cvv2': '123'
@@ -183,7 +183,7 @@ class TestCybersourceProvider(TestCase):
         request = MagicMock()
         request.POST = {'MD': xid}
         request.GET = {'token': signing.dumps({
-            'expiration': {'year': 2020, 'month': 9},
+            'expiration': {'year': 2023, 'month': 9},
             'name': 'John Doe',
             'number': '371449635398431',
             'cvv2': '123'
@@ -210,7 +210,7 @@ class TestCybersourceProvider(TestCase):
         request = MagicMock()
         request.POST = {'MD': xid}
         request.GET = {'token': signing.dumps({
-            'expiration': {'year': 2020, 'month': 9},
+            'expiration': {'year': 2023, 'month': 9},
             'name': 'John Doe',
             'number': '371449635398431',
             'cvv2': '123'
