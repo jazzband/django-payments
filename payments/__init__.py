@@ -1,9 +1,6 @@
 from collections import namedtuple
-try:
-    from django.db.models import get_model
-except ImportError:
-    from django.apps import apps
-    get_model = apps.get_model
+
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import pgettext_lazy
@@ -51,7 +48,7 @@ class RedirectNeeded(Exception):
 class PaymentError(Exception):
 
     def __init__(self, message, code=None, gateway_message=None):
-        super(PaymentError, self).__init__(message)
+        super().__init__(message)
         self.code = code
         self.gateway_message = gateway_message
 
@@ -69,7 +66,7 @@ def get_payment_model():
     except (ValueError, AttributeError):
         raise ImproperlyConfigured('PAYMENT_MODEL must be of the form '
                                    '"app_label.model_name"')
-    payment_model = get_model(app_label, model_name)
+    payment_model = apps.get_model(app_label, model_name)
     if payment_model is None:
         msg = (
             'PAYMENT_MODEL refers to model "%s" that has not been installed' %

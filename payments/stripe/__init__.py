@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from decimal import Decimal
 import json
 
@@ -19,7 +18,7 @@ class StripeProvider(BasicProvider):
         self.public_key = public_key
         self.image = image
         self.name = name
-        super(StripeProvider, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:

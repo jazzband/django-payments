@@ -1,12 +1,10 @@
-from __future__ import unicode_literals
-
 import hashlib
 import json
 from decimal import Decimal
 from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from .. import PaymentStatus
 from . import CoinbaseProvider
@@ -19,11 +17,11 @@ VARIANT = 'coinbase'
 COINBASE_REQUEST = {
     'order': {
         'transaction': {'id': '123456'},
-        'custom': hashlib.md5(('coinbase-%s-%s' % (
+        'custom': hashlib.md5(('coinbase-{}-{}'.format(
             PAYMENT_TOKEN, KEY)).encode('utf-8')).hexdigest()}}
 
 
-class Payment(object):
+class Payment:
 
     id = 1
     description = 'payment'

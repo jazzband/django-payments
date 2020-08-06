@@ -1,7 +1,6 @@
-from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
-from mock import patch, NonCallableMock
+from unittest.mock import patch, NonCallableMock
 
 from payments import core
 from .forms import CreditCardPaymentFormWithName, PaymentForm

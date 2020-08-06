@@ -1,6 +1,5 @@
-from __future__ import unicode_literals
 from unittest import TestCase
-from mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 
 from . import SagepayProvider
 from .. import PaymentStatus
@@ -43,7 +42,7 @@ class TestSagepayProvider(TestCase):
     @patch('payments.sagepay.redirect')
     def test_provider_raises_redirect_needed_on_success(self, mocked_redirect):
         data = {'Status': 'OK'}
-        data = "&".join(u"%s=%s" % kv for kv in data.items())
+        data = "&".join("%s=%s" % kv for kv in data.items())
         with patch.object(SagepayProvider, 'aes_dec', return_value=data):
             self.provider.process_data(self.payment, MagicMock())
             self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
@@ -52,7 +51,7 @@ class TestSagepayProvider(TestCase):
     @patch('payments.sagepay.redirect')
     def test_provider_raises_redirect_needed_on_failure(self, mocked_redirect):
         data = {'Status': ''}
-        data = "&".join(u"%s=%s" % kv for kv in data.items())
+        data = "&".join("%s=%s" % kv for kv in data.items())
         with patch.object(SagepayProvider, 'aes_dec', return_value=data):
             self.provider.process_data(self.payment, MagicMock())
             self.assertEqual(self.payment.status, PaymentStatus.REJECTED)

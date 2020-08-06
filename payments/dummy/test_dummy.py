@@ -1,14 +1,7 @@
 from unittest import TestCase
-try:
-    from urllib.error import URLError
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode
-    from urllib2 import URLError
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
+from urllib.error import URLError
+from urllib.parse import urlencode
 
 from . import DummyProvider
 from .. import FraudStatus, PaymentError, PaymentStatus, RedirectNeeded
@@ -16,7 +9,7 @@ from .. import FraudStatus, PaymentError, PaymentStatus, RedirectNeeded
 VARIANT = 'dummy-3ds'
 
 
-class Payment(object):
+class Payment:
     id = 1
     variant = VARIANT
     currency = 'USD'
@@ -103,7 +96,7 @@ class TestDummy3DSProvider(TestCase):
             'verification_result': verification_result
         }
         params = urlencode({'verification_result': verification_result})
-        expected_redirect = '%s?%s' % (self.payment.get_process_url(), params)
+        expected_redirect = '{}?{}'.format(self.payment.get_process_url(), params)
 
         with self.assertRaises(RedirectNeeded) as exc:
             provider.get_form(self.payment, data)

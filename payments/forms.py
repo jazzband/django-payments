@@ -1,9 +1,4 @@
-from __future__ import unicode_literals
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
+from collections import OrderedDict
 
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -21,12 +16,12 @@ class PaymentForm(forms.Form):
     def __init__(self, data=None, action='', method='post', provider=None,
                  payment=None, hidden_inputs=True, autosubmit=False):
         if hidden_inputs and data is not None:
-            super(PaymentForm, self).__init__(auto_id=False)
+            super().__init__(auto_id=False)
             for key, val in data.items():
                 widget = forms.widgets.HiddenInput()
                 self.fields[key] = forms.CharField(initial=val, widget=widget)
         else:
-            super(PaymentForm, self).__init__(data=data)
+            super().__init__(data=data)
         self.action = action
         self.autosubmit = autosubmit
         self.method = method
@@ -45,7 +40,7 @@ class CreditCardPaymentForm(PaymentForm):
             ' For American Express the four digits found on the front side.'))
 
     def __init__(self, *args, **kwargs):
-        super(CreditCardPaymentForm, self).__init__(
+        super().__init__(
             hidden_inputs=False, *args,  **kwargs)
         if hasattr(self, 'VALID_TYPES'):
             self.fields['number'].valid_types = self.VALID_TYPES
@@ -56,7 +51,7 @@ class CreditCardPaymentFormWithName(CreditCardPaymentForm):
     name = CreditCardNameField(label=_('Name on Credit Card'), max_length=128)
 
     def __init__(self, *args, **kwargs):
-        super(CreditCardPaymentFormWithName, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         name_field = self.fields.pop('name')
         fields = OrderedDict({'name': name_field})
         fields.update(self.fields)

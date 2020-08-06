@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from decimal import Decimal
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseForbidden
@@ -39,7 +38,7 @@ class DotpayProvider(BasicProvider):
         self.lang = lang
         self.lock = lock
         self.type = type
-        super(DotpayProvider, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Dotpay does not support pre-authorization.')

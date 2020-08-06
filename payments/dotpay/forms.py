@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import hashlib
 
 from django import forms
@@ -45,12 +44,12 @@ class ProcessPaymentForm(forms.Form):
     signature = forms.CharField(required=True)
 
     def __init__(self, payment, pin, **kwargs):
-        super(ProcessPaymentForm, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.pin = pin
         self.payment = payment
 
     def clean(self):
-        cleaned_data = super(ProcessPaymentForm, self).clean()
+        cleaned_data = super().clean()
         if not self.errors:
             key_vars = (
                 self.pin,

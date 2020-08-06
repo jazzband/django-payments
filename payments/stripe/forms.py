@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import json
 import stripe
 from django import forms
@@ -13,7 +11,7 @@ from ..widgets import (
 from .widgets import StripeCheckoutWidget, StripeWidget
 
 
-class StripeFormMixin(object):
+class StripeFormMixin:
 
     charge = None
 
@@ -36,7 +34,7 @@ class StripeFormMixin(object):
                         "amount": int(self.payment.total * 100),
                         "currency": self.payment.currency,
                         "card": data['stripeToken'],
-                        "description": '%s %s' % (
+                        "description": '{} {}'.format(
                             self.payment.billing_last_name,
                             self.payment.billing_first_name
                         ),
@@ -92,7 +90,7 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
     stripeToken = forms.CharField(widget=StripeWidget())
 
     def __init__(self, *args, **kwargs):
-        super(PaymentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         stripe_attrs = self.fields['stripeToken'].widget.attrs
         stripe_attrs['data-publishable-key'] = self.provider.public_key
         stripe_attrs['data-address-line1'] = self.payment.billing_address_1

@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import datetime
 import os.path
 
@@ -51,13 +50,13 @@ class CyberSourceProvider(BasicProvider):
             local_path = local_path.replace(os.path.sep, '/')
         if not local_path.startswith('/'):
             # windows paths don't start with '/'
-            local_path = '/%s' % (local_path,)
+            local_path = '/{}'.format(local_path)
         if kwargs.pop('sandbox', True):
-            wsdl_path = 'file://%s/%s' % (local_path, WSDL_PATH_TEST)
+            wsdl_path = 'file://{}/{}'.format(local_path, WSDL_PATH_TEST)
             self.endpoint = (
                 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
         else:
-            wsdl_path = 'file://%s/%s' % (local_path, WSDL_PATH)
+            wsdl_path = 'file://{}/{}'.format(local_path, WSDL_PATH)
             self.endpoint = (
                 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor')
         self.client = suds.client.Client(wsdl_path)
@@ -70,7 +69,7 @@ class CyberSourceProvider(BasicProvider):
             password=self.password)
         security_header.tokens.append(security_token)
         self.client.set_options(soapheaders=[security_header.xml()])
-        super(CyberSourceProvider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:

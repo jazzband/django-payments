@@ -1,10 +1,6 @@
-from __future__ import unicode_literals
 import re
-try:
-    from urllib.parse import urljoin, urlencode
-except ImportError:
-    from urllib import urlencode
-    from urlparse import urljoin
+from urllib.parse import urljoin, urlencode
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -26,8 +22,8 @@ def get_base_url():
     """
     Returns host url according to project settings. Protocol is chosen by
     checking PAYMENT_USES_SSL variable.
-    If PAYMENT_HOST is not specified, gets domain from Sites. 
-    Otherwise checks if it's callable and returns it's result. If it's not a 
+    If PAYMENT_HOST is not specified, gets domain from Sites.
+    Otherwise checks if it's callable and returns it's result. If it's not a
     callable treats it as domain.
     """
     protocol = 'https' if PAYMENT_USES_SSL else 'http'
@@ -38,10 +34,10 @@ def get_base_url():
         domain = PAYMENT_HOST()
     else:
         domain = PAYMENT_HOST
-    return '%s://%s' % (protocol, domain)
+    return '{}://{}'.format(protocol, domain)
 
 
-class BasicProvider(object):
+class BasicProvider:
     '''
     This class defines the provider API. It should not be instantiated
     directly. Use factory instead.

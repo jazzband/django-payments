@@ -1,12 +1,7 @@
-from __future__ import unicode_literals
-
-try:
-    from django.forms.utils import flatatt
-except ImportError:
-    from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.forms.widgets import Input, HiddenInput
-from django.utils.html import format_html
 from django.utils.encoding import force_text
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -27,7 +22,7 @@ class StripeCheckoutWidget(Input):
             'data-currency': payment.currency
         }
         kwargs['attrs'].update(attrs)
-        super(StripeCheckoutWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None, renderer=None):
         if value is None:
@@ -49,4 +44,4 @@ class StripeWidget(HiddenInput):
 
     def __init__(self, attrs=None):
         attrs = dict(attrs or {}, id='id_stripe_token')
-        super(StripeWidget, self).__init__(attrs)
+        super().__init__(attrs)

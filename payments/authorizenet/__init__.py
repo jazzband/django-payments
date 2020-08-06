@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponseForbidden
 import requests
@@ -17,7 +15,7 @@ class AuthorizeNetProvider(BasicProvider):
         self.login_id = login_id
         self.transaction_key = transaction_key
         self.endpoint = endpoint
-        super(AuthorizeNetProvider, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Authorize.Net does not support pre-authorization.')
@@ -29,7 +27,7 @@ class AuthorizeNetProvider(BasicProvider):
             'x_description': payment.description,
             'x_first_name': payment.billing_first_name,
             'x_last_name': payment.billing_last_name,
-            'x_address': "%s, %s" % (payment.billing_address_1,
+            'x_address': "{}, {}".format(payment.billing_address_1,
                                      payment.billing_address_2),
             'x_city': payment.billing_city,
             'x_zip': payment.billing_postcode,

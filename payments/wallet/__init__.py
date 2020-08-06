@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import time
 
 from django.core.exceptions import ImproperlyConfigured
@@ -17,7 +16,7 @@ class GoogleWalletProvider(BasicProvider):
         self.seller_id = seller_id
         self.seller_secret = seller_secret
         self.library = library
-        super(GoogleWalletProvider, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Google Wallet does not support pre-authorization.')

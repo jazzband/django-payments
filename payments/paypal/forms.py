@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from requests.exceptions import HTTPError
 
 from ..forms import CreditCardPaymentFormWithName
@@ -12,7 +10,7 @@ class PaymentForm(CreditCardPaymentFormWithName):
     VALID_TYPES = ['visa', 'mastercard', 'discover', 'amex']
 
     def clean(self):
-        cleaned_data = super(PaymentForm, self).clean()
+        cleaned_data = super().clean()
 
         if not self.errors:
             if not self.payment.transaction_id:

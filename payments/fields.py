@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from calendar import monthrange
 from datetime import date
 import re
@@ -23,12 +22,12 @@ class CreditCardNumberField(forms.CharField):
     def __init__(self, valid_types=None, *args, **kwargs):
         self.valid_types = valid_types
         kwargs['max_length'] = kwargs.pop('max_length', 32)
-        super(CreditCardNumberField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_python(self, value):
         if value is not None:
-            value = re.sub('[\s-]+', '', value)
-        return super(CreditCardNumberField, self).to_python(value)
+            value = re.sub(r'[\s-]+', '', value)
+        return super().to_python(value)
 
     def validate(self, value):
         card_type, issuer_name = get_credit_card_issuer(value)
@@ -88,12 +87,12 @@ class CreditCardExpiryField(forms.MultiValueField):
                            'required': 'required'})),
         )
 
-        super(CreditCardExpiryField, self).__init__(fields, *args, **kwargs)
+        super().__init__(fields, *args, **kwargs)
         self.widget = CreditCardExpiryWidget(widgets=[fields[0].widget,
                                                       fields[1].widget])
 
     def clean(self, value):
-        exp = super(CreditCardExpiryField, self).clean(value)
+        exp = super().clean(value)
         if exp and date.today() > exp:
             raise forms.ValidationError(
                 "The expiration date you entered is in the past.")
@@ -124,7 +123,7 @@ class CreditCardVerificationField(forms.CharField):
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = kwargs.pop('max_length', 4)
-        super(CreditCardVerificationField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self, value):
         if value in validators.EMPTY_VALUES and self.required:

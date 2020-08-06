@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 from contextlib import contextmanager
 
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 from unittest import TestCase
 import stripe
 
