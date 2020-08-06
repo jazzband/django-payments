@@ -28,7 +28,7 @@ class SagepayProvider(BasicProvider):
         self._vendor = vendor
         self._enckey = encryption_key.encode('utf-8')
         self._action = endpoint
-        super(SagepayProvider, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Sagepay does not support pre-authorization.')
@@ -61,9 +61,9 @@ class SagepayProvider(BasicProvider):
         return_url = self.get_return_url(payment)
         data = {
             'VendorTxCode': payment.pk,
-            'Amount': "%.2f" % (payment.total,),
+            'Amount': "{:.2f}".format(payment.total),
             'Currency': payment.currency,
-            'Description': "Payment #%s" % (payment.pk,),
+            'Description': "Payment #{}".format(payment.pk),
             'SuccessURL': return_url,
             'FailureURL': return_url,
             'BillingSurname': payment.billing_last_name,

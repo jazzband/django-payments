@@ -18,7 +18,7 @@ class DummyForm(PaymentForm):
                                             required=False)
 
     def clean(self):
-        cleaned_data = super(DummyForm, self).clean()
+        cleaned_data = super().clean()
         gateway_response = cleaned_data.get('gateway_response')
         verification_result = cleaned_data.get('verification_result')
         if gateway_response == '3ds-redirect' and not verification_result:

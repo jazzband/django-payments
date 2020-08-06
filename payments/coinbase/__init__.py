@@ -24,13 +24,13 @@ class CoinbaseProvider(BasicProvider):
             'endpoint', 'sandbox.coinbase.com')
         self.key = kwargs.pop('key')
         self.secret = kwargs.pop('secret')
-        super(CoinbaseProvider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Coinbase does not support pre-authorization.')
 
     def get_custom_token(self, payment):
-        value = 'coinbase-%s-%s' % (payment.token, self.key)
+        value = 'coinbase-{}-{}'.format(payment.token, self.key)
         return hashlib.md5(value.encode('utf-8')).hexdigest()
 
     def get_checkout_code(self, payment):
@@ -63,7 +63,7 @@ class CoinbaseProvider(BasicProvider):
 
     def get_action(self, payment):
         checkout_url = self.checkout_url % {'endpoint': self.endpoint}
-        return '%s/%s' % (checkout_url, self.get_checkout_code(payment))
+        return '{}/{}'.format(checkout_url, self.get_checkout_code(payment))
 
     def get_hidden_fields(self, payment):
         return {}

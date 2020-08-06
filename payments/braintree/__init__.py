@@ -21,7 +21,7 @@ class BraintreeProvider(BasicProvider):
         braintree.Configuration.configure(
             environment, merchant_id=self.merchant_id,
             public_key=self.public_key, private_key=self.private_key)
-        super(BraintreeProvider, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if not self._capture:
             raise ImproperlyConfigured(
                 'Braintree does not support pre-authorization.')

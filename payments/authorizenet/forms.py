@@ -9,7 +9,7 @@ RESPONSE_STATUS = {
 class PaymentForm(CreditCardPaymentForm):
 
     def clean(self):
-        cleaned_data = super(PaymentForm, self).clean()
+        cleaned_data = super().clean()
 
         if not self.errors:
             if not self.payment.transaction_id:

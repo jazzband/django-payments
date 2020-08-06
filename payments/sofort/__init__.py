@@ -19,7 +19,7 @@ class SofortProvider(BasicProvider):
         self.project_id = kwargs.pop('project_id')
         self.endpoint = kwargs.pop(
              'endpoint', 'https://api.sofort.com/api/xml')
-        super(SofortProvider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
     
     def post_request(self, xml_request):
         response = requests.post(
@@ -50,7 +50,7 @@ class SofortProvider(BasicProvider):
                 raise RedirectNeeded(doc['new_transaction']['payment_url'])
             except KeyError:
                 raise PaymentError(
-                    'Error in %s: %s' % (
+                    'Error in {}: {}'.format(
                         doc['errors']['error']['field'],
                         doc['errors']['error']['message']))
 

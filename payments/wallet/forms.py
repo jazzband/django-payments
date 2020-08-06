@@ -9,7 +9,7 @@ from .widgets import WalletWidget
 class PaymentForm(BasePaymentForm):
 
     def __init__(self, *args, **kwargs):
-        super(PaymentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         widget = WalletWidget(provider=self.provider, payment=self.payment)
         self.fields['payment'] = forms.CharField(widget=widget, required=False)
 
@@ -19,12 +19,12 @@ class ProcessPaymentForm(forms.Form):
     jwt = forms.CharField(required=True)
 
     def __init__(self, payment, provider, **kwargs):
-        super(ProcessPaymentForm, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.provider = provider
         self.payment = payment
 
     def clean_jwt(self):
-        payload = super(ProcessPaymentForm, self).clean().get('jwt')
+        payload = super().clean().get('jwt')
         try:
             jwt_data = jwt.decode(
                 payload.encode('utf-8'), self.provider.seller_secret,

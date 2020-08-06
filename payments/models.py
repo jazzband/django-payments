@@ -9,11 +9,11 @@ from . import FraudStatus, PaymentStatus
 from .core import provider_factory
 
 
-class PaymentAttributeProxy(object):
+class PaymentAttributeProxy:
 
     def __init__(self, payment):
         self._payment = payment
-        super(PaymentAttributeProxy, self).__init__()
+        super().__init__()
 
     def __getattr__(self, item):
         data = json.loads(self._payment.extra_data or '{}')
@@ -21,7 +21,7 @@ class PaymentAttributeProxy(object):
 
     def __setattr__(self, key, value):
         if key == '_payment':
-            return super(PaymentAttributeProxy, self).__setattr__(key, value)
+            return super().__setattr__(key, value)
         try:
             data = json.loads(self._payment.extra_data)
         except ValueError:
@@ -90,7 +90,7 @@ class BasePayment(models.Model):
         available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
         if status not in available_statuses:
             raise ValueError(
-                'Wrong status "%s", it should be one of: %s' % (
+                'Wrong status "{}", it should be one of: {}'.format(
                     status, ', '.join(available_statuses)))
         self.fraud_status = status
         self.fraud_message = message
@@ -110,7 +110,7 @@ class BasePayment(models.Model):
                         break
                 tries.add(token)
 
-        return super(BasePayment, self).save(**kwargs)
+        return super().save(**kwargs)
 
     def __unicode__(self):
         return self.variant

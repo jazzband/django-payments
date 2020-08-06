@@ -22,7 +22,7 @@ class StripeCheckoutWidget(Input):
             'data-currency': payment.currency
         }
         kwargs['attrs'].update(attrs)
-        super(StripeCheckoutWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None, renderer=None):
         if value is None:
@@ -44,4 +44,4 @@ class StripeWidget(HiddenInput):
 
     def __init__(self, attrs=None):
         attrs = dict(attrs or {}, id='id_stripe_token')
-        super(StripeWidget, self).__init__(attrs)
+        super().__init__(attrs)

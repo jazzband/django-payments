@@ -30,7 +30,7 @@ JWT_DATA = {
         'orderId': '1234567890'}}
 
 
-class Payment(object):
+class Payment:
 
     id = 1
     description = 'payment'

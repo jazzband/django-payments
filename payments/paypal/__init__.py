@@ -63,7 +63,7 @@ class PaypalProvider(BasicProvider):
         self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
         self.payment_refund_url = (
             self.endpoint + '/v1/payments/capture/{captureId}/refund')
-        super(PaypalProvider, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def set_response_data(self, payment, response, is_auth=False):
         extra_data = json.loads(payment.extra_data or '{}')
@@ -72,8 +72,8 @@ class PaypalProvider(BasicProvider):
         else:
             extra_data['response'] = response
             if 'links' in response:
-                extra_data['links'] = dict(
-                    (link['rel'], link) for link in response['links'])
+                extra_data['links'] = {
+                    link['rel']: link for link in response['links']}
         payment.extra_data = json.dumps(extra_data)
 
     def set_response_links(self, payment, response):
@@ -82,7 +82,7 @@ class PaypalProvider(BasicProvider):
         resource_key = 'sale' if self._capture else 'authorization'
         links = related_resources[resource_key]['links']
         extra_data = json.loads(payment.extra_data or '{}')
-        extra_data['links'] = dict((link['rel'], link) for link in links)
+        extra_data['links'] = {link['rel']: link for link in links}
         payment.extra_data = json.dumps(extra_data)
 
     def set_error_data(self, payment, error):
@@ -140,7 +140,7 @@ class PaypalProvider(BasicProvider):
                 'expires_in' in last_auth_response and
                 (created + timedelta(
                     seconds=last_auth_response['expires_in'])) > now):
-            return '%s %s' % (last_auth_response['token_type'],
+            return '{} {}'.format(last_auth_response['token_type'],
                               last_auth_response['access_token'])
         else:
             headers = {'Accept': 'application/json',
@@ -153,7 +153,7 @@ class PaypalProvider(BasicProvider):
             data = response.json()
             last_auth_response.update(data)
             self.set_response_data(payment, last_auth_response, is_auth=True)
-            return '%s %s' % (data['token_type'], data['access_token'])
+            return '{} {}'.format(data['token_type'], data['access_token'])
 
     def get_transactions_items(self, payment):
         for purchased_item in payment.get_purchased_items():

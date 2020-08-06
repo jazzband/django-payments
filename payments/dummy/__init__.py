@@ -36,7 +36,7 @@ class DummyProvider(BasicProvider):
                     process_url = payment.get_process_url()
                     params = urlencode(
                         {'verification_result': verification_result})
-                    redirect_url = '%s?%s' % (process_url, params)
+                    redirect_url = '{}?{}'.format(process_url, params)
                     raise RedirectNeeded(redirect_url)
                 elif gateway_response == 'failure':
                     # Gateway raises error (HTTP 500 for example)

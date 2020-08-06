@@ -34,10 +34,10 @@ def get_base_url():
         domain = PAYMENT_HOST()
     else:
         domain = PAYMENT_HOST
-    return '%s://%s' % (protocol, domain)
+    return '{}://{}'.format(protocol, domain)
 
 
-class BasicProvider(object):
+class BasicProvider:
     '''
     This class defines the provider API. It should not be instantiated
     directly. Use factory instead.

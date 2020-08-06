@@ -30,7 +30,7 @@ class Payment(Mock):
     captured_amount = 0
     message = ''
 
-    class attrs(object):
+    class attrs:
         fingerprint_session_id = 'fake'
         merchant_defined_data = {}
 

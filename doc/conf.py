@@ -33,8 +33,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'django-payments'
-copyright = u'2010-2013, Mirumee Software'
+project = 'django-payments'
+copyright = '2010-2013, Mirumee Software'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -168,8 +168,8 @@ htmlhelp_basename = 'django-paymentsdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'django-payments.tex', u'django-payments Documentation',
-   u'Mirumee Software', 'manual'),
+  ('index', 'django-payments.tex', 'django-payments Documentation',
+   'Mirumee Software', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

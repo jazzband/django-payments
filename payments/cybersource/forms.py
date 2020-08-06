@@ -27,10 +27,10 @@ class FingerprintInput(forms.CharField):
         self.org_id = org_id
         self.merchant_id = merchant_id
         self.fingerprint_url = fingerprint_url
-        super(FingerprintInput, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def widget_attrs(self, widget):
-        attrs = super(FingerprintInput, self).widget_attrs(widget=widget)
+        attrs = super().widget_attrs(widget=widget)
         attrs['org_id'] = self.org_id
         attrs['merchant_id'] = self.merchant_id
         attrs['fingerprint_url'] = self.fingerprint_url
@@ -40,7 +40,7 @@ class FingerprintInput(forms.CharField):
 class PaymentForm(CreditCardPaymentFormWithName):
 
     def __init__(self, *args, **kwargs):
-        super(PaymentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.provider.org_id:
             try:
                 fingerprint_id = self.payment.attrs.fingerprint_session_id
@@ -53,7 +53,7 @@ class PaymentForm(CreditCardPaymentFormWithName):
                 fingerprint_url=self.provider.fingerprint_url)
 
     def clean(self):
-        cleaned_data = super(PaymentForm, self).clean()
+        cleaned_data = super().clean()
         if not self.errors:
             if self.provider.org_id:
                 fingerprint = cleaned_data['fingerprint']
