@@ -12,7 +12,7 @@ TRANSACTION_KEY = '1234abdd'
 PROCESS_DATA = {
     'number': '4007000000027',
     'expiration_0': '5',
-    'expiration_1': '2020',
+    'expiration_1': '2023',
     'cvv2': '123'}
 
 STATUS_CONFIRMED = '1'
