@@ -7,7 +7,7 @@ Installation
 
       $ pip install django-payments
       
-#. Add `payments` to your `INSTALLED_APPS`      
+#. Add ``payments`` to your ``INSTALLED_APPS``.
 
 #. Add the callback processor to your URL router::
 
