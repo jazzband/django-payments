@@ -1,21 +1,13 @@
 sudo: false
 language: python
 python:
-  - "2.7"
   - "3.5"
   - "3.6"
 env:
-  - DJANGO="1.11"
-  - DJANGO="2.1"
   - DJANGO="2.2"
   - DJANGO="3.0"
-  - DJANGO="master"
 matrix:
   include:
-    - python: "3.7"
-      sudo: required
-      dist: xenial
-      env: DJANGO="2.1"
     - python: "3.7"
       sudo: required
       dist: xenial
@@ -40,18 +32,16 @@ matrix:
       sudo: required
       dist: xenial
       env: DJANGO="3.1"
+    - python: "3.8"
+      sudo: required
+      dist: xenial
+      env: DJANGO="master"
   allow_failures:
-    - python: "3.5"
-      env: DJANGO="master"
-    - python: "3.6"
-      env: DJANGO="master"
     - python: "3.7"
       env: DJANGO="master"
-  exclude:
-    - python: "2.7"
-      env: DJANGO="2.1"
-    - python: "2.7"
+    - python: "3.8"
       env: DJANGO="master"
+  exclude:
     - python: "3.5"
       env: DJANGO="3.0"
 after_success: codecov

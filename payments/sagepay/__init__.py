@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import binascii
 
 from cryptography.hazmat.primitives import padding

@@ -22,7 +22,7 @@ PACKAGES = [
 
 REQUIREMENTS = [
     'braintree>=3.14.0',
-    'Django>=1.11',
+    'Django>=2.2',
     'cryptography>=1.1.0',
     'PyJWT>=1.3.0',
     'requests>=1.2.0',
@@ -67,8 +67,6 @@ setup(
     include_package_data=True,
     classifiers=[
         'Environment :: Web Environment',
-        'Framework :: Django :: 1.11',
-        'Framework :: Django :: 2.1',
         'Framework :: Django :: 2.2',
         'Framework :: Django :: 3.0',
         'Framework :: Django :: 3.1',
@@ -76,7 +74,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -89,7 +86,6 @@ setup(
     cmdclass={
         'test': PyTest},
     tests_require=[
-        'mock',
         'pytest',
         'pytest-django'],
     zip_safe=False)

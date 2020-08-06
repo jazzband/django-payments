@@ -1,14 +1,7 @@
 from unittest import TestCase
-try:
-    from urllib.error import URLError
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode
-    from urllib2 import URLError
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
+from urllib.error import URLError
+from urllib.parse import urlencode
 
 from . import DummyProvider
 from .. import FraudStatus, PaymentError, PaymentStatus, RedirectNeeded

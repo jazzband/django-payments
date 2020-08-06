@@ -1,12 +1,7 @@
-from __future__ import unicode_literals
-
-try:
-    from django.forms.utils import flatatt
-except ImportError:
-    from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.forms.widgets import Input, HiddenInput
-from django.utils.html import format_html
 from django.utils.encoding import force_text
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
 

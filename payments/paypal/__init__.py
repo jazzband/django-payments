@@ -1,11 +1,6 @@
-from __future__ import unicode_literals
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from functools import wraps
-try:
-    from itertools import ifilter as filter
-except ImportError:
-    pass
 import json
 import logging
 

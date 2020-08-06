@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from calendar import monthrange
 from datetime import date
 import re

@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from ..forms import CreditCardPaymentForm
 from .. import PaymentStatus
 

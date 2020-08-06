@@ -1,9 +1,5 @@
-from __future__ import unicode_literals
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
+from collections import OrderedDict
 
 from django import forms
 from django.utils.translation import ugettext_lazy as _

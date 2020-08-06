@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from decimal import Decimal
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseForbidden

@@ -1,12 +1,10 @@
-from __future__ import unicode_literals
-
 import hashlib
 import json
 from decimal import Decimal
 from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from .. import PaymentStatus
 from . import CoinbaseProvider

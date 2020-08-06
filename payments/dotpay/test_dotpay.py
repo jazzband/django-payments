@@ -1,9 +1,8 @@
-from __future__ import unicode_literals
 import hashlib
 from unittest import TestCase
 
 from django.http import HttpResponse, HttpResponseForbidden
-from mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock
 
 from .. import PaymentStatus
 from .forms import COMPLETED, REJECTED

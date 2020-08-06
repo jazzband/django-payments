@@ -1,6 +1,5 @@
-from __future__ import unicode_literals
 from unittest import TestCase
-from mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 
 from . import SagepayProvider
 from .. import PaymentStatus

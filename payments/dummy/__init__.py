@@ -1,12 +1,6 @@
-from __future__ import unicode_literals
-try:
-    # For Python 3.0 and later
-    from urllib.error import URLError
-    from urllib.parse import urlencode
-except ImportError:
-    # Fall back to Python 2's urllib2
-    from urllib2 import URLError
-    from urllib import urlencode
+from urllib.error import URLError
+from urllib.parse import urlencode
+
 from django.http import HttpResponseRedirect
 
 from .forms import DummyForm

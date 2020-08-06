@@ -1,8 +1,7 @@
-from __future__ import unicode_literals
 import json
 from decimal import Decimal
 from unittest import TestCase
-from mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 
 from django.utils import timezone
 from requests import HTTPError

@@ -1,8 +1,7 @@
-from __future__ import unicode_literals
 from decimal import Decimal
 from unittest import TestCase
 from django.core import signing
-from mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 
 from . import CyberSourceProvider, AUTHENTICATE_REQUIRED, ACCEPTED, \
     TRANSACTION_SETTLED

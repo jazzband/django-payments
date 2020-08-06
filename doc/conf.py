@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # django-payments documentation build configuration file, created by
 # sphinx-quickstart on Thu Sep 30 16:25:38 2010.
 #
