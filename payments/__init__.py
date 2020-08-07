@@ -6,7 +6,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import pgettext_lazy
 
 PurchasedItem = namedtuple('PurchasedItem',
-                           'name, quantity, price, currency, sku')
+                           'name, quantity, price, currency, sku, tax_rate')
+PurchasedItem.__new__.__defaults__ = (None, None, None, None, None, 1)
+# In Python 3.7 and higher the defaults could be set as attribute of namedtuple
 
 
 class PaymentStatus:
