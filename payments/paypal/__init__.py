@@ -211,16 +211,20 @@ class PaypalProvider(BasicProvider):
 
     def process_data(self, payment, request):
         success_url = payment.get_success_url()
+        failure_url = payment.get_failure_url()
         if not 'token' in request.GET:
             return HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:
             if payment.status != PaymentStatus.CONFIRMED:
                 payment.change_status(PaymentStatus.REJECTED)
-                return redirect(payment.get_failure_url())
+                return redirect(failure_url)
             else:
                 return redirect(success_url)
-        executed_payment = self.execute_payment(payment, payer_id)
+        try:
+            executed_payment = self.execute_payment(payment, payer_id)
+        except PaymentError:
+            return redirect(failure_url)
         self.set_response_links(payment, executed_payment)
         payment.attrs.payer_info = executed_payment['payer']['payer_info']
         if self._capture:
