@@ -30,7 +30,7 @@ class CoinbaseProvider(BasicProvider):
                 'Coinbase does not support pre-authorization.')
 
     def get_custom_token(self, payment):
-        value = 'coinbase-{}-{}'.format(payment.token, self.key)
+        value = f'coinbase-{payment.token}-{self.key}'
         return hashlib.md5(value.encode('utf-8')).hexdigest()
 
     def get_checkout_code(self, payment):

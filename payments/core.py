@@ -34,7 +34,7 @@ def get_base_url():
         domain = PAYMENT_HOST()
     else:
         domain = PAYMENT_HOST
-    return '{}://{}'.format(protocol, domain)
+    return f'{protocol}://{domain}'
 
 
 class BasicProvider:
