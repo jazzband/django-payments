@@ -5,6 +5,7 @@ data (asynchronous transaction updates).
 from django.db.transaction import atomic
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.urls import path
 from django.urls import re_path
 from django.views.decorators.csrf import csrf_exempt
 
@@ -46,8 +47,6 @@ def static_callback(request, variant):
 
 
 urlpatterns = [
-    re_path(r'^process/(?P<token>[0-9a-z]{8}-[0-9a-z]{4}-'
-            '[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})/$', process_data,
-            name='process_payment'),
+    path('process/<uuid:token>/', process_data, name='process_payment'),
     re_path(r'^process/(?P<variant>[a-z-]+)/$', static_callback,
             name='static_process_payment')]
