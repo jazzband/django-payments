@@ -67,6 +67,7 @@ Installation
 
       <!-- templates/payment.html -->
       <form action="{{ form.action }}" method="{{ form.method }}">
+          {% csrf_token %}
           {{ form.as_p }}
           <p><input type="submit" value="Proceed" /></p>
       </form>
