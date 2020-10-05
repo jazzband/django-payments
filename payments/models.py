@@ -112,7 +112,7 @@ class BasePayment(models.Model):
 
         return super().save(**kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.variant
 
     def get_form(self, data=None):
