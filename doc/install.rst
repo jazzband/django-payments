@@ -12,10 +12,11 @@ Installation
 #. Add the callback processor to your URL router::
 
       # urls.py
-      from django.conf.urls import include, url
+      from django.conf.urls import include, path
 
       urlpatterns = [
-          url('^payments/', include('payments.urls'))]
+          path('payments/', include('payments.urls')),
+      ]
 
 #. Define a :class:`Payment` model by subclassing :class:`payments.models.BasePayment`::
 
