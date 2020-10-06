@@ -2,6 +2,7 @@ import json
 import logging
 import re
 
+import requests
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from mercadopago import MP
@@ -158,3 +159,24 @@ class MercadoPagoProvider(BasicProvider):
 
     def refund(self, payment, amount=None):
         raise NotImplementedError()
+
+    def poll_for_updates(self, payment):
+        """Helper method to fetch any updates on MercadoPago.
+
+        There's occasional times of flakiness with their notification service, and this
+        helper method helps recover from that and pick up any missed payments.
+        """
+        response = requests.get(
+            "https://api.mercadopago.com/v1/payments/search",
+            params={
+                "access_token": self.client.get_access_token(),
+                "external_reference": payment.transaction_id,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        logger.debug("Found payment info for %s: %s.", payment.pk, data)
+
+        if data["results"]:
+            self.process_collection(data["results"][-1]["id"])
