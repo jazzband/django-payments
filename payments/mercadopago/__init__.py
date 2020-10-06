@@ -13,6 +13,18 @@ from payments.core import BasicProvider
 
 logger = logging.getLogger(__name__)
 
+STATUS_MAP = {
+    "pending": PaymentStatus.WAITING,
+    "approved": PaymentStatus.CONFIRMED,
+    "authorized": PaymentStatus.PREAUTH,
+    "in_process": PaymentStatus.WAITING,
+    "in_mediation": PaymentStatus.WAITING,
+    "rejected": PaymentStatus.REJECTED,
+    "cancelled": PaymentStatus.ERROR,
+    "refunded": PaymentStatus.REFUNDED,
+    "charged_back": PaymentStatus.REFUNDED,
+}
+
 
 class MercadoPagoProvider(BasicProvider):
     def __init__(self, client_id, secret_key, sandbox):
@@ -122,10 +134,8 @@ class MercadoPagoProvider(BasicProvider):
             payment.change_status(PaymentStatus.ERROR, message)
             raise PaymentError(message)
 
-        if response["response"]["status"] == "approved":
-            payment.change_status(PaymentStatus.CONFIRMED)
-        else:
-            payment.change_status(PaymentStatus.WAITING)
+        upstream_status = response["response"]["status"]
+        payment.change_status(STATUS_MAP[upstream_status])
 
     def process_data(self, payment, request):
         if request.method == "GET":
