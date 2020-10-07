@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from uuid import uuid4
 
 import requests
 from django.http import HttpResponse
@@ -55,6 +56,8 @@ class MercadoPagoProvider(BasicProvider):
         if payment.transaction_id:
             raise ValueError("This payment already has a preference.")
 
+        payment.attrs.external_reference = uuid4().hex
+
         payload = {
             "auto_return": "all",
             "items": [
@@ -68,7 +71,7 @@ class MercadoPagoProvider(BasicProvider):
                 }
                 for item in payment.get_purchased_items()
             ],
-            "external_reference": payment.transaction_id,
+            "external_reference": payment.attrs.external_reference,
             "back_urls": {
                 "success": self.get_return_url(payment),
                 "pending": self.get_return_url(payment),
@@ -134,6 +137,8 @@ class MercadoPagoProvider(BasicProvider):
         if response["status"] != 200:
             message = "MercadoPago sent invalid payment data."
             payment.change_status(PaymentStatus.ERROR, message)
+
+            message = f"{message}: {response}"
             raise PaymentError(message)
 
         upstream_status = response["response"]["status"]
@@ -146,7 +151,7 @@ class MercadoPagoProvider(BasicProvider):
             return self.process_notification(payment, request)
 
     def get_form(self, payment, data=None):
-        # There's not for for MP, we need to redirect to their checkout page.
+        # There's no form for MP, we need to redirect to their checkout page.
         preference = self.get_or_create_preference(payment)
         logger.debug("Got preference: %s", preference)
 
@@ -157,14 +162,19 @@ class MercadoPagoProvider(BasicProvider):
 
         raise RedirectNeeded(url)
 
+    def capture(self, payment, amount=None):
+        # only allow if its PRE_AUTH
+        raise NotImplementedError()
+
     def refund(self, payment, amount=None):
         raise NotImplementedError()
 
     def poll_for_updates(self, payment):
         """Helper method to fetch any updates on MercadoPago.
 
-        There's occasional times of flakiness with their notification service, and this
-        helper method helps recover from that and pick up any missed payments.
+        There's occasional times of flakiness with their notification service,
+        and this helper method helps recover from that and pick up any missed
+        payments.
         """
         response = requests.get(
             "https://api.mercadopago.com/v1/payments/search",
@@ -176,7 +186,7 @@ class MercadoPagoProvider(BasicProvider):
         response.raise_for_status()
         data = response.json()
 
-        logger.debug("Found payment info for %s: %s.", payment.pk, data)
+        logger.info("Found payment info for %s: %s.", payment.pk, data)
 
         if data["results"]:
             self.process_collection(data["results"][-1]["id"])
