@@ -180,7 +180,7 @@ class MercadoPagoProvider(BasicProvider):
             "https://api.mercadopago.com/v1/payments/search",
             params={
                 "access_token": self.client.get_access_token(),
-                "external_reference": payment.transaction_id,
+                "external_reference": payment.attrs.external_reference,
             },
         )
         response.raise_for_status()
