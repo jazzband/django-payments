@@ -34,7 +34,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'django-payments'
-copyright = '2010-2013, Mirumee Software'
+copyright = '2010-2020, Mirumee Software and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
