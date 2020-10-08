@@ -171,3 +171,25 @@ Example::
               'public_key': 'pk_test_123456'})}
 
 .. autoclass:: payments.stripe.StripeCardProvider
+
+
+MercadoPago
+-----------
+
+.. autoclass:: payments.mercadopago.MercadoPagoProvider
+
+Example::
+
+    PAYMENT_VARIANTS: = {
+        "mercadopago": (
+            "payments.mercadopago.MercadoPagoProvider",
+            {
+                "client_id": "2343902120820550",
+                "secret_key": "Zt12zu8DrmGPBZokF67YVoL8M7HSsCmR",
+                "sandbox": DEBUG,
+            },
+        ),
+    }
+
+Note that the API sandbox does not return Payment details, so all payments
+will seem unpaid.
