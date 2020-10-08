@@ -1,6 +1,11 @@
 django-payments
 ===============
 
+
+TEST PR TO SEE IF CODECOV REPORTS STATUS.
+
+DO NOT MERGE.
+
 [![Jazzband](https://jazzband.co/static/img/badge.svg)](https://jazzband.co/)
 
 Universal payment handling for Django
