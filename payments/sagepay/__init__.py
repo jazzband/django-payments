@@ -61,9 +61,9 @@ class SagepayProvider(BasicProvider):
         return_url = self.get_return_url(payment)
         data = {
             'VendorTxCode': payment.pk,
-            'Amount': "{:.2f}".format(payment.total),
+            'Amount': f"{payment.total:.2f}",
             'Currency': payment.currency,
-            'Description': "Payment #{}".format(payment.pk),
+            'Description': f"Payment #{payment.pk}",
             'SuccessURL': return_url,
             'FailureURL': return_url,
             'BillingSurname': payment.billing_last_name,

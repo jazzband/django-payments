@@ -50,13 +50,13 @@ class CyberSourceProvider(BasicProvider):
             local_path = local_path.replace(os.path.sep, '/')
         if not local_path.startswith('/'):
             # windows paths don't start with '/'
-            local_path = '/{}'.format(local_path)
+            local_path = f'/{local_path}'
         if kwargs.pop('sandbox', True):
-            wsdl_path = 'file://{}/{}'.format(local_path, WSDL_PATH_TEST)
+            wsdl_path = f'file://{local_path}/{WSDL_PATH_TEST}'
             self.endpoint = (
                 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
         else:
-            wsdl_path = 'file://{}/{}'.format(local_path, WSDL_PATH)
+            wsdl_path = f'file://{local_path}/{WSDL_PATH}'
             self.endpoint = (
                 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor')
         self.client = suds.client.Client(wsdl_path)
