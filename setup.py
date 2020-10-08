@@ -62,7 +62,7 @@ setup(
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
     version='0.13.0',
-    url='http://github.com/mirumee/django-payments',
+    url='http://github.com/jazzband/django-payments',
     packages=PACKAGES,
     include_package_data=True,
     classifiers=[
