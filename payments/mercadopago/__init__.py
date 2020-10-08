@@ -29,7 +29,14 @@ STATUS_MAP = {
 
 
 class MercadoPagoProvider(BasicProvider):
-    def __init__(self, client_id, secret_key, sandbox):
+    def __init__(self, client_id: str, secret_key: str, sandbox: bool):
+        """This backend implements payments using `MercadoPago
+        <https://www.mercadopago.com.ar/>`_.
+
+        :param client_id: Client ID assigned by MP.
+        :param secret_key: Secret key assigned by MP.
+        :param sandbox: Whether to use sandbox more.
+        """
         # self._capture = True
         self.client = MP(client_id, secret_key)
         self.client.sandbox_mode(sandbox)
