@@ -9,7 +9,7 @@ Making a payment
    
       Payment = get_payment_model()
       payment = Payment.objects.create(
-          variant='default',  # this is the variant from PAYMENT_VARIANTS
+          variant='default',  # this is the variant from PAYMENT_VARIANTS_API
           description='Book purchase',
           total=Decimal(120),
           tax=Decimal(20),

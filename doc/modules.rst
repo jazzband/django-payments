@@ -11,7 +11,7 @@ Dummy
 
 Example::
 
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'dummy': ('payments.dummy.DummyProvider', {})}
 
 
@@ -29,7 +29,7 @@ Authorize.Net
 Example::
 
       # use staging environment
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'authorizenet': ('payments.authorizenet.AuthorizeNetProvider', {
               'login_id': '1234login',
               'transaction_key': '1234567890abcdef',
@@ -52,7 +52,7 @@ Braintree
 Example::
 
       # use sandbox
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'braintree': ('payments.braintree.BraintreeProvider', {
               'merchant_id': '112233445566',
               'public_key': '1234567890abcdef',
@@ -77,7 +77,7 @@ Coinbase
 Example::
 
       # use sandbox
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'coinbase': ('payments.coinbase.CoinbaseProvider', {
               'key': '123abcd',
               'secret': 'abcd1234',
@@ -103,7 +103,7 @@ Cybersource
 Example::
 
       # use sandbox
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'cybersource': ('payments.cybersource.CyberSourceProvider', {
               'merchant_id': 'example',
               'password': '1234567890abcdef',
@@ -143,7 +143,7 @@ Dotpay
 Example::
 
       # use defaults for channel and lang but lock available channels
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'dotpay': ('payments.dotpay.DotpayProvider', {
               'seller_id': '123',
               'pin': '0000',
@@ -167,7 +167,7 @@ Google Wallet
 Example::
 
       # use sandbox
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'wallet': ('payments.wallet.GoogleWalletProvider', {
               'seller_id': '112233445566',
               'seller_secret': '1234567890abcdef',
@@ -208,7 +208,7 @@ PayPal
 Example::
 
       # use sandbox
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'paypal': ('payments.paypal.PaypalProvider', {
               'client_id': 'user@example.com',
               'secret': 'iseedeadpeople',
@@ -223,7 +223,7 @@ Example::
 
 Example::
 
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'paypal': ('payments.paypal.PaypalCardProvider', {
               'client_id': 'user@example.com',
               'secret': 'iseedeadpeople'})}
@@ -248,7 +248,7 @@ Sage Pay
 Example::
 
       # use simulator
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'sage': ('payments.sagepay.SagepayProvider', {
               'vendor': 'example',
               'encryption_key': '1234567890abcdef',
@@ -271,7 +271,7 @@ Sofort.com
 
 Example::
 
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'sage': ('payments.sofort.SofortProvider', {
               'id': '123456',
               'key': '1234567890abcdef',
@@ -297,7 +297,7 @@ Stripe
 Example::
 
       # use sandbox
-      PAYMENT_VARIANTS = {
+      PAYMENT_VARIANTS_API = {
           'stripe': ('payments.stripe.StripeProvider', {
               'secret_key': 'sk_test_123456',
               'public_key': 'pk_test_123456'})}

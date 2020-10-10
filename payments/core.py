@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 
-PAYMENT_VARIANTS = {
+PAYMENT_VARIANTS_API = {
     'default': ('payments.dummy.DummyProvider', {})}
 
 PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
@@ -124,7 +124,7 @@ def provider_factory(variant):
     '''
     Return the provider instance based on variant
     '''
-    variants = getattr(settings, 'PAYMENT_VARIANTS', PAYMENT_VARIANTS)
+    variants = getattr(settings, 'PAYMENT_VARIANTS_API', PAYMENT_VARIANTS_API)
     handler, config = variants.get(variant, (None, None))
     if not handler:
         raise ValueError('Payment variant does not exist: %s' %
