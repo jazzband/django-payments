@@ -9,20 +9,25 @@ CENTS = Decimal('0.01')
 
 
 class DotpayProvider(BasicProvider):
-    '''
-    dotpay.pl payment provider
+    """Payment provider for dotpay.pl
 
-    seller_id:
-        seller ID, assigned by dotpay
-    pin:
-        PIN
-    channel:
-        default payment channel (consult dotpay.pl reference guide)
-    lang:
-        UI language
-    lock:
-        whether to disable channels other than the default selected above
-    '''
+    This backend implements payments using a popular Polish gateway, `Dotpay.pl
+    <http://www.dotpay.pl>`_.
+
+    Due to API limitations there is no support for transferring purchased items.
+
+    This backend does not support fraud detection.
+
+    :param seller_id: Seller ID assigned by Dotpay
+    :param pin: PIN assigned by Dotpay
+    :param channel: Default payment channel (consult reference guide). Ignored if channel_groups is set.
+    :param channel_groups: Payment channels to choose from (consult reference guide). Overrides channel.
+    :param lang: UI language
+    :param lock: Whether to disable channels other than the default selected above
+    :param endpoint: The API endpoint to use. For the production environment, use ``'https://ssl.dotpay.pl/'`` instead
+    :param ignore_last_payment_channel: Display default channel or channel groups instead of last used channel.
+    :param type: Determines what should be displayed after payment is completed (consult reference guide).
+    """
     _method = 'post'
 
     def __init__(self, seller_id, pin,

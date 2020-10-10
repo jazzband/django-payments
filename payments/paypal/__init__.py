@@ -50,11 +50,17 @@ def authorize(fun):
 
 
 class PaypalProvider(BasicProvider):
-    '''
-    paypal.com payment provider
-    '''
+    """Payment provider for Paypal, redirection-based.
+
+    This backend implements payments using `PayPal.com <https://www.paypal.com/>`_.
+
+    :param client_id: Client ID assigned by PayPal or your email address
+    :param secret: Secret assigned by PayPal
+    :param endpoint: The API endpoint to use. For the production environment, use ``'https://api.paypal.com'`` instead
+    :param capture: Whether to capture the payment automatically. See :ref:`capture-payments` for more details.
+    """
     def __init__(self, client_id, secret,
-                 endpoint='https://api.sandbox.paypal.com', **kwargs):
+                 endpoint='https://api.sandbox.paypal.com', capture=True):
         self.secret = secret
         self.client_id = client_id
         self.endpoint = endpoint
@@ -63,7 +69,7 @@ class PaypalProvider(BasicProvider):
         self.payment_execute_url = self.payments_url + '/%(id)s/execute/'
         self.payment_refund_url = (
             self.endpoint + '/v1/payments/capture/{captureId}/refund')
-        super().__init__(**kwargs)
+        super().__init__(capture=capture)
 
     def set_response_data(self, payment, response, is_auth=False):
         extra_data = json.loads(payment.extra_data or '{}')
@@ -301,9 +307,15 @@ class PaypalProvider(BasicProvider):
 
 
 class PaypalCardProvider(PaypalProvider):
-    '''
-    paypal.com credit card payment provider
-    '''
+    """Payment provider for Paypal, form-based.
+
+    This backend implements payments using `PayPal.com <https://www.paypal.com/>`_ but
+    the credit card data is collected by your site.
+
+    Parameters are the same as  :class:`~PaypalProvider`.
+
+    This backend does not support fraud detection.
+    """
 
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:

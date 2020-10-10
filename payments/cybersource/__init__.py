@@ -36,14 +36,31 @@ WSDL_PATH = 'xml/CyberSourceTransaction_1.101.wsdl'
 
 
 class CyberSourceProvider(BasicProvider):
-    '''CyberSource payment provider
-    '''
+    """Payment provider for CyberSource
 
-    fingerprint_url = 'https://h.online-metrix.net/fp/'
+    This backend implements payments using `Cybersource
+    <http://www.cybersource.com/www/>`_.
 
-    def __init__(self, *args, **kwargs):
-        self.merchant_id = kwargs.pop('merchant_id')
-        self.password = kwargs.pop('password')
+    This backend supports fraud detection.
+
+    :param merchant_id: Your Merchant ID
+    :param password: Generated transaction security key for the SOAP toolkit
+    :param org_id: Provide this parameter to enable Cybersource Device Fingerprinting
+    :param fingerprint_url: Address of the fingerprint server
+    :param sandbox: Whether to use a sandbox environment for testing
+    :param capture: Whether to capture the payment automatically.  See
+        :ref:`capture-payments` for more details.
+    """
+
+    fingerprint_url: str
+
+    def __init__(
+        self, merchant_id, password, org_id=None,
+        fingerprint_url='https://h.online-metrix.net/fp/', sandbox=True,
+        capture=True,
+    ):
+        self.merchant_id = merchant_id
+        self.password = password
         local_path = os.path.dirname(__file__)
         if os.path.sep != '/':
             # ugly hack for urllib and Windows
@@ -51,7 +68,7 @@ class CyberSourceProvider(BasicProvider):
         if not local_path.startswith('/'):
             # windows paths don't start with '/'
             local_path = f'/{local_path}'
-        if kwargs.pop('sandbox', True):
+        if sandbox:
             wsdl_path = f'file://{local_path}/{WSDL_PATH_TEST}'
             self.endpoint = (
                 'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
@@ -60,16 +77,15 @@ class CyberSourceProvider(BasicProvider):
             self.endpoint = (
                 'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor')
         self.client = suds.client.Client(wsdl_path)
-        if 'fingerprint_url' in kwargs:
-            self.fingerprint_url = kwargs.pop('fingerprint_url')
-        self.org_id = kwargs.pop('org_id', None)
+        self.fingerprint_url = fingerprint_url
+        self.org_id = org_id
         security_header = suds.wsse.Security()
         security_token = suds.wsse.UsernameToken(
             username=self.merchant_id,
             password=self.password)
         security_header.tokens.append(security_token)
         self.client.set_options(soapheaders=[security_header.xml()])
-        super().__init__(*args, **kwargs)
+        super().__init__(capture=capture)
 
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:

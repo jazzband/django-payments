@@ -8,6 +8,18 @@ from ..core import BasicProvider
 
 
 class AuthorizeNetProvider(BasicProvider):
+    """Payment provider for Authorize.Net.
+
+    This backend implements payments using the Advanced Integration Method (AIM) from
+    `Authorize.Net <https://www.authorize.net/>`_.
+
+    This backend does not support fraud detection.
+
+    :param login_id: Your API Login ID assigned by Authorize.net
+    :param transaction_key: Your unique Transaction Key assigned by Authorize.net
+    :param endpoint: The API endpoint to use. For the production environment, use
+        ``'https://secure.authorize.net/gateway/transact.dll'`` instead.
+    """
 
     def __init__(self, login_id, transaction_key,
                  endpoint='https://test.authorize.net/gateway/transact.dll',

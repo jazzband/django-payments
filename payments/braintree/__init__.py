@@ -7,6 +7,17 @@ from ..core import BasicProvider
 
 
 class BraintreeProvider(BasicProvider):
+    """Payment provider for Braintree.
+
+    This backend implements payments using `Braintree <https://www.braintreepayments.com/>`_.
+
+    This backend does not support fraud detection.
+
+    :param merchant_id: Merchant ID assigned by Braintree
+    :param public_key: Public key assigned by Braintree
+    :param private_key: Private key assigned by Braintree
+    :param sandbox: Whether to use a sandbox environment for testing
+    """
 
     def __init__(self, merchant_id, public_key, private_key, sandbox=True,
                  **kwargs):

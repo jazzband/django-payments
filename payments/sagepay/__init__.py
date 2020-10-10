@@ -11,16 +11,19 @@ from .. import PaymentStatus
 
 
 class SagepayProvider(BasicProvider):
-    '''
-    sagepay.com payment provider
+    """
+    Payment provider for sagepay.com
 
-    vendor:
-        vendor name
-    encryption_key:
-        encryption key
-    endpoint:
-        gateway URL to post transaction data to
-    '''
+    This backend implements payments using `SagePay.com <https://www.sagepay.com/>`_
+    Form API.
+
+    This backend does not support fraud detection. Purchased items are not currently
+    transferred.
+
+    :param vendor: Your vendor code
+    :param encryption_key: Encryption key assigned by Sage Pay
+    :param endpoint: The API endpoint to use. For the production environment, use ``'https://live.sagepay.com/gateway/service/vspform-register.vsp'`` instead
+    """
     _version = '3.00'
     _action = 'https://test.sagepay.com/Simulator/VSPFormGateway.asp'
 

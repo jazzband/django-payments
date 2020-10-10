@@ -6,3 +6,5 @@
 *.py[co]
 *~
 *\.egg*
+docs/_build
+payments/version.py

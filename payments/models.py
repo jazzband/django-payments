@@ -1,11 +1,12 @@
 import json
+from typing import Iterable
 from uuid import uuid4
 
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from . import FraudStatus, PaymentStatus
+from . import FraudStatus, PaymentStatus, PurchasedItem
 from .core import provider_factory
 
 
@@ -79,7 +80,7 @@ class BasePayment(models.Model):
     class Meta:
         abstract = True
 
-    def change_status(self, status, message=''):
+    def change_status(self, status: PaymentStatus, message=''):
         '''
         Updates the Payment status and sends the status_changed signal.
         '''
@@ -89,7 +90,7 @@ class BasePayment(models.Model):
         self.save()
         status_changed.send(sender=type(self), instance=self)
 
-    def change_fraud_status(self, status, message='', commit=True):
+    def change_fraud_status(self, status: PaymentStatus, message='', commit=True):
         available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
         if status not in available_statuses:
             raise ValueError(
@@ -122,16 +123,16 @@ class BasePayment(models.Model):
         provider = provider_factory(self.variant)
         return provider.get_form(self, data=data)
 
-    def get_purchased_items(self):
+    def get_purchased_items(self) -> Iterable[PurchasedItem]:
         return []
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         raise NotImplementedError()
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         raise NotImplementedError()
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return reverse('process_payment', kwargs={'token': self.token})
 
     def capture(self, amount=None):

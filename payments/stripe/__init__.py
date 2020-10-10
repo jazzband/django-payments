@@ -9,6 +9,15 @@ from ..core import BasicProvider
 
 
 class StripeProvider(BasicProvider):
+    """Provider backend using `Stripe <https://stripe.com/>`_.
+
+    This backend does not support fraud detection.
+
+    :param secret_key: Secret key assigned by Stripe.
+    :param public_key: Public key assigned by Stripe.
+    :param name: A friendly name for your store.
+    :param image: Your logo.
+    """
 
     form_class = ModalPaymentForm
 
@@ -56,4 +65,11 @@ class StripeProvider(BasicProvider):
 
 
 class StripeCardProvider(StripeProvider):
+    """Provider backend using `Stripe <https://stripe.com/>`_, form-based.
+
+    This backend implements payments using `Stripe <https://stripe.com/>`_ but
+    the credit card data is collected by your site.
+
+    Parameters are the same as  :class:`~StripeProvider`.
+    """
     form_class = PaymentForm

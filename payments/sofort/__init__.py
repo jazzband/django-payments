@@ -12,14 +12,24 @@ from ..core import BasicProvider
 
 
 class SofortProvider(BasicProvider):
-    
-    def __init__(self, *args, **kwargs):
-        self.secret = kwargs.pop('key')
-        self.client_id = kwargs.pop('id')
-        self.project_id = kwargs.pop('project_id')
-        self.endpoint = kwargs.pop(
-             'endpoint', 'https://api.sofort.com/api/xml')
-        super().__init__(*args, **kwargs)
+    """Payment provider for Google Wallet.
+
+    This backend implements payments using `sofort.com <https://www.sofort.com/>`_ API.
+
+    This backend does not support fraud detection.
+
+    :param key: Your secret key
+    :param id: Your sofort.com user id
+    :param project_id: Your sofort.com project id
+    :param endpoint: The API endpoint to use.
+    """
+
+    def __init__(self, key, id, project_id, endpoint='https://api.sofort.com/api/xml', **kwargs):
+        self.secret = key
+        self.client_id = id
+        self.project_id = project_id
+        self.endpoint = endpoint
+        super().__init__(**kwargs)
     
     def post_request(self, xml_request):
         response = requests.post(
