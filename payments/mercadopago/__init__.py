@@ -33,6 +33,10 @@ class MercadoPagoProvider(BasicProvider):
         """This backend implements payments using `MercadoPago
         <https://www.mercadopago.com.ar/>`_.
 
+        You'll need to install with extra dependencies to use this:
+
+            pip install "django-payments[mercadopago]"
+
         :param client_id: Client ID assigned by MP.
         :param secret_key: Secret key assigned by MP.
         :param sandbox: Whether to use sandbox more.
