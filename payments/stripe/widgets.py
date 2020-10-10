@@ -2,7 +2,7 @@ from django.forms.utils import flatatt
 from django.forms.widgets import Input, HiddenInput
 from django.utils.encoding import force_text
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class StripeCheckoutWidget(Input):

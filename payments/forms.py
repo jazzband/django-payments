@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from django import forms
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .fields import (CreditCardNumberField, CreditCardExpiryField,
                      CreditCardVerificationField, CreditCardNameField)
