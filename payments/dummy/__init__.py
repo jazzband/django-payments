@@ -9,9 +9,12 @@ from ..core import BasicProvider
 
 
 class DummyProvider(BasicProvider):
-    '''
-    Dummy payment provider
-    '''
+    """Dummy payment provider.
+
+    This is a dummy backend suitable for testing your store without contacting any
+    payment gateways. Instead of using an external service it will simply show you a
+    form that allows you to confirm or reject the payment.
+    """
 
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:

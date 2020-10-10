@@ -9,6 +9,17 @@ from ..core import BasicProvider
 
 
 class GoogleWalletProvider(BasicProvider):
+    """Payment provider for Google Wallet.
+
+    This backend implements payments using `Google Wallet
+    <https://developers.google.com/commerce/wallet/digital/>`_ for digital goods API.
+
+    :param seller_id: Seller ID assigned by Google Wallet
+    :param seller_secret: Seller secret assigned by Google Wallet
+    :param library: The API library to use. For the production environment, use ``'https://wallet.google.com/inapp/lib/buy.js'`` instead
+
+    This backend does not support fraud detection.
+    """
 
     def __init__(self, seller_id, seller_secret,
                  library='https://sandbox.google.com/checkout/inapp/lib/buy.js',

@@ -61,7 +61,12 @@ setup(
     author='Mirumee Software',
     author_email='hello@mirumee.com',
     description='Universal payment handling for Django',
-    version='0.13.0',
+    long_description=open("README.rst").read(),
+    use_scm_version={
+        "version_scheme": "post-release",
+        "write_to": "payments/version.py",
+    },
+    setup_requires=["setuptools_scm"],
     url='http://github.com/jazzband/django-payments',
     packages=PACKAGES,
     include_package_data=True,

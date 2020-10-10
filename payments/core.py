@@ -1,11 +1,13 @@
 import re
+from typing import Dict
+from typing import Tuple
 from urllib.parse import urljoin, urlencode
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 
-PAYMENT_VARIANTS = {
+PAYMENT_VARIANTS: Dict[str, Tuple[str, Dict]] = {
     'default': ('payments.dummy.DummyProvider', {})}
 
 PAYMENT_HOST = getattr(settings, 'PAYMENT_HOST', None)
@@ -18,7 +20,7 @@ if not PAYMENT_HOST:
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
 
-def get_base_url():
+def get_base_url() -> str:
     """
     Returns host url according to project settings. Protocol is chosen by
     checking PAYMENT_USES_SSL variable.
@@ -49,6 +51,11 @@ class BasicProvider:
         return self.get_return_url(payment)
 
     def __init__(self, capture=True):
+        """Create a new provider instance.
+
+        This method should not be called directly; use :func:`provider_factory`
+        instead.
+        """
         self._capture = capture
 
     def get_hidden_fields(self, payment):

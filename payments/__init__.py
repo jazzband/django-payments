@@ -5,6 +5,10 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import pgettext_lazy
 
+from payments import version
+
+__version__ = version.version
+
 PurchasedItem = namedtuple('PurchasedItem',
                            'name, quantity, price, currency, sku')
 
