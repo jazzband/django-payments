@@ -1,4 +1,6 @@
-from collections import namedtuple
+from decimal import Decimal
+from typing import NamedTuple
+from typing import Optional
 
 from django.apps import apps
 from django.conf import settings
@@ -9,8 +11,16 @@ from payments import version
 
 __version__ = version.version
 
-PurchasedItem = namedtuple('PurchasedItem',
-                           'name, quantity, price, currency, sku')
+
+class PurchasedItem(NamedTuple):
+    """A single item in a purchase."""
+
+    name: str
+    quantity: int
+    price: Decimal
+    currency: str
+    sku: str
+    tax_rate: Optional[Decimal] = None
 
 
 class PaymentStatus:
