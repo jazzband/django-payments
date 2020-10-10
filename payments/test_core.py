@@ -36,6 +36,8 @@ class TestBasePayment(TestCase):
             extra_data='{"attr1": "test1", "attr2": "test2"}')
         self.assertEqual(payment.attrs.attr1, "test1")
         self.assertEqual(payment.attrs.attr2, 'test2')
+        self.assertEqual(getattr(payment.attrs, "attr5", None), None)
+        self.assertEqual(hasattr(payment.attrs, "attr7"), False)
 
     def test_capture_with_wrong_status(self):
         payment = BasePayment(variant='default', status=PaymentStatus.WAITING)
