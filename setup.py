@@ -55,6 +55,7 @@ setup(
     extras_require={
         "braintree": ["braintree>=3.14.0"],
         "cybersource": ["suds-jurko>=0.6"],
+        "mercadopago": ["mercadopago<1.0.0"],
         "sagepay": ["cryptography>=1.1.0"],
         "sofort": ["xmltodict>=0.9.2"],
         "stripe": ["stripe>=2.6.0"],
