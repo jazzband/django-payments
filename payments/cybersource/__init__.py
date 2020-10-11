@@ -176,7 +176,7 @@ class CyberSourceProvider(BasicProvider):
             self._set_proper_payment_status_from_reason_code(
                 payment, response.reasonCode)
 
-    def capture(self, payment, amount=None):
+    def capture(self, payment, amount=None, final=True):
         if amount is None:
             amount = payment.total
         params = self._prepare_capture(payment, amount=amount)

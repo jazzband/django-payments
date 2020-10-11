@@ -1,6 +1,7 @@
 import json
 from typing import Iterable
 from uuid import uuid4
+import logging
 
 from django.db import models
 from django.urls import reverse
@@ -9,6 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from . import FraudStatus, PaymentStatus, PurchasedItem
 from .core import provider_factory
 
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 class PaymentAttributeProxy:
 
@@ -84,11 +87,16 @@ class BasePayment(models.Model):
         '''
         Updates the Payment status and sends the status_changed signal.
         '''
-        from .signals import status_changed
-        self.status = status
-        self.message = message
-        self.save()
-        status_changed.send(sender=type(self), instance=self)
+        if  self.status != status:
+            from .signals import status_changed
+            self.status = status
+            self.message = message
+            self.save()
+            for receiver, result in status_changed.send_robust(sender=type(self), instance=self):
+                if isinstance(result, Exception):
+                    logger.critical(result)
+        else:
+            self.save()
 
     def change_fraud_status(self, status: PaymentStatus, message='', commit=True):
         available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
@@ -135,17 +143,21 @@ class BasePayment(models.Model):
     def get_process_url(self) -> str:
         return reverse('process_payment', kwargs={'token': self.token})
 
-    def capture(self, amount=None):
+    def capture(self, amount=None, final=True):
+        ''' Capture a fraction of the total amount of a payment. Return amount captured or None '''
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
                 'Only pre-authorized payments can be captured.')
         provider = provider_factory(self.variant)
-        amount = provider.capture(self, amount)
+        amount = provider.capture(self, amount, final)
         if amount:
-            self.captured_amount = amount
-            self.change_status(PaymentStatus.CONFIRMED)
+            self.captured_amount += amount
+            if final:
+                self.change_status(PaymentStatus.CONFIRMED)
+        return amount
 
     def release(self):
+        ''' Annilates captured payment '''
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError(
                 'Only pre-authorized payments can be released.')
@@ -154,6 +166,7 @@ class BasePayment(models.Model):
         self.change_status(PaymentStatus.REFUNDED)
 
     def refund(self, amount=None):
+        ''' Refund payment, return amount which was refunded or None '''
         if self.status != PaymentStatus.CONFIRMED:
             raise ValueError(
                 'Only charged payments can be refunded.')
@@ -161,12 +174,14 @@ class BasePayment(models.Model):
             if amount > self.captured_amount:
                 raise ValueError(
                     'Refund amount can not be greater then captured amount')
-            provider = provider_factory(self.variant)
-            amount = provider.refund(self, amount)
+        provider = provider_factory(self.variant)
+        amount = provider.refund(self, amount)
+        if amount:
             self.captured_amount -= amount
-        if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:
-            self.change_status(PaymentStatus.REFUNDED)
-        self.save()
+            if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:
+                self.change_status(PaymentStatus.REFUNDED)
+            self.save()
+        return amount
 
     @property
     def attrs(self):

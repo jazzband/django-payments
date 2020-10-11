@@ -34,7 +34,7 @@ class Payment(Mock):
         self.fraud_status = status
         self.fraud_message = message
 
-    def capture(self, amount=None):
+    def capture(self, amount=None, final=True):
         amount = amount or self.total
         self.captured_amount = amount
         self.change_status(PaymentStatus.CONFIRMED)
