@@ -1,51 +1,26 @@
-sudo: false
+dist: xenial
 language: python
 python:
   - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9-dev"
 env:
   - DJANGO="2.2"
   - DJANGO="3.0"
+  - DJANGO="3.1"
+  - DJANGO="master"
 matrix:
-  include:
-    - python: "3.7"
-      sudo: required
-      dist: xenial
-      env: DJANGO="2.2"
-    - python: "3.7"
-      sudo: required
-      dist: xenial
-      env: DJANGO="3.0"
-    - python: "3.7"
-      sudo: required
-      dist: xenial
-      env: DJANGO="master"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="2.2"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="3.0"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="3.1"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="master"
-    - python: "3.9"
-      sudo: required
-      dist: xenial
-      env: DJANGO="master"
   allow_failures:
+    - python: "3.6"
+      env: DJANGO="master"
     - python: "3.7"
       env: DJANGO="master"
     - python: "3.8"
       env: DJANGO="master"
-    - python: "3.9"
+    - python: "3.9-dev"
       env: DJANGO="master"
 after_success: codecov
 install: pip install tox-travis codecov
-script: tox
+script: tox -v
+
