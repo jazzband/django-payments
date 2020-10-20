@@ -1,51 +1,39 @@
-sudo: false
+dist: xenial
 language: python
 python:
-  - "3.6"
+- '3.6'
+- '3.7'
+- '3.8'
+- '3.9'
 env:
-  - DJANGO="2.2"
-  - DJANGO="3.0"
-matrix:
-  include:
-    - python: "3.7"
-      sudo: required
-      dist: xenial
-      env: DJANGO="2.2"
-    - python: "3.7"
-      sudo: required
-      dist: xenial
-      env: DJANGO="3.0"
-    - python: "3.7"
-      sudo: required
-      dist: xenial
-      env: DJANGO="master"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="2.2"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="3.0"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="3.1"
-    - python: "3.8"
-      sudo: required
-      dist: xenial
-      env: DJANGO="master"
-    - python: "3.9"
-      sudo: required
-      dist: xenial
-      env: DJANGO="master"
-  allow_failures:
-    - python: "3.7"
-      env: DJANGO="master"
-    - python: "3.8"
-      env: DJANGO="master"
-    - python: "3.9"
-      env: DJANGO="master"
+- DJANGO='2.2'
+- DJANGO='3.0'
+- DJANGO='3.1'
+- DJANGO='dev'
 after_success: codecov
-install: pip install tox-travis codecov
-script: tox
+install: travis_retry pip install tox-travis codecov
+script: tox -v
+jobs:
+  fast_finish: true
+  allow_failures:
+    - python: '3.7'
+      env: DJANGO='dev'
+    - python: '3.8'
+      env: DJANGO='dev'
+    - python: '3.9'
+      env: DJANGO='dev'
+  include:
+  - stage: deploy
+    if: tag IS present
+    python: 3.8
+    script: skip
+    deploy:
+      provider: pypi
+      user: jazzband
+      server: https://jazzband.co/projects/django-payments/upload
+      distributions: sdist bdist_wheel
+      password:
+        secure: ZTjLp04QMWEfvH0c0a3gRWPAo1xli2AtHUmb6Wl4GnL8PqSlTxvRfpHUn0edrw3ZM0yxWRsH505Ub2Ts/wvClhhnO7B5cSC/v/ZbhbSOpJq3s5la7o528PSwVOfPZ/jdk/xVPA63N5cdv6CdmggbhVjJho28Dh9VJjnwld3fyIE=
+      on:
+        tags: true
+        repo: jazzband/django-payments
