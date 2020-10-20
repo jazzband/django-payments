@@ -29,10 +29,17 @@ class TestProviderFactory(TestCase):
         self.assertRaises(ValueError, core.provider_factory, 'fake_provider')
 
 
+class Payment(BasePayment):
+    """
+    Just a concrete model class for testing since instantiating
+    an abstract model is deprecated in newer versions of Django.
+    """
+
+
 class TestBasePayment(TestCase):
 
     def test_payment_attributes(self):
-        payment = BasePayment(
+        payment = Payment(
             extra_data='{"attr1": "test1", "attr2": "test2"}')
         self.assertEqual(payment.attrs.attr1, "test1")
         self.assertEqual(payment.attrs.attr2, 'test2')
@@ -40,7 +47,7 @@ class TestBasePayment(TestCase):
         self.assertEqual(hasattr(payment.attrs, "attr7"), False)
 
     def test_capture_with_wrong_status(self):
-        payment = BasePayment(variant='default', status=PaymentStatus.WAITING)
+        payment = Payment(variant='default', status=PaymentStatus.WAITING)
         self.assertRaises(ValueError, payment.capture)
 
     @patch('payments.dummy.DummyProvider.capture')
@@ -50,7 +57,7 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_capture_method.return_value = amount
 
-            payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
+            payment = Payment(variant='default', status=PaymentStatus.PREAUTH)
             payment.capture(amount)
 
             self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
@@ -66,7 +73,7 @@ class TestBasePayment(TestCase):
 
             captured_amount = Decimal('100')
             status = PaymentStatus.PREAUTH
-            payment = BasePayment(variant='default', status=status,
+            payment = Payment(variant='default', status=status,
                                   captured_amount=captured_amount)
             payment.capture(amount)
 
@@ -75,7 +82,7 @@ class TestBasePayment(TestCase):
         self.assertEqual(mocked_capture_method.call_count, 1)
 
     def test_release_with_wrong_status(self):
-        payment = BasePayment(variant='default', status=PaymentStatus.WAITING)
+        payment = Payment(variant='default', status=PaymentStatus.WAITING)
         self.assertRaises(ValueError, payment.release)
 
     @patch('payments.dummy.DummyProvider.release')
@@ -83,17 +90,17 @@ class TestBasePayment(TestCase):
         with patch.object(BasePayment, 'save') as mocked_save_method:
             mocked_save_method.return_value = None
 
-            payment = BasePayment(variant='default', status=PaymentStatus.PREAUTH)
+            payment = Payment(variant='default', status=PaymentStatus.PREAUTH)
             payment.release()
             self.assertEqual(payment.status, PaymentStatus.REFUNDED)
         self.assertEqual(mocked_release_method.call_count, 1)
 
     def test_refund_with_wrong_status(self):
-        payment = BasePayment(variant='default', status=PaymentStatus.WAITING)
+        payment = Payment(variant='default', status=PaymentStatus.WAITING)
         self.assertRaises(ValueError, payment.refund)
 
     def test_refund_too_high_amount(self):
-        payment = BasePayment(variant='default', status=PaymentStatus.CONFIRMED,
+        payment = Payment(variant='default', status=PaymentStatus.CONFIRMED,
                               captured_amount=Decimal('100'))
         self.assertRaises(ValueError, payment.refund, Decimal('200'))
 
@@ -106,7 +113,7 @@ class TestBasePayment(TestCase):
 
             captured_amount = Decimal('200')
             status = PaymentStatus.CONFIRMED
-            payment = BasePayment(variant='default', status=status,
+            payment = Payment(variant='default', status=status,
                                   captured_amount=captured_amount)
             payment.refund(refund_amount)
             self.assertEqual(payment.status, status)
@@ -122,7 +129,7 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_refund_method.return_value = refund_amount
 
-            payment = BasePayment(variant='default', status=status,
+            payment = Payment(variant='default', status=status,
                                   captured_amount=captured_amount)
             payment.refund(refund_amount)
             self.assertEqual(payment.status, status)
@@ -137,7 +144,7 @@ class TestBasePayment(TestCase):
             mocked_save_method.return_value = None
             mocked_refund_method.return_value = refund_amount
 
-            payment = BasePayment(variant='default', status=PaymentStatus.CONFIRMED,
+            payment = Payment(variant='default', status=PaymentStatus.CONFIRMED,
                                   captured_amount=captured_amount)
             payment.refund(refund_amount)
             self.assertEqual(payment.status, PaymentStatus.REFUNDED)
