@@ -40,3 +40,4 @@ Additional payment providers
 * `BNL POSitivity (BNP Paribas) <https://github.com/esistgut/django-payments-bnlepos>`_
 * `Redsys (formerly known as Sermepa) <https://github.com/ajostergaard/django-payments-redsys>`_
 * `Razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay/>`_
+* `PayU <https://github.com/PetrDlouhy/django-payments-payu/>`_
