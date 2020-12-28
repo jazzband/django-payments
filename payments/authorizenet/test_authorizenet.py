@@ -39,7 +39,6 @@ class Payment(Mock):
         self.status = status
 
 
-
 class TestAuthorizeNetProvider(TestCase):
 
     def setUp(self):

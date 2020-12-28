@@ -30,7 +30,7 @@ class SofortProvider(BasicProvider):
         self.project_id = project_id
         self.endpoint = endpoint
         super().__init__(**kwargs)
-    
+
     def post_request(self, xml_request):
         response = requests.post(
             self.endpoint,
@@ -39,7 +39,7 @@ class SofortProvider(BasicProvider):
             auth=(self.client_id, self.secret))
         doc = xmltodict.parse(response.content)
         return doc, response
-        
+
     def get_form(self, payment, data=None):
         if not payment.id:
             payment.save()
@@ -65,7 +65,7 @@ class SofortProvider(BasicProvider):
                         doc['errors']['error']['message']))
 
     def process_data(self, payment, request):
-        if not 'trans' in request.GET:
+        if 'trans' not in request.GET:
             return HttpResponseForbidden('FAILED')
         transaction_id = request.GET.get('trans')
         payment.transaction_id = transaction_id
@@ -76,7 +76,7 @@ class SofortProvider(BasicProvider):
         try:
             # If there is a transaction and status returned,
             # the payment was successful
-            status = doc['transactions']['transaction_details']['status']
+            doc['transactions']['transaction_details']['status']
         except KeyError:
             # Payment Failed
             payment.change_status(PaymentStatus.REJECTED)

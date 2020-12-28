@@ -184,7 +184,7 @@ class CyberSourceProvider(BasicProvider):
         if response.reasonCode == ACCEPTED:
             payment.transaction_id = response.requestID
         elif response.reasonCode == TRANSACTION_SETTLED:
-                payment.change_status(PaymentStatus.CONFIRMED)
+            payment.change_status(PaymentStatus.CONFIRMED)
         else:
             payment.save()
             error = self._get_error_message(response.reasonCode)
@@ -367,7 +367,7 @@ class CyberSourceProvider(BasicProvider):
             return '003'
         elif card_type == 'discover':
             return '004'
-        elif card_type =='diners':
+        elif card_type == 'diners':
             return'005'
         elif card_type == 'jcb':
             return '007'
@@ -450,7 +450,7 @@ class CyberSourceProvider(BasicProvider):
         cc_data = request.GET.get('token')
         try:
             cc_data = signing.loads(cc_data)
-        except:
+        except Exception:
             return redirect(payment.get_failure_url())
         else:
             expiration = cc_data['expiration']
@@ -463,7 +463,7 @@ class CyberSourceProvider(BasicProvider):
         try:
             self._set_proper_payment_status_from_reason_code(
                 payment, response.reasonCode)
-        except PaymentError as e:
+        except PaymentError:
             pass
         if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return redirect(payment.get_success_url())

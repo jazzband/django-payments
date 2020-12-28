@@ -1,5 +1,6 @@
 from decimal import Decimal
 from unittest import TestCase
+from typing import Dict
 from django.core import signing
 from unittest.mock import patch, MagicMock, Mock
 
@@ -32,7 +33,7 @@ class Payment(Mock):
 
     class attrs:
         fingerprint_session_id = 'fake'
-        merchant_defined_data = {}
+        merchant_defined_data: Dict[str, str] = {}
 
     def get_process_url(self):
         return 'http://example.com'
@@ -69,7 +70,7 @@ class TestCybersourceProvider(TestCase):
         response.requestID = transaction_id
         response.reasonCode = 100
         mocked_request.return_value = response
-        with self.assertRaises(RedirectNeeded) as exc:
+        with self.assertRaises(RedirectNeeded):
             self.provider.get_form(
                 payment=self.payment, data=PROCESS_DATA)
         self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
@@ -133,7 +134,7 @@ class TestCybersourceProvider(TestCase):
         response.requestID = transaction_id
         response.reasonCode = ACCEPTED
         mocked_request.return_value = response
-        amount = self.provider.release(self.payment)
+        self.provider.release(self.payment)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
     @patch('payments.cybersource.redirect')

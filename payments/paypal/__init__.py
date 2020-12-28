@@ -142,12 +142,12 @@ class PaypalProvider(BasicProvider):
         last_auth_response = self.get_last_response(payment, is_auth=True)
         created = payment.created
         now = timezone.now()
-        if ('access_token' in last_auth_response and
-                'expires_in' in last_auth_response and
-                (created + timedelta(
+        if ('access_token' in last_auth_response
+                and 'expires_in' in last_auth_response
+                and (created + timedelta(
                     seconds=last_auth_response['expires_in'])) > now):
             return '{} {}'.format(last_auth_response['token_type'],
-                              last_auth_response['access_token'])
+                                  last_auth_response['access_token'])
         else:
             headers = {'Accept': 'application/json',
                        'Accept-Language': 'en_US'}
@@ -218,7 +218,7 @@ class PaypalProvider(BasicProvider):
     def process_data(self, payment, request):
         success_url = payment.get_success_url()
         failure_url = payment.get_failure_url()
-        if not 'token' in request.GET:
+        if 'token' not in request.GET:
             return HttpResponseForbidden('FAILED')
         payer_id = request.GET.get('PayerID')
         if not payer_id:
