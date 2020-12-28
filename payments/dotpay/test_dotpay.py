@@ -1,12 +1,15 @@
 import hashlib
 from unittest import TestCase
+from unittest.mock import MagicMock
+from unittest.mock import Mock
 
-from django.http import HttpResponse, HttpResponseForbidden
-from unittest.mock import MagicMock, Mock
+from django.http import HttpResponse
+from django.http import HttpResponseForbidden
 
-from .. import PaymentStatus
-from .forms import COMPLETED, REJECTED
 from . import DotpayProvider
+from .. import PaymentStatus
+from .forms import COMPLETED
+from .forms import REJECTED
 
 VARIANT = 'dotpay'
 PIN = '123'

@@ -1,11 +1,14 @@
-from decimal import Decimal
 import json
+from decimal import Decimal
 
 import stripe
 
-from .forms import ModalPaymentForm, PaymentForm
-from .. import RedirectNeeded, PaymentError, PaymentStatus
+from .. import PaymentError
+from .. import PaymentStatus
+from .. import RedirectNeeded
 from ..core import BasicProvider
+from .forms import ModalPaymentForm
+from .forms import PaymentForm
 
 
 class StripeProvider(BasicProvider):

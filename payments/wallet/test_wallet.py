@@ -1,13 +1,14 @@
 import time
 from decimal import Decimal
 from unittest import TestCase
-
-from django.http import HttpResponse, HttpResponseForbidden
-import jwt
 from unittest.mock import MagicMock
 
-from .. import PaymentStatus
+import jwt
+from django.http import HttpResponse
+from django.http import HttpResponseForbidden
+
 from . import GoogleWalletProvider
+from .. import PaymentStatus
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
 SELLER_ID = 'abc123'

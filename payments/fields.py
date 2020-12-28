@@ -1,14 +1,16 @@
+import re
 from calendar import monthrange
 from datetime import date
-import re
 
 from django import forms
 from django.core import validators
 from django.utils.translation import gettext_lazy as _
 
 from .core import get_credit_card_issuer
-from .utils import get_month_choices, get_year_choices
-from .widgets import CreditCardExpiryWidget, CreditCardNumberWidget
+from .utils import get_month_choices
+from .utils import get_year_choices
+from .widgets import CreditCardExpiryWidget
+from .widgets import CreditCardNumberWidget
 
 
 class CreditCardNumberField(forms.CharField):

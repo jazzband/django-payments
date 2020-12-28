@@ -3,9 +3,11 @@ from urllib.parse import urlencode
 
 from django.http import HttpResponseRedirect
 
-from .forms import DummyForm
-from .. import PaymentError, PaymentStatus, RedirectNeeded
+from .. import PaymentError
+from .. import PaymentStatus
+from .. import RedirectNeeded
 from ..core import BasicProvider
+from .forms import DummyForm
 
 
 class DummyProvider(BasicProvider):

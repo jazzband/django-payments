@@ -1,7 +1,8 @@
 import re
 from typing import Dict
 from typing import Tuple
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured

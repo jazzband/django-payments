@@ -1,16 +1,16 @@
-from collections import OrderedDict
-
 import hashlib
 import hmac
 import json
 import time
+from collections import OrderedDict
 
-from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpResponse, HttpResponseForbidden
 import requests
+from django.core.exceptions import ImproperlyConfigured
+from django.http import HttpResponse
+from django.http import HttpResponseForbidden
 
-from ..core import BasicProvider
 from .. import PaymentStatus
+from ..core import BasicProvider
 
 
 class CoinbaseProvider(BasicProvider):

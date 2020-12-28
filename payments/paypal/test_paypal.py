@@ -1,13 +1,19 @@
 import json
 from decimal import Decimal
 from unittest import TestCase
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock
+from unittest.mock import Mock
+from unittest.mock import patch
 
 from django.utils import timezone
 from requests import HTTPError
 
-from . import PaypalProvider, PaypalCardProvider
-from .. import PurchasedItem, RedirectNeeded, PaymentError, PaymentStatus
+from . import PaypalCardProvider
+from . import PaypalProvider
+from .. import PaymentError
+from .. import PaymentStatus
+from .. import PurchasedItem
+from .. import RedirectNeeded
 
 CLIENT_ID = 'abc123'
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'

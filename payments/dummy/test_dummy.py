@@ -4,7 +4,10 @@ from urllib.error import URLError
 from urllib.parse import urlencode
 
 from . import DummyProvider
-from .. import FraudStatus, PaymentError, PaymentStatus, RedirectNeeded
+from .. import FraudStatus
+from .. import PaymentError
+from .. import PaymentStatus
+from .. import RedirectNeeded
 
 VARIANT = 'dummy-3ds'
 
