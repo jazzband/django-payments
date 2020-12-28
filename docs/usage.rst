@@ -21,7 +21,7 @@ Making a payment
           billing_address_2='',
           billing_city='London',
           billing_postcode='NW1 6XE',
-          billing_country_code='UK',
+          billing_country_code='GB',
           billing_country_area='Greater London',
           customer_ip_address='127.0.0.1')
 
