@@ -70,7 +70,7 @@ class TestCybersourceProvider(TestCase):
         response.requestID = transaction_id
         response.reasonCode = 100
         mocked_request.return_value = response
-        with self.assertRaises(RedirectNeeded) as exc:
+        with self.assertRaises(RedirectNeeded):
             self.provider.get_form(
                 payment=self.payment, data=PROCESS_DATA)
         self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
@@ -134,7 +134,7 @@ class TestCybersourceProvider(TestCase):
         response.requestID = transaction_id
         response.reasonCode = ACCEPTED
         mocked_request.return_value = response
-        amount = self.provider.release(self.payment)
+        self.provider.release(self.payment)
         self.assertEqual(self.payment.transaction_id, transaction_id)
 
     @patch('payments.cybersource.redirect')

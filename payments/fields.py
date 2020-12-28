@@ -35,8 +35,8 @@ class CreditCardNumberField(forms.CharField):
             raise forms.ValidationError(self.error_messages['required'])
         if value and not self.cart_number_checksum_validation(self, value):
             raise forms.ValidationError(self.error_messages['invalid'])
-        if (value and not self.valid_types is None
-                and not card_type in self.valid_types):
+        if (value and self.valid_types is not None
+                and card_type not in self.valid_types):
             valid_types = map(issuer_name, self.valid_types)
             error_message = self.error_messages['invalid_type'] % {
                 'valid_types': ', '.join(valid_types)
@@ -58,7 +58,6 @@ class CreditCardNumberField(forms.CharField):
             digits.append(digit)
             even = not even
         return sum(digits) % 10 == 0 if digits else False
-
 
 
 class CreditCardExpiryField(forms.MultiValueField):

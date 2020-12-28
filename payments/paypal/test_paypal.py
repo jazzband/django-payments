@@ -83,7 +83,7 @@ class TestPaypalProvider(TestCase):
             post.json = data
             post.status_code = 200
             mocked_post.return_value = post
-            with self.assertRaises(RedirectNeeded) as exc:
+            with self.assertRaises(RedirectNeeded):
                 self.provider.get_form(payment=self.payment)
         self.assertEqual(self.payment.status, PaymentStatus.WAITING)
         self.assertEqual(self.payment.captured_amount, Decimal('0'))
@@ -305,7 +305,7 @@ class TestPaypalCardProvider(TestCase):
             post.status_code = 400
             post.json = data
             mocked_post.return_value = post
-            with self.assertRaises(PaymentError) as exc:
+            with self.assertRaises(PaymentError):
                 self.provider.get_form(
                     payment=self.payment, data=PROCESS_DATA)
         self.assertEqual(self.payment.status, PaymentStatus.ERROR)

@@ -23,7 +23,7 @@ class FingerprintInput(forms.CharField):
     widget = FingerprintWidget
     hidden_widget = FingerprintWidget
 
-    def __init__(self, org_id, merchant_id, fingerprint_url,  *args, **kwargs):
+    def __init__(self, org_id, merchant_id, fingerprint_url, *args, **kwargs):
         self.org_id = org_id
         self.merchant_id = merchant_id
         self.fingerprint_url = fingerprint_url

@@ -150,5 +150,5 @@ class TestDummy3DSProvider(TestCase):
 
     def test_provider_switches_payment_status_on_get_form(self):
         provider = DummyProvider()
-        form = provider.get_form(self.payment, data={})
+        provider.get_form(self.payment, data={})
         self.assertEqual(self.payment.status, PaymentStatus.INPUT)

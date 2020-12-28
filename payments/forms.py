@@ -41,7 +41,7 @@ class CreditCardPaymentForm(PaymentForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(
-            hidden_inputs=False, *args,  **kwargs)
+            hidden_inputs=False, *args, **kwargs)
         if hasattr(self, 'VALID_TYPES'):
             self.fields['number'].valid_types = self.VALID_TYPES
 

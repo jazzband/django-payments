@@ -74,7 +74,7 @@ class TestBasePayment(TestCase):
             captured_amount = Decimal('100')
             status = PaymentStatus.PREAUTH
             payment = Payment(variant='default', status=status,
-                                  captured_amount=captured_amount)
+                              captured_amount=captured_amount)
             payment.capture(amount)
 
             self.assertEqual(payment.status, status)
@@ -101,7 +101,7 @@ class TestBasePayment(TestCase):
 
     def test_refund_too_high_amount(self):
         payment = Payment(variant='default', status=PaymentStatus.CONFIRMED,
-                              captured_amount=Decimal('100'))
+                          captured_amount=Decimal('100'))
         self.assertRaises(ValueError, payment.refund, Decimal('200'))
 
     @patch('payments.dummy.DummyProvider.refund')
@@ -114,7 +114,7 @@ class TestBasePayment(TestCase):
             captured_amount = Decimal('200')
             status = PaymentStatus.CONFIRMED
             payment = Payment(variant='default', status=status,
-                                  captured_amount=captured_amount)
+                              captured_amount=captured_amount)
             payment.refund(refund_amount)
             self.assertEqual(payment.status, status)
             self.assertEqual(payment.captured_amount, captured_amount)
@@ -130,7 +130,7 @@ class TestBasePayment(TestCase):
             mocked_refund_method.return_value = refund_amount
 
             payment = Payment(variant='default', status=status,
-                                  captured_amount=captured_amount)
+                              captured_amount=captured_amount)
             payment.refund(refund_amount)
             self.assertEqual(payment.status, status)
             self.assertEqual(payment.captured_amount, Decimal('100'))
@@ -145,7 +145,7 @@ class TestBasePayment(TestCase):
             mocked_refund_method.return_value = refund_amount
 
             payment = Payment(variant='default', status=PaymentStatus.CONFIRMED,
-                                  captured_amount=captured_amount)
+                              captured_amount=captured_amount)
             payment.refund(refund_amount)
             self.assertEqual(payment.status, PaymentStatus.REFUNDED)
             self.assertEqual(payment.captured_amount, Decimal('0'))
@@ -194,6 +194,7 @@ class TestPaymentForm(TestCase):
         self.assertEqual(len(form.fields), len(data))
         self.assertEqual(form.fields['field1'].initial, 'value1')
 
+
 class TestCardIssuer(TestCase):
     def test_mastercard(self):
         self.assertEqual(core.get_credit_card_issuer("2720999018275485"), ('mastercard', 'MasterCard'))
@@ -203,12 +204,12 @@ class TestCardIssuer(TestCase):
     def test_visa(self):
         self.assertEqual(core.get_credit_card_issuer("4929299255922609"), ('visa', 'VISA'))
         self.assertEqual(core.get_credit_card_issuer("4539883983691685"), ('visa', 'VISA'))
-        self.assertEqual(core.get_credit_card_issuer("4916396455393611281"), ('visa', 'VISA'),"19 digit Visa Card")
+        self.assertEqual(core.get_credit_card_issuer("4916396455393611281"), ('visa', 'VISA'), "19 digit Visa Card")
 
     def test_discover(self):
         self.assertEqual(core.get_credit_card_issuer("6011281400356614"), ('discover', 'Discover'))
         self.assertEqual(core.get_credit_card_issuer("6011223438090674"), ('discover', 'Discover'))
-        self.assertEqual(core.get_credit_card_issuer("6011509478386387430"), ('discover', 'Discover'),"19 digit Discover Card")
+        self.assertEqual(core.get_credit_card_issuer("6011509478386387430"), ('discover', 'Discover'), "19 digit Discover Card")
 
     def test_amex(self):
         self.assertEqual(core.get_credit_card_issuer("341841172626538"), ('amex', 'American Express'))

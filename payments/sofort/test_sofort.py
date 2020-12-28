@@ -50,7 +50,7 @@ class TestSofortProvider(TestCase):
         mocked_parser.return_value = {
             'new_transaction': {
                 'payment_url': 'http://payment.com'}}
-        with self.assertRaises(RedirectNeeded) as exc:
+        with self.assertRaises(RedirectNeeded):
             self.provider.get_form(self.payment)
 
     @patch('xmltodict.parse')
