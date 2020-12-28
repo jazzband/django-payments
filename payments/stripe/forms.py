@@ -1,14 +1,21 @@
 import json
+
 import stripe
 from django import forms
 from django.utils.translation import ugettext as _
 
-from .. import FraudStatus, PaymentStatus, RedirectNeeded
-from ..forms import PaymentForm as BasePaymentForm, CreditCardPaymentFormWithName
-from ..utils import get_month_choices, get_year_choices
-from ..widgets import (
-    SensitiveTextInput, SensitiveSelect, CreditCardExpiryWidget)
-from .widgets import StripeCheckoutWidget, StripeWidget
+from .. import FraudStatus
+from .. import PaymentStatus
+from .. import RedirectNeeded
+from ..forms import CreditCardPaymentFormWithName
+from ..forms import PaymentForm as BasePaymentForm
+from ..utils import get_month_choices
+from ..utils import get_year_choices
+from ..widgets import CreditCardExpiryWidget
+from ..widgets import SensitiveSelect
+from ..widgets import SensitiveTextInput
+from .widgets import StripeCheckoutWidget
+from .widgets import StripeWidget
 
 
 class StripeFormMixin:

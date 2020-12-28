@@ -1,8 +1,8 @@
 from requests.exceptions import HTTPError
 
-from ..forms import CreditCardPaymentFormWithName
-from ..core import get_credit_card_issuer
 from .. import PaymentStatus
+from ..core import get_credit_card_issuer
+from ..forms import CreditCardPaymentFormWithName
 
 
 class PaymentForm(CreditCardPaymentFormWithName):

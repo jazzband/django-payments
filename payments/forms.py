@@ -3,8 +3,10 @@ from collections import OrderedDict
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from .fields import (CreditCardNumberField, CreditCardExpiryField,
-                     CreditCardVerificationField, CreditCardNameField)
+from .fields import CreditCardExpiryField
+from .fields import CreditCardNameField
+from .fields import CreditCardNumberField
+from .fields import CreditCardVerificationField
 
 
 class PaymentForm(forms.Form):

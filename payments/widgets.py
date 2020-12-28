@@ -1,6 +1,8 @@
 import re
 
-from django.forms.widgets import TextInput, MultiWidget, Select
+from django.forms.widgets import MultiWidget
+from django.forms.widgets import Select
+from django.forms.widgets import TextInput
 
 
 class CreditCardNumberWidget(TextInput):

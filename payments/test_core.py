@@ -1,11 +1,13 @@
 from decimal import Decimal
 from unittest import TestCase
-from unittest.mock import patch, NonCallableMock
+from unittest.mock import NonCallableMock
+from unittest.mock import patch
 
-from payments import core
-from .forms import CreditCardPaymentFormWithName, PaymentForm
-from .models import BasePayment
 from . import PaymentStatus
+from .forms import CreditCardPaymentFormWithName
+from .forms import PaymentForm
+from .models import BasePayment
+from payments import core
 
 
 class TestHelpers(TestCase):

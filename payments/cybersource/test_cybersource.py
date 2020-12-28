@@ -1,12 +1,19 @@
 from decimal import Decimal
-from unittest import TestCase
 from typing import Dict
-from django.core import signing
-from unittest.mock import patch, MagicMock, Mock
+from unittest import TestCase
+from unittest.mock import MagicMock
+from unittest.mock import Mock
+from unittest.mock import patch
 
-from . import CyberSourceProvider, AUTHENTICATE_REQUIRED, ACCEPTED, \
-    TRANSACTION_SETTLED
-from .. import PaymentStatus, PurchasedItem, RedirectNeeded
+from django.core import signing
+
+from . import ACCEPTED
+from . import AUTHENTICATE_REQUIRED
+from . import CyberSourceProvider
+from . import TRANSACTION_SETTLED
+from .. import PaymentStatus
+from .. import PurchasedItem
+from .. import RedirectNeeded
 
 MERCHANT_ID = 'abcd1234'
 PASSWORD = '1234abdd1234abcd'

@@ -1,18 +1,22 @@
-from datetime import timedelta
-from decimal import Decimal, ROUND_HALF_UP
-from functools import wraps
 import json
 import logging
+from datetime import timedelta
+from decimal import Decimal
+from decimal import ROUND_HALF_UP
+from functools import wraps
 
+import requests
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import timezone
-import requests
 from requests.exceptions import HTTPError
 
+from .. import PaymentError
+from .. import PaymentStatus
+from .. import RedirectNeeded
+from ..core import BasicProvider
+from ..core import get_credit_card_issuer
 from .forms import PaymentForm
-from .. import PaymentError, PaymentStatus, RedirectNeeded
-from ..core import BasicProvider, get_credit_card_issuer
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)

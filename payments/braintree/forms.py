@@ -1,7 +1,7 @@
 import braintree
 
-from ..forms import CreditCardPaymentFormWithName
 from .. import PaymentStatus
+from ..forms import CreditCardPaymentFormWithName
 
 
 class BraintreePaymentForm(CreditCardPaymentFormWithName):

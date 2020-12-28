@@ -1,10 +1,11 @@
+import requests
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponseForbidden
-import requests
 
-from .forms import PaymentForm
-from .. import PaymentStatus, RedirectNeeded
+from .. import PaymentStatus
+from .. import RedirectNeeded
 from ..core import BasicProvider
+from .forms import PaymentForm
 
 
 class AuthorizeNetProvider(BasicProvider):

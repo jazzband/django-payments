@@ -2,12 +2,14 @@ import hashlib
 import json
 from decimal import Decimal
 from unittest import TestCase
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-from django.http import HttpResponse, HttpResponseForbidden
-from unittest.mock import MagicMock, patch
+from django.http import HttpResponse
+from django.http import HttpResponseForbidden
 
-from .. import PaymentStatus
 from . import CoinbaseProvider
+from .. import PaymentStatus
 
 PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
 KEY = 'abc123'

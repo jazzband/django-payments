@@ -1,5 +1,7 @@
 from unittest import TestCase
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock
+from unittest.mock import Mock
+from unittest.mock import patch
 
 from . import SagepayProvider
 from .. import PaymentStatus
