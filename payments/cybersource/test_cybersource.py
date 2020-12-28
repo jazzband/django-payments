@@ -1,5 +1,6 @@
 from decimal import Decimal
 from unittest import TestCase
+from typing import Dict
 from django.core import signing
 from unittest.mock import patch, MagicMock, Mock
 
@@ -32,7 +33,7 @@ class Payment(Mock):
 
     class attrs:
         fingerprint_session_id = 'fake'
-        merchant_defined_data = {}
+        merchant_defined_data: Dict[str, str] = {}
 
     def get_process_url(self):
         return 'http://example.com'
