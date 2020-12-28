@@ -214,5 +214,3 @@ class TestCardIssuer(TestCase):
         self.assertEqual(core.get_credit_card_issuer("341841172626538"), ('amex', 'American Express'))
         self.assertEqual(core.get_credit_card_issuer("348710065929999"), ('amex', 'American Express'))
         self.assertEqual(core.get_credit_card_issuer("341473920579841"), ('amex', 'American Express'))
-
-    

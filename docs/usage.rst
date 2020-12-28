@@ -6,7 +6,7 @@ Making a payment
       from decimal import Decimal
 
       from payments import get_payment_model
-   
+
       Payment = get_payment_model()
       payment = Payment.objects.create(
           variant='default',  # this is the variant from PAYMENT_VARIANTS

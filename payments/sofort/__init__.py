@@ -30,7 +30,7 @@ class SofortProvider(BasicProvider):
         self.project_id = project_id
         self.endpoint = endpoint
         super().__init__(**kwargs)
-    
+
     def post_request(self, xml_request):
         response = requests.post(
             self.endpoint,
@@ -39,7 +39,7 @@ class SofortProvider(BasicProvider):
             auth=(self.client_id, self.secret))
         doc = xmltodict.parse(response.content)
         return doc, response
-        
+
     def get_form(self, payment, data=None):
         if not payment.id:
             payment.save()

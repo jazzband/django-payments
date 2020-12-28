@@ -998,7 +998,7 @@
             <xsd:element name="foreignAmount" type="tns:amount" minOccurs="0"/>
             <xsd:element name="foreignCurrency" type="xsd:string" minOccurs="0"/>
             <xsd:element name="originalAmount" type="tns:amount" minOccurs="0"/>
-            <xsd:element name="originalCurrency" type="xsd:string" minOccurs="0"/>              
+            <xsd:element name="originalCurrency" type="xsd:string" minOccurs="0"/>
             <xsd:element name="exchangeRate" type="tns:amount" minOccurs="0"/>
             <xsd:element name="exchangeRateTimeStamp" type="xsd:string" minOccurs="0"/>
             <xsd:element name="additionalAmountType0" type="xsd:string" minOccurs="0"/>
@@ -1491,7 +1491,7 @@
     <xsd:complexType name="DCC">
         <xsd:sequence>
             <xsd:element name="dccIndicator" type="xsd:integer" minOccurs="0"/>
-            <xsd:element name="referenceNumber" type="xsd:string" minOccurs="0"/>           
+            <xsd:element name="referenceNumber" type="xsd:string" minOccurs="0"/>
         </xsd:sequence>
     </xsd:complexType>
 
@@ -1599,7 +1599,7 @@
     </xsd:complexType>
      <xsd:complexType name="ServiceFeeCalculateReply">
      <xsd:sequence>
-        <xsd:element name="reasonCode" type="xsd:integer" /> 
+        <xsd:element name="reasonCode" type="xsd:integer" />
         <xsd:element name="amount" type="tns:amount" minOccurs="0" />
         <xsd:element name="requestDateTime" type="tns:dateTime" minOccurs="0" />
      </xsd:sequence>
@@ -2740,10 +2740,10 @@
             <xsd:element name="hostedDataRetrieveReply" type="tns:HostedDataRetrieveReply" minOccurs="0" />
             <xsd:element name="salesSlipNumber" type="xsd:string" minOccurs="0" />
             <xsd:element name="additionalProcessorResponse" type="xsd:string" minOccurs="0" />
-            <xsd:element name="jpo" type="tns:JPO" minOccurs="0" />            
+            <xsd:element name="jpo" type="tns:JPO" minOccurs="0" />
             <xsd:element name="card" type="tns:Card" minOccurs="0" />
             <xsd:element name="paymentNetworkToken" type="tns:PaymentNetworkToken" minOccurs="0"/>
-            <xsd:element name="reserved" type="tns:ReplyReserved" minOccurs="0"/>			
+            <xsd:element name="reserved" type="tns:ReplyReserved" minOccurs="0"/>
             <!--ReplyReserved should always be the last element in the xsd, new elements should be added before this-->
         </xsd:sequence>
     </xsd:complexType>
@@ -3007,7 +3007,7 @@
             <xsd:sequence>
                 <xsd:element name="merchantDescriptor" type="xsd:string" minOccurs="0"/>
                 <xsd:element name="merchantDescriptorContact" type="xsd:string" minOccurs="0"/>
-                <xsd:element name="merchantDescriptorState" type="xsd:string" minOccurs="0"/>    
+                <xsd:element name="merchantDescriptorState" type="xsd:string" minOccurs="0"/>
             </xsd:sequence>
         </xsd:complexType>
     <!-- EMV transaction data request/reply start -->
