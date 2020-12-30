@@ -1,10 +1,9 @@
-.*
 !.coveragerc
 !.gitignore
-!.travis.yml
 *.swp
 *.py[co]
 *~
 *\.egg*
 docs/_build
 payments/version.py
+coverage.xml
