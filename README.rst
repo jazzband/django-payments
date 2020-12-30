@@ -5,9 +5,9 @@ django-payments
   :target: https://jazzband.co/
   :alt: Jazzband
 
-.. image:: https://travis-ci.com/jazzband/django-payments.svg?branch=master
-  :target: https://travis-ci.com/jazzband/django-payments
-  :alt: build status
+.. image:: https://github.com/jazzband/django-payments/workflows/Test/badge.svg
+   :target: https://github.com/jazzband/django-payments/actions
+   :alt: GitHub Actions
 
 .. image:: https://codecov.io/gh/jazzband/django-payments/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/jazzband/django-payments
