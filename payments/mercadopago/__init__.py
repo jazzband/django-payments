@@ -135,7 +135,7 @@ class MercadoPagoProvider(BasicProvider):
 
     def process_callback(self, payment, request):
         collection_id = request.GET.get("collection_id", None)
-        if not collection_id.isdigit():
+        if not collection_id or not collection_id.isdigit():
             payment.change_status(PaymentStatus.ERROR)
             return redirect(payment.get_failure_url())
 
