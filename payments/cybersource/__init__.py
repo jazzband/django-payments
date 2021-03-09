@@ -5,7 +5,7 @@ import suds.client
 import suds.wsse
 from django.core import signing
 from django.shortcuts import redirect
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from suds.sax.element import Element
 from suds.sudsobject import Object
 

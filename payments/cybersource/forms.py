@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from django import forms
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from .. import PaymentError
 from ..forms import CreditCardPaymentFormWithName

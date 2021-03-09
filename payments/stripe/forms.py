@@ -2,7 +2,7 @@ import json
 
 import stripe
 from django import forms
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from .. import FraudStatus
 from .. import PaymentStatus
