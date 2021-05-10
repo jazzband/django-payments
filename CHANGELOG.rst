@@ -4,6 +4,11 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v0.14.1
+-------
+
+- Added support for Django 3.2.
+
 v0.14.0
 -------
 
