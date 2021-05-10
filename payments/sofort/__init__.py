@@ -14,7 +14,7 @@ from ..core import BasicProvider
 
 
 class SofortProvider(BasicProvider):
-    """Payment provider for Google Wallet.
+    """Payment provider for Sofort.
 
     This backend implements payments using `sofort.com <https://www.sofort.com/>`_ API.
 
