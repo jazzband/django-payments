@@ -1,6 +1,7 @@
 import json
 from typing import Iterable
 from uuid import uuid4
+from decimal import Decimal
 
 from django.db import models
 from django.urls import reverse
@@ -58,10 +59,10 @@ class BasePayment(models.Model):
     #: Currency code (may be provider-specific)
     currency = models.CharField(max_length=10)
     #: Total amount (gross)
-    total = models.DecimalField(max_digits=9, decimal_places=2, default='0.0')
-    delivery = models.DecimalField(
-        max_digits=9, decimal_places=2, default='0.0')
-    tax = models.DecimalField(max_digits=9, decimal_places=2, default='0.0')
+    total = models.DecimalField(max_digits=20, decimal_places=8, default=Decimal('0.0'))
+    delivery = models.DecimalField(max_digits=20,
+        decimal_places=8, default=Decimal('0.0'))
+    tax = models.DecimalField(max_digits=20, decimal_places=8, default=Decimal('0.0'))
     description = models.TextField(blank=True, default='')
     billing_first_name = models.CharField(max_length=256, blank=True)
     billing_last_name = models.CharField(max_length=256, blank=True)
@@ -77,7 +78,7 @@ class BasePayment(models.Model):
     message = models.TextField(blank=True, default='')
     token = models.CharField(max_length=36, blank=True, default='')
     captured_amount = models.DecimalField(
-        max_digits=9, decimal_places=2, default='0.0')
+        max_digits=20, decimal_places=8, default=Decimal('0.0'))
 
     class Meta:
         abstract = True
