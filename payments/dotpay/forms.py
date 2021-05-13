@@ -5,12 +5,12 @@ from django import forms
 from .. import PaymentStatus
 
 
-NEW = 'new'
-PROCESSING = 'processing'
-COMPLETED = 'completed'
-REJECTED = 'rejected'
-PROCESSING_REALIZATION_WAITING = 'processing_realization_waiting'
-PROCESSING_REALIZATION = 'processing_realization'
+NEW = "new"
+PROCESSING = "processing"
+COMPLETED = "completed"
+REJECTED = "rejected"
+PROCESSING_REALIZATION_WAITING = "processing_realization_waiting"
+PROCESSING_REALIZATION = "processing_realization"
 
 
 class ProcessPaymentForm(forms.Form):
@@ -53,45 +53,46 @@ class ProcessPaymentForm(forms.Form):
         if not self.errors:
             key_vars = (
                 self.pin,
-                cleaned_data.get('id', ''),
-                cleaned_data.get('operation_number', ''),
-                cleaned_data.get('operation_type', ''),
-                cleaned_data.get('operation_status', ''),
-                cleaned_data.get('operation_amount', ''),
-                cleaned_data.get('operation_currency', ''),
-                cleaned_data.get('operation_withdrawal_amount', ''),
-                cleaned_data.get('operation_commission_amount', ''),
-                cleaned_data.get('is_completed', ''),
-                cleaned_data.get('operation_original_amount', ''),
-                cleaned_data.get('operation_original_currency', ''),
-                cleaned_data.get('operation_datetime', ''),
-                cleaned_data.get('operation_related_number', ''),
-                cleaned_data.get('control', ''),
-                cleaned_data.get('description', ''),
-                cleaned_data.get('email', ''),
-                cleaned_data.get('p_info', ''),
-                cleaned_data.get('p_email', ''),
-                cleaned_data.get('credit_card_issuer_identification_number', ''),
-                cleaned_data.get('credit_card_masked_number', ''),
-                cleaned_data.get('credit_card_brand_codename', ''),
-                cleaned_data.get('credit_card_brand_code', ''),
-                cleaned_data.get('credit_card_id', ''),
-                cleaned_data.get('channel', ''),
-                cleaned_data.get('channel_country', ''),
-                cleaned_data.get('geoip_country', ''))
-            key = ''.join(key_vars)
+                cleaned_data.get("id", ""),
+                cleaned_data.get("operation_number", ""),
+                cleaned_data.get("operation_type", ""),
+                cleaned_data.get("operation_status", ""),
+                cleaned_data.get("operation_amount", ""),
+                cleaned_data.get("operation_currency", ""),
+                cleaned_data.get("operation_withdrawal_amount", ""),
+                cleaned_data.get("operation_commission_amount", ""),
+                cleaned_data.get("is_completed", ""),
+                cleaned_data.get("operation_original_amount", ""),
+                cleaned_data.get("operation_original_currency", ""),
+                cleaned_data.get("operation_datetime", ""),
+                cleaned_data.get("operation_related_number", ""),
+                cleaned_data.get("control", ""),
+                cleaned_data.get("description", ""),
+                cleaned_data.get("email", ""),
+                cleaned_data.get("p_info", ""),
+                cleaned_data.get("p_email", ""),
+                cleaned_data.get("credit_card_issuer_identification_number", ""),
+                cleaned_data.get("credit_card_masked_number", ""),
+                cleaned_data.get("credit_card_brand_codename", ""),
+                cleaned_data.get("credit_card_brand_code", ""),
+                cleaned_data.get("credit_card_id", ""),
+                cleaned_data.get("channel", ""),
+                cleaned_data.get("channel_country", ""),
+                cleaned_data.get("geoip_country", ""),
+            )
+            key = "".join(key_vars)
             sha256 = hashlib.sha256()
-            sha256.update(key.encode('utf-8'))
+            sha256.update(key.encode("utf-8"))
             key_hash = sha256.hexdigest()
-            if key_hash != self.cleaned_data['signature']:
-                self._errors['signature'] = self.error_class(['Bad hash'])
-            if int(cleaned_data['control']) != self.payment.id:
-                self._errors['control'] = self.error_class(['Bad payment id'])
+            if key_hash != self.cleaned_data["signature"]:
+                self._errors["signature"] = self.error_class(["Bad hash"])
+            if int(cleaned_data["control"]) != self.payment.id:
+                self._errors["control"] = self.error_class(["Bad payment id"])
         return cleaned_data
 
     def save(self, *args, **kwargs):
-        status = self.cleaned_data['operation_status']
-        self.payment.transaction_id = self.cleaned_data['operation_number']
+        status = self.cleaned_data["operation_status"]
+        self.payment.transaction_id = self.cleaned_data["operation_number"]
         self.payment.save()
         if status == COMPLETED:
             self.payment.captured_amount = self.payment.total

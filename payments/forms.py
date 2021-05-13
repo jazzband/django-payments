@@ -10,13 +10,22 @@ from .fields import CreditCardVerificationField
 
 
 class PaymentForm(forms.Form):
-    '''
+    """
     Payment form, suitable for Django templates.
 
     When displaying the form remember to use *action* and *method*.
-    '''
-    def __init__(self, data=None, action='', method='post', provider=None,
-                 payment=None, hidden_inputs=True, autosubmit=False):
+    """
+
+    def __init__(
+        self,
+        data=None,
+        action="",
+        method="post",
+        provider=None,
+        payment=None,
+        hidden_inputs=True,
+        autosubmit=False,
+    ):
         if hidden_inputs and data is not None:
             super().__init__(auto_id=False)
             for key, val in data.items():
@@ -33,28 +42,30 @@ class PaymentForm(forms.Form):
 
 class CreditCardPaymentForm(PaymentForm):
 
-    number = CreditCardNumberField(label=_('Card Number'), max_length=32,
-                                   required=True)
+    number = CreditCardNumberField(label=_("Card Number"), max_length=32, required=True)
     expiration = CreditCardExpiryField()
     cvv2 = CreditCardVerificationField(
-        label=_('CVV2 Security Number'), required=False, help_text=_(
-            'Last three digits located on the back of your card.'
-            ' For American Express the four digits found on the front side.'))
+        label=_("CVV2 Security Number"),
+        required=False,
+        help_text=_(
+            "Last three digits located on the back of your card."
+            " For American Express the four digits found on the front side."
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            hidden_inputs=False, *args, **kwargs)
-        if hasattr(self, 'VALID_TYPES'):
-            self.fields['number'].valid_types = self.VALID_TYPES
+        super().__init__(hidden_inputs=False, *args, **kwargs)
+        if hasattr(self, "VALID_TYPES"):
+            self.fields["number"].valid_types = self.VALID_TYPES
 
 
 class CreditCardPaymentFormWithName(CreditCardPaymentForm):
 
-    name = CreditCardNameField(label=_('Name on Credit Card'), max_length=128)
+    name = CreditCardNameField(label=_("Name on Credit Card"), max_length=128)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        name_field = self.fields.pop('name')
-        fields = OrderedDict({'name': name_field})
+        name_field = self.fields.pop("name")
+        fields = OrderedDict({"name": name_field})
         fields.update(self.fields)
         self.fields = fields

@@ -11,23 +11,26 @@ from django.http import HttpResponseForbidden
 from . import CoinbaseProvider
 from .. import PaymentStatus
 
-PAYMENT_TOKEN = '5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6'
-KEY = 'abc123'
-SECRET = '123abc'
-VARIANT = 'coinbase'
+PAYMENT_TOKEN = "5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6"
+KEY = "abc123"
+SECRET = "123abc"
+VARIANT = "coinbase"
 
 COINBASE_REQUEST = {
-    'order': {
-        'transaction': {'id': '123456'},
-        'custom': hashlib.md5(('coinbase-{}-{}'.format(
-            PAYMENT_TOKEN, KEY)).encode('utf-8')).hexdigest()}}
+    "order": {
+        "transaction": {"id": "123456"},
+        "custom": hashlib.md5(
+            ("coinbase-{}-{}".format(PAYMENT_TOKEN, KEY)).encode("utf-8")
+        ).hexdigest(),
+    }
+}
 
 
 class Payment:
 
     id = 1
-    description = 'payment'
-    currency = 'BTC'
+    description = "payment"
+    currency = "BTC"
     total = Decimal(100)
     status = PaymentStatus.WAITING
     token = PAYMENT_TOKEN
@@ -37,10 +40,10 @@ class Payment:
         self.status = status
 
     def get_failure_url(self):
-        return 'http://cancel.com'
+        return "http://cancel.com"
 
     def get_process_url(self):
-        return 'http://example.com'
+        return "http://example.com"
 
     def get_purchased_items(self):
         return []
@@ -49,11 +52,10 @@ class Payment:
         return self
 
     def get_success_url(self):
-        return 'http://success.com'
+        return "http://success.com"
 
 
 class TestCoinbaseProvider(TestCase):
-
     def setUp(self):
         self.payment = Payment()
         self.provider = CoinbaseProvider(key=KEY, secret=SECRET)
@@ -73,7 +75,7 @@ class TestCoinbaseProvider(TestCase):
         CoinbaseProvider.process_data() checks request custom token
         """
         data = dict(COINBASE_REQUEST)
-        data.update({'order': {'custom': 'fake'}})
+        data.update({"order": {"custom": "fake"}})
         request = MagicMock()
         request.body = json.dumps(data)
         response = self.provider.process_data(self.payment, request)
@@ -84,19 +86,20 @@ class TestCoinbaseProvider(TestCase):
         CoinbaseProvider.process_data() checks request body
         """
         request = MagicMock()
-        request.POST = {'id': '1234'}
+        request.POST = {"id": "1234"}
         response = self.provider.process_data(self.payment, request)
         self.assertEqual(type(response), HttpResponseForbidden)
 
-    @patch('time.time')
-    @patch('requests.post')
+    @patch("time.time")
+    @patch("requests.post")
     def test_provider_returns_checkout_url(self, mocked_post, mocked_time):
-        code = '123abc'
-        signature = '21d476eff7b2e6cccdfe6deb0c097ba638d5de7e775b303e' \
-                    '4fdb2f8bfeff72e2'
-        url = 'https://sandbox.coinbase.com/checkouts/%s' % code
+        code = "123abc"
+        signature = (
+            "21d476eff7b2e6cccdfe6deb0c097ba638d5de7e775b303e" "4fdb2f8bfeff72e2"
+        )
+        url = "https://sandbox.coinbase.com/checkouts/%s" % code
         post = MagicMock()
-        post.json = MagicMock(return_value={'button': {'code': code}})
+        post.json = MagicMock(return_value={"button": {"code": code}})
         post.status_code = 200
         mocked_post.return_value = post
         mocked_time.return_value = 1
@@ -104,4 +107,5 @@ class TestCoinbaseProvider(TestCase):
         form = self.provider.get_form(self.payment)
         self.assertEqual(form.action, url)
         self.assertEqual(
-            mocked_post.call_args[1]['headers']['ACCESS_SIGNATURE'], signature)
+            mocked_post.call_args[1]["headers"]["ACCESS_SIGNATURE"], signature
+        )
