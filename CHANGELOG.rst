@@ -10,6 +10,9 @@ v0.15.0
 - Support for "Google Wallet" has been dropped. It seems to be dead upstream,
   and all existing links to the documentation and to the JS scripts are broken.
 - Added support for Django 3.2.
+- Dependencies that are only required for a specific provider have been moved
+  to extra (optional) dependencies. See the installation instructions for
+  further details.
 
 v0.14.0
 -------

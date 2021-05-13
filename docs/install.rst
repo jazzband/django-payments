@@ -7,6 +7,14 @@ Installation
 
       $ pip install django-payments
 
+Note than some providers have additional dependencies. For example, if using
+stripe, you should run:
+
+
+   .. code-block:: bash
+
+      $ pip install "django-payments[stripe]"
+
 #. Add ``payments`` to your ``INSTALLED_APPS``.
 
 #. Add the callback processor to your URL router::
