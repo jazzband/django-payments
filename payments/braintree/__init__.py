@@ -20,8 +20,7 @@ class BraintreeProvider(BasicProvider):
     :param sandbox: Whether to use a sandbox environment for testing
     """
 
-    def __init__(self, merchant_id, public_key, private_key, sandbox=True,
-                 **kwargs):
+    def __init__(self, merchant_id, public_key, private_key, sandbox=True, **kwargs):
         self.merchant_id = merchant_id
         self.public_key = public_key
         self.private_key = private_key
@@ -31,12 +30,14 @@ class BraintreeProvider(BasicProvider):
             environment = braintree.Environment.Production
 
         braintree.Configuration.configure(
-            environment, merchant_id=self.merchant_id,
-            public_key=self.public_key, private_key=self.private_key)
+            environment,
+            merchant_id=self.merchant_id,
+            public_key=self.public_key,
+            private_key=self.private_key,
+        )
         super().__init__(**kwargs)
         if not self._capture:
-            raise ImproperlyConfigured(
-                'Braintree does not support pre-authorization.')
+            raise ImproperlyConfigured("Braintree does not support pre-authorization.")
 
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:

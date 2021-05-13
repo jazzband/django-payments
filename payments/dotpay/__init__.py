@@ -7,7 +7,7 @@ from django.http import HttpResponseForbidden
 from ..core import BasicProvider
 from .forms import ProcessPaymentForm
 
-CENTS = Decimal('0.01')
+CENTS = Decimal("0.01")
 
 
 class DotpayProvider(BasicProvider):
@@ -30,12 +30,22 @@ class DotpayProvider(BasicProvider):
     :param ignore_last_payment_channel: Display default channel or channel groups instead of last used channel.
     :param type: Determines what should be displayed after payment is completed (consult reference guide).
     """
-    _method = 'post'
 
-    def __init__(self, seller_id, pin,
-                 endpoint='https://ssl.dotpay.pl/test_payment/',
-                 channel=0, channel_groups=None, ignore_last_payment_channel=False,
-                 lang='pl', lock=False, type=2, **kwargs):
+    _method = "post"
+
+    def __init__(
+        self,
+        seller_id,
+        pin,
+        endpoint="https://ssl.dotpay.pl/test_payment/",
+        channel=0,
+        channel_groups=None,
+        ignore_last_payment_channel=False,
+        lang="pl",
+        lock=False,
+        type=2,
+        **kwargs
+    ):
         self.seller_id = seller_id
         self.pin = pin
         self.endpoint = endpoint
@@ -47,39 +57,41 @@ class DotpayProvider(BasicProvider):
         self.type = type
         super().__init__(**kwargs)
         if not self._capture:
-            raise ImproperlyConfigured(
-                'Dotpay does not support pre-authorization.')
+            raise ImproperlyConfigured("Dotpay does not support pre-authorization.")
 
     def get_action(self, payment):
         return self.endpoint
 
     def get_hidden_fields(self, payment):
         if not payment.description:
-            raise ValueError('Payment description is required')
+            raise ValueError("Payment description is required")
 
         data = {
-            'id': self.seller_id,
-            'amount': Decimal(str(payment.total)).quantize(CENTS),
-            'control': str(payment.id),
-            'currency': payment.currency,
-            'description': payment.description,
-            'lang': self.lang,
-            'ignore_last_payment_channel':
-                '1' if self.ignore_last_payment_channel else '0',
-            'ch_lock': '1' if self.lock else '0',
-            'URL': payment.get_success_url(),
-            'URLC': self.get_return_url(payment),
-            'type': str(self.type)}
+            "id": self.seller_id,
+            "amount": Decimal(str(payment.total)).quantize(CENTS),
+            "control": str(payment.id),
+            "currency": payment.currency,
+            "description": payment.description,
+            "lang": self.lang,
+            "ignore_last_payment_channel": "1"
+            if self.ignore_last_payment_channel
+            else "0",
+            "ch_lock": "1" if self.lock else "0",
+            "URL": payment.get_success_url(),
+            "URLC": self.get_return_url(payment),
+            "type": str(self.type),
+        }
         if self.channel_groups:
-            data['channel_groups'] = self.channel_groups
+            data["channel_groups"] = self.channel_groups
         else:
-            data['channel'] = str(self.channel)
+            data["channel"] = str(self.channel)
         return data
 
     def process_data(self, payment, request):
-        form = ProcessPaymentForm(payment=payment, pin=self.pin,
-                                  data=request.POST or None)
+        form = ProcessPaymentForm(
+            payment=payment, pin=self.pin, data=request.POST or None
+        )
         if not form.is_valid():
-            return HttpResponseForbidden('FAILED')
+            return HttpResponseForbidden("FAILED")
         form.save()
-        return HttpResponse('OK')
+        return HttpResponse("OK")

@@ -24,35 +24,37 @@ class PurchasedItem(NamedTuple):
 
 
 class PaymentStatus:
-    WAITING = 'waiting'
-    PREAUTH = 'preauth'
-    CONFIRMED = 'confirmed'
-    REJECTED = 'rejected'
-    REFUNDED = 'refunded'
-    ERROR = 'error'
-    INPUT = 'input'
+    WAITING = "waiting"
+    PREAUTH = "preauth"
+    CONFIRMED = "confirmed"
+    REJECTED = "rejected"
+    REFUNDED = "refunded"
+    ERROR = "error"
+    INPUT = "input"
 
     CHOICES = [
-        (WAITING, pgettext_lazy('payment status', 'Waiting for confirmation')),
-        (PREAUTH, pgettext_lazy('payment status', 'Pre-authorized')),
-        (CONFIRMED, pgettext_lazy('payment status', 'Confirmed')),
-        (REJECTED, pgettext_lazy('payment status', 'Rejected')),
-        (REFUNDED, pgettext_lazy('payment status', 'Refunded')),
-        (ERROR, pgettext_lazy('payment status', 'Error')),
-        (INPUT, pgettext_lazy('payment status', 'Input'))]
+        (WAITING, pgettext_lazy("payment status", "Waiting for confirmation")),
+        (PREAUTH, pgettext_lazy("payment status", "Pre-authorized")),
+        (CONFIRMED, pgettext_lazy("payment status", "Confirmed")),
+        (REJECTED, pgettext_lazy("payment status", "Rejected")),
+        (REFUNDED, pgettext_lazy("payment status", "Refunded")),
+        (ERROR, pgettext_lazy("payment status", "Error")),
+        (INPUT, pgettext_lazy("payment status", "Input")),
+    ]
 
 
 class FraudStatus:
-    UNKNOWN = 'unknown'
-    ACCEPT = 'accept'
-    REJECT = 'reject'
-    REVIEW = 'review'
+    UNKNOWN = "unknown"
+    ACCEPT = "accept"
+    REJECT = "reject"
+    REVIEW = "review"
 
     CHOICES = [
-        (UNKNOWN, pgettext_lazy('fraud status', 'Unknown')),
-        (ACCEPT, pgettext_lazy('fraud status', 'Passed')),
-        (REJECT, pgettext_lazy('fraud status', 'Rejected')),
-        (REVIEW, pgettext_lazy('fraud status', 'Review'))]
+        (UNKNOWN, pgettext_lazy("fraud status", "Unknown")),
+        (ACCEPT, pgettext_lazy("fraud status", "Passed")),
+        (REJECT, pgettext_lazy("fraud status", "Rejected")),
+        (REVIEW, pgettext_lazy("fraud status", "Review")),
+    ]
 
 
 class RedirectNeeded(Exception):
@@ -60,7 +62,6 @@ class RedirectNeeded(Exception):
 
 
 class PaymentError(Exception):
-
     def __init__(self, message, code=None, gateway_message=None):
         super().__init__(message)
         self.code = code
@@ -72,18 +73,20 @@ class ExternalPostNeeded(Exception):
 
 
 def get_payment_model():
-    '''
+    """
     Return the Payment model that is active in this project
-    '''
+    """
     try:
-        app_label, model_name = settings.PAYMENT_MODEL.split('.')
+        app_label, model_name = settings.PAYMENT_MODEL.split(".")
     except (ValueError, AttributeError):
-        raise ImproperlyConfigured('PAYMENT_MODEL must be of the form '
-                                   '"app_label.model_name"')
+        raise ImproperlyConfigured(
+            "PAYMENT_MODEL must be of the form " '"app_label.model_name"'
+        )
     payment_model = apps.get_model(app_label, model_name)
     if payment_model is None:
         msg = (
-            'PAYMENT_MODEL refers to model "%s" that has not been installed' %
-            settings.PAYMENT_MODEL)
+            'PAYMENT_MODEL refers to model "%s" that has not been installed'
+            % settings.PAYMENT_MODEL
+        )
         raise ImproperlyConfigured(msg)
     return payment_model

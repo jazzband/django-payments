@@ -34,8 +34,8 @@ ADDRESS_VERIFICATION_SERVICE_FAIL = 200
 CARD_VERIFICATION_NUMBER_FAIL = 230
 SMART_AUTHORIZATION_FAIL = 520
 
-WSDL_PATH_TEST = 'xml/CyberSourceTransaction_1.101.test.wsdl'
-WSDL_PATH = 'xml/CyberSourceTransaction_1.101.wsdl'
+WSDL_PATH_TEST = "xml/CyberSourceTransaction_1.101.test.wsdl"
+WSDL_PATH = "xml/CyberSourceTransaction_1.101.wsdl"
 
 
 class CyberSourceProvider(BasicProvider):
@@ -58,34 +58,38 @@ class CyberSourceProvider(BasicProvider):
     fingerprint_url: str
 
     def __init__(
-        self, merchant_id, password, org_id=None,
-        fingerprint_url='https://h.online-metrix.net/fp/', sandbox=True,
+        self,
+        merchant_id,
+        password,
+        org_id=None,
+        fingerprint_url="https://h.online-metrix.net/fp/",
+        sandbox=True,
         capture=True,
     ):
         self.merchant_id = merchant_id
         self.password = password
         local_path = os.path.dirname(__file__)
-        if os.path.sep != '/':
+        if os.path.sep != "/":
             # ugly hack for urllib and Windows
-            local_path = local_path.replace(os.path.sep, '/')
-        if not local_path.startswith('/'):
+            local_path = local_path.replace(os.path.sep, "/")
+        if not local_path.startswith("/"):
             # windows paths don't start with '/'
-            local_path = f'/{local_path}'
+            local_path = f"/{local_path}"
         if sandbox:
-            wsdl_path = f'file://{local_path}/{WSDL_PATH_TEST}'
+            wsdl_path = f"file://{local_path}/{WSDL_PATH_TEST}"
             self.endpoint = (
-                'https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor')
+                "https://ics2wstest.ic3.com/commerce/1.x/transactionProcessor"
+            )
         else:
-            wsdl_path = f'file://{local_path}/{WSDL_PATH}'
-            self.endpoint = (
-                'https://ics2ws.ic3.com/commerce/1.x/transactionProcessor')
+            wsdl_path = f"file://{local_path}/{WSDL_PATH}"
+            self.endpoint = "https://ics2ws.ic3.com/commerce/1.x/transactionProcessor"
         self.client = suds.client.Client(wsdl_path)
         self.fingerprint_url = fingerprint_url
         self.org_id = org_id
         security_header = suds.wsse.Security()
         security_token = suds.wsse.UsernameToken(
-            username=self.merchant_id,
-            password=self.password)
+            username=self.merchant_id, password=self.password
+        )
         security_header.tokens.append(security_token)
         self.client.set_options(soapheaders=[security_header.xml()])
         super().__init__(capture=capture)
@@ -115,33 +119,42 @@ class CyberSourceProvider(BasicProvider):
         elif reason_code == FRAUD_MANAGER_REVIEW:
             payment.change_fraud_status(
                 FraudStatus.REVIEW,
-                _('The order is marked for review by Decision Manager'),
-                commit=False)
+                _("The order is marked for review by Decision Manager"),
+                commit=False,
+            )
             self._change_status_to_confirmed(payment)
         elif reason_code == FRAUD_MANAGER_REJECT:
             payment.change_fraud_status(
-                FraudStatus.REJECT, _('The order has been rejected by Decision Manager'),
-                commit=False)
+                FraudStatus.REJECT,
+                _("The order has been rejected by Decision Manager"),
+                commit=False,
+            )
             self._change_status_to_confirmed(payment)
         elif reason_code == FRAUD_SCORE_EXCEEDS_THRESHOLD:
             payment.change_fraud_status(
-                FraudStatus.REJECT, _('Fraud score exceeds threshold.'), commit=False)
+                FraudStatus.REJECT, _("Fraud score exceeds threshold."), commit=False
+            )
             self._change_status_to_confirmed(payment)
         elif reason_code == SMART_AUTHORIZATION_FAIL:
             payment.change_fraud_status(
-                FraudStatus.REJECT, _('CyberSource Smart Authorization failed.'),
-                commit=False)
+                FraudStatus.REJECT,
+                _("CyberSource Smart Authorization failed."),
+                commit=False,
+            )
             self._change_status_to_confirmed(payment)
         elif reason_code == CARD_VERIFICATION_NUMBER_FAIL:
             payment.change_fraud_status(
-                FraudStatus.REJECT, _('Card verification number (CVN) did not match.'),
-                commit=False)
+                FraudStatus.REJECT,
+                _("Card verification number (CVN) did not match."),
+                commit=False,
+            )
             self._change_status_to_confirmed(payment)
         elif reason_code == ADDRESS_VERIFICATION_SERVICE_FAIL:
             payment.change_fraud_status(
-                FraudStatus.REJECT, _(
-                    'CyberSource Address Verification Service failed.'),
-                commit=False)
+                FraudStatus.REJECT,
+                _("CyberSource Address Verification Service failed."),
+                commit=False,
+            )
             self._change_status_to_confirmed(payment)
         else:
             error = self._get_error_message(reason_code)
@@ -160,24 +173,24 @@ class CyberSourceProvider(BasicProvider):
             xid = response.payerAuthEnrollReply.xid
             payment.attrs.xid = xid
             payment.change_status(
-                PaymentStatus.WAITING,
-                message=_('3-D Secure verification in progress'))
+                PaymentStatus.WAITING, message=_("3-D Secure verification in progress")
+            )
             action = response.payerAuthEnrollReply.acsURL
             cc_data = dict(data)
-            expiration = cc_data.pop('expiration')
-            cc_data['expiration'] = {
-                'month': expiration.month,
-                'year': expiration.year}
+            expiration = cc_data.pop("expiration")
+            cc_data["expiration"] = {"month": expiration.month, "year": expiration.year}
             cc_data = signing.dumps(cc_data)
             payload = {
-                'PaReq': response.payerAuthEnrollReply.paReq,
-                'TermUrl': self.get_return_url(payment, {'token': cc_data}),
-                'MD': xid}
+                "PaReq": response.payerAuthEnrollReply.paReq,
+                "TermUrl": self.get_return_url(payment, {"token": cc_data}),
+                "MD": xid,
+            }
             form = BaseForm(data=payload, action=action, autosubmit=True)
             raise ExternalPostNeeded(form)
         else:
             self._set_proper_payment_status_from_reason_code(
-                payment, response.reasonCode)
+                payment, response.reasonCode
+            )
 
     def capture(self, payment, amount=None):
         if amount is None:
@@ -218,53 +231,63 @@ class CyberSourceProvider(BasicProvider):
     def _get_error_message(self, code):
         if code in [221, 222, 700, 701, 702, 703]:
             return _(
-                'Our bank has flagged your transaction as unusually suspicious. Please contact us to resolve this issue.')  # noqa
+                "Our bank has flagged your transaction as unusually suspicious. Please contact us to resolve this issue."
+            )  # noqa
         elif code in [201, 203, 209]:
             return _(
-                'Your bank has declined the transaction. No additional information was provided.')  # noqa
+                "Your bank has declined the transaction. No additional information was provided."
+            )  # noqa
         elif code == 202:
             return _(
-                'The card has either expired or you have entered an incorrect expiration date.')  # noqa
+                "The card has either expired or you have entered an incorrect expiration date."
+            )  # noqa
         elif code in [204, 210, 251]:
             return _(
-                'There are insufficient funds on your card or it has reached its credit limit.')  # noqa
+                "There are insufficient funds on your card or it has reached its credit limit."
+            )  # noqa
         elif code == 205:
             return _(
-                'The card you are trying to use was reported as lost or stolen.')  # noqa
+                "The card you are trying to use was reported as lost or stolen."
+            )  # noqa
         elif code == 208:
             return _(
-                'Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue.')  # noqa
+                "Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue."
+            )  # noqa
         elif code == 211:
             return _(
-                'Your bank has declined the transaction. Please check the verification number of your card and retry.')  # noqa
+                "Your bank has declined the transaction. Please check the verification number of your card and retry."
+            )  # noqa
         elif code == 231:
             return _(
-                'Your bank has declined the transaction. Please make sure the card number you have entered is correct and retry.')  # noqa
+                "Your bank has declined the transaction. Please make sure the card number you have entered is correct and retry."
+            )  # noqa
         elif code in [232, 240]:
             return _(
-                'We are sorry but our bank cannot handle the card type you are using.')  # noqa
-        elif code in [450, 451, 452, 453, 454, 455,
-                      456, 457, 458, 459, 460, 461]:
+                "We are sorry but our bank cannot handle the card type you are using."
+            )  # noqa
+        elif code in [450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461]:
             return _(
-                'We were unable to verify your address. Please make sure the address you entered is correct and retry.')  # noqa
+                "We were unable to verify your address. Please make sure the address you entered is correct and retry."
+            )  # noqa
         else:
             return _(
-                'We were unable to complete the transaction. Please try again later.')  # noqa
+                "We were unable to complete the transaction. Please try again later."
+            )  # noqa
 
     def _get_params_for_new_payment(self, payment):
         params = {
-            'merchantID': self.merchant_id,
-            'merchantReferenceCode': payment.id,
+            "merchantID": self.merchant_id,
+            "merchantReferenceCode": payment.id,
         }
         try:
             fingerprint_id = payment.attrs.fingerprint_session_id
         except KeyError:
             pass
         else:
-            params['deviceFingerprintID'] = fingerprint_id
+            params["deviceFingerprintID"] = fingerprint_id
         merchant_defined_data = self._prepare_merchant_defined_data(payment)
         if merchant_defined_data:
-            params['merchantDefinedData'] = merchant_defined_data
+            params["merchantDefinedData"] = merchant_defined_data
         return params
 
     def _make_request(self, payment, params):
@@ -272,123 +295,131 @@ class CyberSourceProvider(BasicProvider):
         payment.attrs.last_response = self._serialize_response(response)
         return response
 
-    def _prepare_payer_auth_validation_check(self, payment, card_data,
-                                             pa_response):
-        check_service = self.client.factory.create(
-            'data:PayerAuthValidateService')
-        check_service._run = 'true'
+    def _prepare_payer_auth_validation_check(self, payment, card_data, pa_response):
+        check_service = self.client.factory.create("data:PayerAuthValidateService")
+        check_service._run = "true"
         check_service.signedPARes = pa_response
         params = self._get_params_for_new_payment(payment)
-        params['payerAuthValidateService'] = check_service
+        params["payerAuthValidateService"] = check_service
         if payment.attrs.capture:
-            service = self.client.factory.create('data:CCCreditService')
-            service._run = 'true'
-            params['ccCreditService'] = service
+            service = self.client.factory.create("data:CCCreditService")
+            service._run = "true"
+            params["ccCreditService"] = service
         else:
-            service = self.client.factory.create('data:CCAuthService')
-            service._run = 'true'
-            params['ccAuthService'] = service
-        params.update({
-            'billTo': self._prepare_billing_data(payment),
-            'card': self._prepare_card_data(card_data),
-            'item': self._prepare_items(payment),
-            'purchaseTotals': self._prepare_totals(payment)})
+            service = self.client.factory.create("data:CCAuthService")
+            service._run = "true"
+            params["ccAuthService"] = service
+        params.update(
+            {
+                "billTo": self._prepare_billing_data(payment),
+                "card": self._prepare_card_data(card_data),
+                "item": self._prepare_items(payment),
+                "purchaseTotals": self._prepare_totals(payment),
+            }
+        )
         return params
 
     def _prepare_sale(self, payment, card_data):
-        service = self.client.factory.create('data:CCCreditService')
-        service._run = 'true'
-        check_service = self.client.factory.create(
-            'data:PayerAuthEnrollService')
-        check_service._run = 'true'
+        service = self.client.factory.create("data:CCCreditService")
+        service._run = "true"
+        check_service = self.client.factory.create("data:PayerAuthEnrollService")
+        check_service._run = "true"
         params = self._get_params_for_new_payment(payment)
-        params.update({
-            'ccCreditService': service,
-            'payerAuthEnrollService': check_service,
-            'billTo': self._prepare_billing_data(payment),
-            'card': self._prepare_card_data(card_data),
-            'item': self._prepare_items(payment),
-            'purchaseTotals': self._prepare_totals(payment)})
+        params.update(
+            {
+                "ccCreditService": service,
+                "payerAuthEnrollService": check_service,
+                "billTo": self._prepare_billing_data(payment),
+                "card": self._prepare_card_data(card_data),
+                "item": self._prepare_items(payment),
+                "purchaseTotals": self._prepare_totals(payment),
+            }
+        )
         return params
 
     def _prepare_preauth(self, payment, card_data):
-        service = self.client.factory.create('data:CCAuthService')
-        service._run = 'true'
-        check_service = self.client.factory.create(
-            'data:PayerAuthEnrollService')
-        check_service._run = 'true'
+        service = self.client.factory.create("data:CCAuthService")
+        service._run = "true"
+        check_service = self.client.factory.create("data:PayerAuthEnrollService")
+        check_service._run = "true"
         params = self._get_params_for_new_payment(payment)
-        params.update({
-            'ccAuthService': service,
-            'payerAuthEnrollService': check_service,
-            'billTo': self._prepare_billing_data(payment),
-            'card': self._prepare_card_data(card_data),
-            'item': self._prepare_items(payment),
-            'purchaseTotals': self._prepare_totals(payment)})
+        params.update(
+            {
+                "ccAuthService": service,
+                "payerAuthEnrollService": check_service,
+                "billTo": self._prepare_billing_data(payment),
+                "card": self._prepare_card_data(card_data),
+                "item": self._prepare_items(payment),
+                "purchaseTotals": self._prepare_totals(payment),
+            }
+        )
         return params
 
     def _prepare_capture(self, payment, amount=None):
-        service = self.client.factory.create('data:CCCaptureService')
-        service._run = 'true'
+        service = self.client.factory.create("data:CCCaptureService")
+        service._run = "true"
         service.authRequestID = payment.transaction_id
         params = {
-            'merchantID': self.merchant_id,
-            'merchantReferenceCode': payment.id,
-            'ccCaptureService': service,
-            'purchaseTotals': self._prepare_totals(payment, amount=amount)}
+            "merchantID": self.merchant_id,
+            "merchantReferenceCode": payment.id,
+            "ccCaptureService": service,
+            "purchaseTotals": self._prepare_totals(payment, amount=amount),
+        }
         return params
 
     def _prepare_release(self, payment):
-        service = self.client.factory.create('data:CCAuthReversalService')
-        service._run = 'true'
+        service = self.client.factory.create("data:CCAuthReversalService")
+        service._run = "true"
         service.authRequestID = payment.transaction_id
         params = {
-            'merchantID': self.merchant_id,
-            'merchantReferenceCode': payment.id,
-            'ccAuthReversalService': service,
-            'purchaseTotals': self._prepare_totals(payment)}
+            "merchantID": self.merchant_id,
+            "merchantReferenceCode": payment.id,
+            "ccAuthReversalService": service,
+            "purchaseTotals": self._prepare_totals(payment),
+        }
         return params
 
     def _prepare_refund(self, payment, amount=None):
-        service = self.client.factory.create('data:CCCreditService')
-        service._run = 'true'
+        service = self.client.factory.create("data:CCCreditService")
+        service._run = "true"
         service.captureRequestID = payment.transaction_id
         params = {
-            'merchantID': self.merchant_id,
-            'merchantReferenceCode': payment.id,
-            'ccCreditService': service,
-            'purchaseTotals': self._prepare_totals(payment, amount=amount)}
+            "merchantID": self.merchant_id,
+            "merchantReferenceCode": payment.id,
+            "ccCreditService": service,
+            "purchaseTotals": self._prepare_totals(payment, amount=amount),
+        }
         return params
 
     def _prepare_card_type(self, card_number):
         card_type, card_name = get_credit_card_issuer(card_number)
-        if card_type == 'visa':
-            return '001'
-        elif card_type == 'mastercard':
-            return '002'
-        elif card_type == 'amex':
-            return '003'
-        elif card_type == 'discover':
-            return '004'
-        elif card_type == 'diners':
-            return'005'
-        elif card_type == 'jcb':
-            return '007'
-        elif card_type == 'maestro':
-            return '042'
+        if card_type == "visa":
+            return "001"
+        elif card_type == "mastercard":
+            return "002"
+        elif card_type == "amex":
+            return "003"
+        elif card_type == "discover":
+            return "004"
+        elif card_type == "diners":
+            return "005"
+        elif card_type == "jcb":
+            return "007"
+        elif card_type == "maestro":
+            return "042"
 
     def _prepare_card_data(self, data):
-        card = self.client.factory.create('data:Card')
-        card.fullName = data['name']
-        card.accountNumber = data['number']
-        card.expirationMonth = data['expiration'].month
-        card.expirationYear = data['expiration'].year
-        card.cvNumber = data['cvv2']
-        card.cardType = self._prepare_card_type(data['number'])
+        card = self.client.factory.create("data:Card")
+        card.fullName = data["name"]
+        card.accountNumber = data["number"]
+        card.expirationMonth = data["expiration"].month
+        card.expirationYear = data["expiration"].year
+        card.cvNumber = data["cvv2"]
+        card.cardType = self._prepare_card_type(data["number"])
         return card
 
     def _prepare_billing_data(self, payment):
-        billing = self.client.factory.create('data:BillTo')
+        billing = self.client.factory.create("data:BillTo")
         billing.firstName = payment.billing_first_name
         billing.lastName = payment.billing_last_name
         billing.street1 = payment.billing_address_1
@@ -404,7 +435,7 @@ class CyberSourceProvider(BasicProvider):
     def _prepare_items(self, payment):
         items = []
         for i, item in enumerate(payment.get_purchased_items()):
-            purchased = self.client.factory.create('data:Item')
+            purchased = self.client.factory.create("data:Item")
             purchased._id = i
             purchased.unitPrice = str(item.price)
             purchased.quantity = str(item.quantity)
@@ -419,16 +450,16 @@ class CyberSourceProvider(BasicProvider):
         except KeyError:
             return
         else:
-            data = self.client.factory.create('data:MerchantDefinedData')
+            data = self.client.factory.create("data:MerchantDefinedData")
             for i, value in merchant_defined_data.items():
-                field = self.client.factory.create('data:MDDField')
+                field = self.client.factory.create("data:MDDField")
                 field._id = int(i)
                 field.value = value
                 data.mddField.append(field)
             return data
 
     def _prepare_totals(self, payment, amount=None):
-        totals = self.client.factory.create('data:PurchaseTotals')
+        totals = self.client.factory.create("data:PurchaseTotals")
         totals.currency = payment.currency
         if amount is None:
             totals.grandTotalAmount = str(payment.total)
@@ -445,27 +476,30 @@ class CyberSourceProvider(BasicProvider):
         return response
 
     def process_data(self, payment, request):
-        xid = request.POST.get('MD')
+        xid = request.POST.get("MD")
         if xid != payment.attrs.xid:
             return redirect(payment.get_failure_url())
         if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return redirect(payment.get_success_url())
-        cc_data = request.GET.get('token')
+        cc_data = request.GET.get("token")
         try:
             cc_data = signing.loads(cc_data)
         except Exception:
             return redirect(payment.get_failure_url())
         else:
-            expiration = cc_data['expiration']
-            cc_data['expiration'] = datetime.date(
-                expiration['year'], expiration['month'], 1)
+            expiration = cc_data["expiration"]
+            cc_data["expiration"] = datetime.date(
+                expiration["year"], expiration["month"], 1
+            )
         params = self._prepare_payer_auth_validation_check(
-            payment, cc_data, request.POST.get('PaRes'))
+            payment, cc_data, request.POST.get("PaRes")
+        )
         response = self._make_request(payment, params)
         payment.transaction_id = response.requestID
         try:
             self._set_proper_payment_status_from_reason_code(
-                payment, response.reasonCode)
+                payment, response.reasonCode
+            )
         except PaymentError:
             pass
         if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:

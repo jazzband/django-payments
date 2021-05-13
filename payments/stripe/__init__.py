@@ -24,7 +24,7 @@ class StripeProvider(BasicProvider):
 
     form_class = ModalPaymentForm
 
-    def __init__(self, public_key, secret_key, image='', name='', **kwargs):
+    def __init__(self, public_key, secret_key, image="", name="", **kwargs):
         stripe.api_key = secret_key
         self.secret_key = secret_key
         self.public_key = public_key
@@ -35,8 +35,7 @@ class StripeProvider(BasicProvider):
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:
             payment.change_status(PaymentStatus.INPUT)
-        form = self.form_class(
-            data=data, payment=payment, provider=self)
+        form = self.form_class(data=data, payment=payment, provider=self)
 
         if form.is_valid():
             form.save()
@@ -50,7 +49,7 @@ class StripeProvider(BasicProvider):
             charge.capture(amount=amount)
         except stripe.InvalidRequestError:
             payment.change_status(PaymentStatus.REFUNDED)
-            raise PaymentError('Payment already refunded')
+            raise PaymentError("Payment already refunded")
         payment.attrs.capture = json.dumps(charge)
         return Decimal(amount) / 100
 
@@ -75,4 +74,5 @@ class StripeCardProvider(StripeProvider):
 
     Parameters are the same as  :class:`~StripeProvider`.
     """
+
     form_class = PaymentForm
