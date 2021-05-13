@@ -4,9 +4,11 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
-v0.14.1
+v0.15.0
 -------
 
+- Support for "Google Wallet" has been dropped. It seems to be dead upstream,
+  and all existing links to the documentation and to the JS scripts are broken.
 - Added support for Django 3.2.
 
 v0.14.0

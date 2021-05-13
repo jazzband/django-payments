@@ -104,37 +104,6 @@ Example::
               'lock': True,
               'endpoint': 'https://ssl.dotpay.pl/test_payment/'})}
 
-
-Google Wallet
--------------
-
-.. autoclass:: payments.wallet.GoogleWalletProvider
-
-Example::
-
-      # use sandbox
-      PAYMENT_VARIANTS = {
-          'wallet': ('payments.wallet.GoogleWalletProvider', {
-              'seller_id': '112233445566',
-              'seller_secret': '1234567890abcdef',
-              'library': 'https://sandbox.google.com/checkout/inapp/lib/buy.js'})}
-
-This backend requires js files that should be added to the template using ``{{ form.media }}`` e.g:
-
-.. code-block:: html
-
-      <!-- templates/payment.html -->
-      <form action="{{ form.action }}" method="{{ form.method }}">
-          {{ form.as_p }}
-          <p><input type="submit" value="Proceed" /></p>
-      </form>
-      {{ form.media }}
-
-To specify the `postback URL` at the Merchant Settings page use direct url to `process payment view` in conjunction with your `variant name`:
-
-E.g.: ``https://example.com/payments/process/wallet``
-
-
 PayPal
 ------
 
