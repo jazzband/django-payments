@@ -15,16 +15,6 @@ PACKAGES = [
     "payments.stripe",
 ]
 
-REQUIREMENTS = [
-    "braintree>=3.14.0",
-    "Django>=2.2",
-    "cryptography>=1.1.0",
-    "requests>=1.2.0",
-    "stripe>=2.6.0",
-    "suds-jurko>=0.6",
-    "xmltodict>=0.9.2",
-]
-
 
 setup(
     name="django-payments",
@@ -58,6 +48,16 @@ setup(
         "Topic :: Software Development :: Libraries :: Application Frameworks",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    install_requires=REQUIREMENTS,
+    install_requires=[
+        "Django>=2.2",
+        "requests>=1.2.0",
+    ],
+    extras_require={
+        "braintree": ["braintree>=3.14.0"],
+        "cybersource": ["suds-jurko>=0.6"],
+        "sagepay": ["cryptography>=1.1.0"],
+        "sofort": ["xmltodict>=0.9.2"],
+        "stripe": ["stripe>=2.6.0"],
+    },
     zip_safe=False,
 )
