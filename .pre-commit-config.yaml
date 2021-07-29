@@ -3,7 +3,7 @@
 # vim: set nospell:
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -12,7 +12,7 @@ repos:
       - id: check-added-large-files
       - id: debug-statements
   - repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.5.0
+    rev: v2.6.0
     hooks:
       - id: reorder-python-imports
         exclude: docs\/.*
@@ -23,10 +23,12 @@ repos:
         additional_dependencies: [flake8-comprehensions, flake8-bugbear]
         exclude: docs\/.*
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v0.812"
+    rev: "v0.910"
     hooks:
       - id: mypy
+        additional_dependencies:
+          - types-requests
   - repo: https://github.com/psf/black
-    rev: "21.5b1"
+    rev: "21.7b0"
     hooks:
       - id: black
