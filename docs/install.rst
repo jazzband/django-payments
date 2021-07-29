@@ -7,7 +7,7 @@ Installation
 
       $ pip install django-payments
 
-Note than some providers have additional dependencies. For example, if using
+Note that some providers have additional dependencies. For example, if using
 stripe, you should run:
 
 
