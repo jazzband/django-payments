@@ -5,12 +5,11 @@ from unittest.mock import patch
 
 import stripe
 
-from . import StripeCardProvider
-from . import StripeProvider
 from .. import FraudStatus
 from .. import PaymentStatus
 from .. import RedirectNeeded
-
+from . import StripeCardProvider
+from . import StripeProvider
 
 SECRET_KEY = "1234abcd"
 PUBLIC_KEY = "abcd1234"

@@ -8,8 +8,8 @@ from unittest.mock import patch
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 
-from . import CoinbaseProvider
 from .. import PaymentStatus
+from . import CoinbaseProvider
 
 PAYMENT_TOKEN = "5a4dae68-2715-4b1e-8bb2-2c2dbe9255f6"
 KEY = "abc123"

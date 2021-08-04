@@ -19,7 +19,6 @@ from ..core import get_credit_card_issuer
 from ..forms import PaymentForm as BaseForm
 from .forms import PaymentForm
 
-
 ACCEPTED = 100
 TRANSACTION_SETTLED = 238
 TRANSACTION_REVERSED = 237

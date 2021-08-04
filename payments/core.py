@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-
 PAYMENT_VARIANTS: Dict[str, Tuple[str, Dict]] = {
     "default": ("payments.dummy.DummyProvider", {})
 }

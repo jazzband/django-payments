@@ -3,9 +3,8 @@ from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from . import SagepayProvider
 from .. import PaymentStatus
-
+from . import SagepayProvider
 
 VENDOR = "abcd1234"
 ENCRYPTION_KEY = "1234abdd1234abcd"

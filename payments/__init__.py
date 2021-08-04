@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import pgettext_lazy
 
-from payments import version
+from payments import version  # type: ignore
 
 __version__ = version.version
 

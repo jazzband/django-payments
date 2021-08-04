@@ -6,8 +6,8 @@ from unittest.mock import Mock
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 
-from . import DotpayProvider
 from .. import PaymentStatus
+from . import DotpayProvider
 from .forms import COMPLETED
 from .forms import REJECTED
 

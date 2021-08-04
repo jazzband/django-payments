@@ -1,8 +1,8 @@
 import json
 import logging
 from datetime import timedelta
-from decimal import Decimal
 from decimal import ROUND_HALF_UP
+from decimal import Decimal
 from functools import wraps
 
 import requests

@@ -7,13 +7,13 @@ from unittest.mock import patch
 
 from django.core import signing
 
-from . import ACCEPTED
-from . import AUTHENTICATE_REQUIRED
-from . import CyberSourceProvider
-from . import TRANSACTION_SETTLED
 from .. import PaymentStatus
 from .. import PurchasedItem
 from .. import RedirectNeeded
+from . import ACCEPTED
+from . import AUTHENTICATE_REQUIRED
+from . import TRANSACTION_SETTLED
+from . import CyberSourceProvider
 
 MERCHANT_ID = "abcd1234"
 PASSWORD = "1234abdd1234abcd"
