@@ -4,7 +4,6 @@ from django import forms
 
 from .. import PaymentStatus
 
-
 NEW = "new"
 PROCESSING = "processing"
 COMPLETED = "completed"

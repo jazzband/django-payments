@@ -3,11 +3,11 @@ from unittest.mock import MagicMock
 from urllib.error import URLError
 from urllib.parse import urlencode
 
-from . import DummyProvider
 from .. import FraudStatus
 from .. import PaymentError
 from .. import PaymentStatus
 from .. import RedirectNeeded
+from . import DummyProvider
 
 VARIANT = "dummy-3ds"
 

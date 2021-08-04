@@ -3,10 +3,9 @@ from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from . import AuthorizeNetProvider
 from .. import PaymentStatus
 from .. import RedirectNeeded
-
+from . import AuthorizeNetProvider
 
 LOGIN_ID = "abcd1234"
 TRANSACTION_KEY = "1234abdd"
