@@ -11,11 +11,10 @@ repos:
       - id: check-toml
       - id: check-added-large-files
       - id: debug-statements
-  - repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.6.0
+  - repo: https://github.com/pycqa/isort
+    rev: 5.9.3
     hooks:
-      - id: reorder-python-imports
-        exclude: docs\/.*
+      - id: isort
   - repo: https://gitlab.com/pycqa/flake8
     rev: "3.9.2"
     hooks:
