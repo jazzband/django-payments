@@ -4,6 +4,7 @@ import re
 from uuid import uuid4
 
 import requests
+from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from mercadopago import MP
@@ -12,6 +13,7 @@ from payments import PaymentError
 from payments import PaymentStatus
 from payments import RedirectNeeded
 from payments.core import BasicProvider
+from payments.models import BasePayment
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +48,14 @@ class MercadoPagoProvider(BasicProvider):
         self.client.sandbox_mode(sandbox)
         self.is_sandbox = sandbox
 
-    def get_or_create_preference(self, payment):
+    def get_or_create_preference(self, payment: BasePayment):
         if payment.transaction_id:
             return self.get_preference(payment)
         else:
             return self.create_preference(payment)
 
-    def get_preference(self, payment):
+    def get_preference(self, payment: BasePayment):
+        """Helper to fetch the preference for a payment."""
         if not payment.transaction_id:
             raise ValueError("This payment does not have a preference.")
 
@@ -63,7 +66,7 @@ class MercadoPagoProvider(BasicProvider):
 
         return result["response"]
 
-    def create_preference(self, payment):
+    def create_preference(self, payment: BasePayment):
         if payment.transaction_id:
             raise ValueError("This payment already has a preference.")
 
@@ -109,11 +112,11 @@ class MercadoPagoProvider(BasicProvider):
 
         return result["response"]
 
-    def get_action(self, payment):
+    def get_action(self, payment: BasePayment):
         # This is the form-action. But we don't use a form.
         raise NotImplementedError()
 
-    def process_notification(self, payment, request):
+    def process_notification(self, payment: BasePayment, request: HttpRequest):
         data = json.loads(request.body)
 
         logger.debug(
@@ -128,12 +131,14 @@ class MercadoPagoProvider(BasicProvider):
 
         if topic == "payment":
             match = re.search(r"(\d+)", resource)
+            if not match:
+                raise ValueError("Missing resource id in notification.")
             collection_id = match.groups()[0]
             self.process_collection(payment, collection_id)
 
         return HttpResponse("Thanks")
 
-    def process_callback(self, payment, request):
+    def process_callback(self, payment: BasePayment, request: HttpRequest):
         collection_id = request.GET.get("collection_id", None)
         if not collection_id or not collection_id.isdigit():
             payment.change_status(PaymentStatus.ERROR)
@@ -143,7 +148,7 @@ class MercadoPagoProvider(BasicProvider):
 
         return redirect(payment.get_success_url())
 
-    def process_collection(self, payment, collection_id):
+    def process_collection(self, payment: BasePayment, collection_id):
         response = self.client.get_payment_info(collection_id)
         if response["status"] != 200:
             message = "MercadoPago sent invalid payment data."
@@ -155,13 +160,13 @@ class MercadoPagoProvider(BasicProvider):
         upstream_status = response["response"]["status"]
         payment.change_status(STATUS_MAP[upstream_status])
 
-    def process_data(self, payment, request):
+    def process_data(self, payment: BasePayment, request: HttpRequest):
         if request.method == "GET":
             return self.process_callback(payment, request)
         elif request.method == "POST":
             return self.process_notification(payment, request)
 
-    def get_form(self, payment, data=None):
+    def get_form(self, payment: BasePayment, data=None):
         # There's no form for MP, we need to redirect to their checkout page.
         preference = self.get_or_create_preference(payment)
         logger.debug("Got preference: %s", preference)
@@ -173,14 +178,14 @@ class MercadoPagoProvider(BasicProvider):
 
         raise RedirectNeeded(url)
 
-    def capture(self, payment, amount=None):
+    def capture(self, payment: BasePayment, amount=None):
         # only allow if its PRE_AUTH
         raise NotImplementedError()
 
-    def refund(self, payment, amount=None):
+    def refund(self, payment: BasePayment, amount=None):
         raise NotImplementedError()
 
-    def poll_for_updates(self, payment):
+    def poll_for_updates(self, payment: BasePayment):
         """Helper method to fetch any updates on MercadoPago.
 
         There's occasional times of flakiness with their notification service,
