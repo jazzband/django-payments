@@ -1,9 +1,11 @@
 from typing import Optional
 from unittest.mock import Mock
+from unittest.mock import call
 from unittest.mock import patch
 
 import pytest
 
+from payments import PaymentError
 from payments import PaymentStatus
 from payments import PurchasedItem
 from payments.mercadopago import MercadoPagoProvider
@@ -214,3 +216,83 @@ def test_create_preference_that_already_exists(mp_provider: MercadoPagoProvider)
 
     with pytest.raises(ValueError, match="payment already has a preference"):
         mp_provider.create_preference(payment)
+
+
+def test_process_successful_collection(mp_provider: MercadoPagoProvider):
+    payment_info = {
+        "status": 200,
+        "response": {"status": "approved"},
+    }
+
+    payment = Payment()
+    with patch(
+        "mercadopago.mercadopago.MP.get_payment_info",
+        spec=True,
+        return_value=payment_info,
+    ):
+        mp_provider.process_collection(payment, "12")
+
+    assert payment.status == PaymentStatus.CONFIRMED
+
+
+def test_process_failed_collection(mp_provider: MercadoPagoProvider):
+    payment_info = {
+        "status": 404,
+    }
+
+    payment = Payment()
+    with patch(
+        "mercadopago.mercadopago.MP.get_payment_info",
+        spec=True,
+        return_value=payment_info,
+    ), pytest.raises(
+        PaymentError,
+        match="MercadoPago sent invalid payment data.",
+    ):
+        mp_provider.process_collection(payment, "12")
+
+    assert payment.status == PaymentStatus.ERROR
+
+
+def test_process_pending_collection(mp_provider: MercadoPagoProvider):
+    payment_info = {
+        "status": 200,
+        "response": {"status": "pending"},
+    }
+
+    payment = Payment()
+    with patch(
+        "mercadopago.mercadopago.MP.get_payment_info",
+        spec=True,
+        return_value=payment_info,
+    ):
+        mp_provider.process_collection(payment, "12")
+
+    assert payment.status == PaymentStatus.WAITING
+
+
+def test_get_preference(mp_provider: MercadoPagoProvider):
+    preference = Mock()
+    mocked_response = {
+        "status": 200,
+        "response": preference,
+    }
+
+    payment = Payment()
+    payment.transaction_id = "ABJ122"
+    with patch(
+        "mercadopago.mercadopago.MP.get_preference",
+        spec=True,
+        return_value=mocked_response,
+    ) as get_preference:
+        assert mp_provider.get_preference(payment) == preference
+
+    assert get_preference.call_count == 1
+    assert get_preference.call_args == call(payment.transaction_id)
+
+
+def test_get_preference_with_missing_transaction_id(mp_provider: MercadoPagoProvider):
+    payment = Payment()
+
+    with pytest.raises(ValueError, match="payment does not have a preference"):
+        mp_provider.get_preference(payment)

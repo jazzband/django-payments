@@ -149,9 +149,17 @@ class MercadoPagoProvider(BasicProvider):
         return redirect(payment.get_success_url())
 
     def process_collection(self, payment: BasePayment, collection_id):
+        """Process a collection event.
+
+        MercadoPago sends us an event when they collect money. This fetches
+        details for that and updates the payment accordintly.
+
+        :param colection_id: The collection_id we got from MercadoPago.
+        """
         response = self.client.get_payment_info(collection_id)
         if response["status"] != 200:
             message = "MercadoPago sent invalid payment data."
+            # Maybe if it's previously approved keep it that way?
             payment.change_status(PaymentStatus.ERROR, message)
 
             message = f"{message}: {response}"
