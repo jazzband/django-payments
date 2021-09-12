@@ -3,11 +3,10 @@ import logging
 import re
 from uuid import uuid4
 
-import requests
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from mercadopago import MP
+from mercadopago import SDK
 
 from payments import PaymentError
 from payments import PaymentStatus
@@ -31,7 +30,7 @@ STATUS_MAP = {
 
 
 class MercadoPagoProvider(BasicProvider):
-    def __init__(self, client_id: str, secret_key: str, sandbox: bool):
+    def __init__(self, access_token: str, sandbox: bool):
         """This backend implements payments using `MercadoPago
         <https://www.mercadopago.com.ar/>`_.
 
@@ -39,13 +38,11 @@ class MercadoPagoProvider(BasicProvider):
 
             pip install "django-payments[mercadopago]"
 
-        :param client_id: Client ID assigned by MP.
-        :param secret_key: Secret key assigned by MP.
+        :param access token: The access token provided by MP.
         :param sandbox: Whether to use sandbox more.
         """
         # self._capture = True
-        self.client = MP(client_id, secret_key)
-        self.client.sandbox_mode(sandbox)
+        self.client = SDK(access_token)
         self.is_sandbox = sandbox
 
     def get_or_create_preference(self, payment: BasePayment):
@@ -59,7 +56,7 @@ class MercadoPagoProvider(BasicProvider):
         if not payment.transaction_id:
             raise ValueError("This payment does not have a preference.")
 
-        result = self.client.get_preference(payment.transaction_id)
+        result = self.client.preference().get(payment.transaction_id)
 
         if result["status"] >= 300:
             raise Exception("Failed to retrieve MercadoPago preference.", result)
@@ -102,7 +99,7 @@ class MercadoPagoProvider(BasicProvider):
                 payload["shipments"] = shipments
 
         logger.debug("Creating preference with payload: %s", payload)
-        result = self.client.create_preference(payload)
+        result = self.client.preference().create(payload)
 
         if result["status"] >= 300:
             raise Exception("Failed to create MercadoPago preference.", result)
@@ -156,7 +153,7 @@ class MercadoPagoProvider(BasicProvider):
 
         :param colection_id: The collection_id we got from MercadoPago.
         """
-        response = self.client.get_payment_info(collection_id)
+        response = self.client.payment().get(collection_id)
         if response["status"] != 200:
             message = "MercadoPago sent invalid payment data."
             # Maybe if it's previously approved keep it that way?
@@ -200,17 +197,13 @@ class MercadoPagoProvider(BasicProvider):
         and this helper method helps recover from that and pick up any missed
         payments.
         """
-        response = requests.get(
-            "https://api.mercadopago.com/v1/payments/search",
-            params={
-                "access_token": self.client.get_access_token(),
+        data = self.client.payment().search(
+            {
                 "external_reference": payment.attrs.external_reference,
-            },
+            }
         )
-        response.raise_for_status()
-        data = response.json()
 
-        logger.info("Found payment info for %s: %s.", payment.pk, data)
+        logger.info("Found payment info for %s: %s.", payment, data)
 
         if data["results"]:
             self.process_collection(payment, data["results"][-1]["id"])

@@ -58,7 +58,7 @@ class Payment(Mock):
 
 @pytest.fixture
 def mp_provider():
-    return MercadoPagoProvider("client_id", "secret_key", True)
+    return MercadoPagoProvider("fake_access_token", True)
 
 
 # These are mock request and responses are based on valid data that actually worked in
@@ -197,7 +197,7 @@ def test_approved_payment_notification(rf, mp_provider: MercadoPagoProvider):
     }
 
     with patch(
-        "mercadopago.mercadopago.MP.get_payment_info",
+        "mercadopago.resources.payment.Payment.get",
         spec=True,
         return_value=payment_info_response,
     ) as payment_info, patch(
@@ -226,7 +226,7 @@ def test_process_successful_collection(mp_provider: MercadoPagoProvider):
 
     payment = Payment()
     with patch(
-        "mercadopago.mercadopago.MP.get_payment_info",
+        "mercadopago.resources.payment.Payment.get",
         spec=True,
         return_value=payment_info,
     ):
@@ -242,7 +242,7 @@ def test_process_failed_collection(mp_provider: MercadoPagoProvider):
 
     payment = Payment()
     with patch(
-        "mercadopago.mercadopago.MP.get_payment_info",
+        "mercadopago.resources.payment.Payment.get",
         spec=True,
         return_value=payment_info,
     ), pytest.raises(
@@ -262,7 +262,7 @@ def test_process_pending_collection(mp_provider: MercadoPagoProvider):
 
     payment = Payment()
     with patch(
-        "mercadopago.mercadopago.MP.get_payment_info",
+        "mercadopago.resources.payment.Payment.get",
         spec=True,
         return_value=payment_info,
     ):
@@ -281,7 +281,7 @@ def test_get_preference(mp_provider: MercadoPagoProvider):
     payment = Payment()
     payment.transaction_id = "ABJ122"
     with patch(
-        "mercadopago.mercadopago.MP.get_preference",
+        "mercadopago.resources.preference.Preference.get",
         spec=True,
         return_value=mocked_response,
     ) as get_preference:
