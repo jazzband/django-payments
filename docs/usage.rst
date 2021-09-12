@@ -1,7 +1,7 @@
 Making a payment
 ================
 
-#. Create a :class:`Payment` instance::
+First create a :class:`Payment` instance::
 
       from decimal import Decimal
 
@@ -23,10 +23,10 @@ Making a payment
           billing_postcode='NW1 6XE',
           billing_country_code='GB',
           billing_country_area='Greater London',
-          customer_ip_address='127.0.0.1')
+          customer_ip_address='127.0.0.1',
+      )
 
-#. Redirect the user to your payment handling view.
-
+And then redirect the user to your payment handling view.
 
 Payment amounts
 ---------------

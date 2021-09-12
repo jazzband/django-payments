@@ -16,6 +16,8 @@ class DummyProvider(BasicProvider):
     This is a dummy backend suitable for testing your store without contacting any
     payment gateways. Instead of using an external service it will simply show you a
     form that allows you to confirm or reject the payment.
+
+    You should only use this in development or in test servers.
     """
 
     def get_form(self, payment, data=None):
