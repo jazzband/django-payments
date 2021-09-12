@@ -59,7 +59,11 @@ class MercadoPagoProvider(BasicProvider):
         result = self.client.preference().get(payment.transaction_id)
 
         if result["status"] >= 300:
-            raise Exception("Failed to retrieve MercadoPago preference.", result)
+            raise PaymentError(
+                message="Failed to retrieve MercadoPago preference.",
+                code=result["status"],
+                gateway_message=result["response"],
+            )
 
         return result["response"]
 

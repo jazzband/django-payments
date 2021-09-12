@@ -318,6 +318,28 @@ def test_get_preference_with_missing_transaction_id(mp_provider: MercadoPagoProv
         mp_provider.get_preference(payment)
 
 
+def test_get_preference_internal_error(mp_provider: MercadoPagoProvider):
+    mocked_response = {
+        "status": 500,
+        "response": "Internal error",
+    }
+
+    payment = Payment()
+    payment.transaction_id = "ABJ122"
+    with patch(
+        "mercadopago.resources.preference.Preference.get",
+        spec=True,
+        return_value=mocked_response,
+    ) as get_preference:
+        with pytest.raises(
+            PaymentError, match="Failed to retrieve MercadoPago preference."
+        ):
+            mp_provider.get_preference(payment)
+
+    assert get_preference.call_count == 1
+    assert get_preference.call_args == call(payment.transaction_id)
+
+
 def test_get_form_for_existing_preference(mp_provider: MercadoPagoProvider):
     mocked_response = {
         "status": 200,
