@@ -8,6 +8,7 @@ import pytest
 from payments import PaymentError
 from payments import PaymentStatus
 from payments import PurchasedItem
+from payments import RedirectNeeded
 from payments.mercadopago import MercadoPagoProvider
 
 
@@ -296,3 +297,46 @@ def test_get_preference_with_missing_transaction_id(mp_provider: MercadoPagoProv
 
     with pytest.raises(ValueError, match="payment does not have a preference"):
         mp_provider.get_preference(payment)
+
+
+def test_get_form_for_existing_preference(mp_provider: MercadoPagoProvider):
+    mocked_response = {
+        "status": 200,
+        "response": {"sandbox_init_point": "https://example.com/pay"},
+    }
+
+    payment = Payment()
+    payment.transaction_id = "ABJ122"
+    with patch(
+        "mercadopago.resources.preference.Preference.get",
+        spec=True,
+        return_value=mocked_response,
+    ) as get_preference:
+        with pytest.raises(RedirectNeeded) as exc_info:
+            mp_provider.get_form(payment)
+
+    assert get_preference.call_count == 1
+    assert get_preference.call_args == call(payment.transaction_id)
+    assert str(exc_info.value) == "https://example.com/pay"
+
+
+def test_get_form_for_inexistent_preference(mp_provider: MercadoPagoProvider):
+    mocked_response = {
+        "status": 200,
+        "response": {
+            "id": "AZ12",
+            "sandbox_init_point": "https://example.com/pay",
+        },
+    }
+
+    payment = Payment()
+    with patch(
+        "mercadopago.resources.preference.Preference.create",
+        spec=True,
+        return_value=mocked_response,
+    ) as get_preference:
+        with pytest.raises(RedirectNeeded) as exc_info:
+            mp_provider.get_form(payment)
+
+    assert get_preference.call_count == 1
+    assert str(exc_info.value) == "https://example.com/pay"
