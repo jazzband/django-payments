@@ -219,6 +219,25 @@ def test_create_preference_that_already_exists(mp_provider: MercadoPagoProvider)
         mp_provider.create_preference(payment)
 
 
+def test_create_preference_failure(mp_provider: MercadoPagoProvider):
+    preference_info = {
+        "status": 500,
+        "response": "internal server error",
+    }
+
+    payment = Payment()
+
+    with patch(
+        "mercadopago.resources.preference.Preference.create",
+        spec=True,
+        return_value=preference_info,
+    ), pytest.raises(
+        PaymentError,
+        match="Failed to create MercadoPago preference.",
+    ):
+        mp_provider.create_preference(payment)
+
+
 def test_process_successful_collection(mp_provider: MercadoPagoProvider):
     payment_info = {
         "status": 200,

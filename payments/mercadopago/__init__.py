@@ -102,7 +102,11 @@ class MercadoPagoProvider(BasicProvider):
         result = self.client.preference().create(payload)
 
         if result["status"] >= 300:
-            raise Exception("Failed to create MercadoPago preference.", result)
+            raise PaymentError(
+                message="Failed to create MercadoPago preference.",
+                code=result["status"],
+                gateway_message=result["response"],
+            )
 
         payment.transaction_id = result["response"]["id"]
         payment.save()
