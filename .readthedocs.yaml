@@ -1,0 +1,15 @@
+version: 2
+
+python:
+  version: 3.9
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
+        - braintree
+        - cybersource
+        - mercadopago
+        - sagepay
+        - sofort
+        - stripe
