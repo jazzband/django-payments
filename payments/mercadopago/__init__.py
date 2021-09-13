@@ -174,6 +174,13 @@ class MercadoPagoProvider(BasicProvider):
         payment.change_status(STATUS_MAP[upstream_status])
 
     def process_data(self, payment: BasePayment, request: HttpRequest):
+        """Handle a request received after a payment.
+
+        If it's a GET request, then it's the user being redirected after
+        completing a payment (it may have failed or have been successfull).
+
+        If it's a POST, it's a webhook notification.
+        """
         if request.method == "GET":
             return self.process_callback(payment, request)
         elif request.method == "POST":

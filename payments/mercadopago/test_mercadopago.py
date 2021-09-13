@@ -4,6 +4,7 @@ from unittest.mock import call
 from unittest.mock import patch
 
 import pytest
+from django.test import RequestFactory
 
 from payments import PaymentError
 from payments import PaymentStatus
@@ -394,3 +395,39 @@ def test_get_form_for_inexistent_preference(mp_provider: MercadoPagoProvider):
 
     assert get_preference.call_count == 1
     assert str(exc_info.value) == "https://example.com/pay"
+
+
+def test_process_notification_ignores_merchant_orders(
+    mp_provider: MercadoPagoProvider,
+    rf: RequestFactory,
+):
+    payment = Payment()
+    request = rf.post(
+        "/process/xxx-yyy",
+        {"topic": "merchant_order"},
+        content_type="application/json",
+    )
+    response = mp_provider.process_data(payment, request)
+
+    assert response.content.decode() == "Thanks"
+
+
+def test_process_notification_processes_payment_collection(
+    mp_provider: MercadoPagoProvider,
+    rf: RequestFactory,
+):
+    payment = Payment()
+    request = rf.post(
+        "/process/xxx-yyy",
+        {"topic": "payment", "resource": "payment123"},
+        content_type="application/json",
+    )
+    with patch(
+        "payments.mercadopago.MercadoPagoProvider.process_collection",
+        spec=True,
+    ) as process_collection:
+        response = mp_provider.process_data(payment, request)
+
+    assert response.content.decode() == "Thanks"
+    assert process_collection.call_count == 1
+    assert process_collection.call_args == call(payment, "123")
