@@ -1,23 +1,44 @@
 Installation
 ============
 
-#. Install django-payments
+Install the package
+-------------------
 
    .. code-block:: bash
 
       $ pip install django-payments
 
-Note that some providers have additional dependencies. For example, if using
-stripe, you should run:
+Most providers have additional dependencies. For example, if using stripe, you
+should run:
 
 
    .. code-block:: bash
 
       $ pip install "django-payments[stripe]"
 
-#. Add ``payments`` to your ``INSTALLED_APPS``.
+Note the quotes to avoid the shell parsing the square brackets.
 
-#. Add the callback processor to your URL router::
+.. versionchanged:: 0.15
+
+   Each provider now has extra/optional dependencies. Previously, dependencies
+   for **all** providers was installed by default.
+
+Configure Django
+----------------
+
+Add ``payments`` to your ``settings.py``:
+
+    .. code-block:: python
+
+      INSTALLED_APPS = [
+        ...
+        "payments",
+        ...
+      ]
+
+Add the callback processor to your URL router (``urls.py``):
+
+    .. code-block:: python
 
       # urls.py
       from django.conf.urls import include, path
@@ -26,7 +47,16 @@ stripe, you should run:
           path('payments/', include('payments.urls')),
       ]
 
-#. Define a :class:`Payment` model by subclassing :class:`payments.models.BasePayment`::
+Create a "Payment" class
+------------------------
+
+You'll need to create your own ``Payment`` model by subclassing the
+:class:`payments.models.BasePayment`:: class shipped with this model.
+
+You may include any extra payment-related fields on this model. We suggest
+adding a foreign key to your existing purchase or order model.
+
+    .. code-block:: python
 
       # mypaymentapp/models.py
       from decimal import Decimal
@@ -36,20 +66,33 @@ stripe, you should run:
 
       class Payment(BasePayment):
 
-          def get_failure_url(self):
+          def get_failure_url(self) -> str:
+              # Return a URL where users are redirected after
+              # they fail to complete a payment:
               return 'http://example.com/failure/'
 
-          def get_success_url(self):
+          def get_success_url(self) -> str:
+              # Return a URL where users are redirected after
+              # they successfully complete a payment:
               return 'http://example.com/success/'
 
-          def get_purchased_items(self):
-              # you'll probably want to retrieve these from an associated order
-              yield PurchasedItem(name='The Hound of the Baskervilles', sku='BSKV',
-                                  quantity=9, price=Decimal(10), currency='USD')
+          def get_purchased_items(self) -> Iterable[PurchasedItem]:
+              # Return items that will be included in this payment.
+              yield PurchasedItem(
+                  name='The Hound of the Baskervilles',
+                  sku='BSKV',
+                  quantity=9,
+                  price=Decimal(10),
+                  currency='USD',
+              )
 
-   The :meth:`get_purchased_items` method should return an iterable yielding instances of :class:`payments.PurchasedItem`.
+Create a payment view
+---------------------
 
-#. Write a view that will handle the payment. You can obtain a form instance by passing POST data to ``payment.get_form()``::
+Write a view that will handle the payment. You can obtain a form instance by
+passing POST data to ``payment.get_form()``:
+
+    .. code-block:: python
 
       # mypaymentapp/views.py
       from django.shortcuts import get_object_or_404, redirect
@@ -67,9 +110,11 @@ stripe, you should run:
 
    .. note::
 
-      Please note that :meth:`Payment.get_form` may raise a :exc:`RedirectNeeded` exception.
+      Please note that :meth:`Payment.get_form` may raise a
+      :exc:`RedirectNeeded` exception. In this case, you need to redirect the
+      user to the supplied URL.
 
-#. Prepare a template that displays the form using its *action* and *method*:
+Prepare a template that displays the form using its ``action`` and ``method``:
 
    .. code-block:: html
 
@@ -80,26 +125,40 @@ stripe, you should run:
           <p><input type="submit" value="Proceed" /></p>
       </form>
 
+Additional Django settings
+--------------------------
 
-#. Configure your ``settings.py``::
+Additionally, you'll need to configure a few extra settings:
 
-      # settings.py
-      INSTALLED_APPS = [
-          # ...
-          'payments']
+    .. code-block:: python
 
+      # This can be a string or callable, and should return a base host that
+      # will be used when receiving callbacks and notifications from payment
+      # providers.
+      #
+      # Keep in mind that if you use `localhost`, external servers won't be
+      # able to reach you for webhook notifications.
       PAYMENT_HOST = 'localhost:8000'
+
+      # Whether to use TLS (HTTPS). If false, will use plain-text HTTP.
+      # Defaults to ``not settings.DEBUG``.
       PAYMENT_USES_SSL = False
+
+      # A dotted path to your Payment class (see above).
       PAYMENT_MODEL = 'mypaymentapp.Payment'
+
+      # Named configuration for your payment provider(s).
+      #
+      # Each payment processor takes different arguments.
+      # This setting is a tuple, where the first element is the variant's name
+      # (this is just a local alias), and the second element is a dict with
+      # the provider-specific attributes (generally API keys or alike).
+      #
+      # See Backends for details.
       PAYMENT_VARIANTS = {
-          'default': ('payments.dummy.DummyProvider', {})}
+          'default': ('payments.dummy.DummyProvider', {})
+      }
 
-   Variants are named pairs of payment providers and their configuration.
-
-   .. note::
+   .. hint::
 
       Variant names are used in URLs so it's best to stick to ASCII.
-
-   .. note::
-
-      PAYMENT_HOST can also be a callable object.

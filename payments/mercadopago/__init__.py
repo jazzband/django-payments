@@ -30,17 +30,17 @@ STATUS_MAP = {
 
 
 class MercadoPagoProvider(BasicProvider):
+    """This backend implements payments using `MercadoPago <https://www.mercadopago.com.ar/>`_.
+
+    You'll need to install with extra dependencies to use this::
+
+        pip install "django-payments[mercadopago]"
+
+    :param access_token: The access token provided by MP.
+    :param sandbox: Whether to use sandbox more.
+    """
+
     def __init__(self, access_token: str, sandbox: bool):
-        """This backend implements payments using `MercadoPago
-        <https://www.mercadopago.com.ar/>`_.
-
-        You'll need to install with extra dependencies to use this:
-
-            pip install "django-payments[mercadopago]"
-
-        :param access token: The access token provided by MP.
-        :param sandbox: Whether to use sandbox more.
-        """
         # self._capture = True
         self.client = SDK(access_token)
         self.is_sandbox = sandbox
