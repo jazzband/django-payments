@@ -1,5 +1,6 @@
 import json
 from typing import Iterable
+from typing import Union
 from uuid import uuid4
 
 from django.db import models
@@ -83,7 +84,7 @@ class BasePayment(models.Model):
     class Meta:
         abstract = True
 
-    def change_status(self, status: PaymentStatus, message=""):
+    def change_status(self, status: Union[PaymentStatus, str], message=""):
         """
         Updates the Payment status and sends the status_changed signal.
         """

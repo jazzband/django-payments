@@ -13,6 +13,7 @@ v0.15.0
 - Dependencies that are only required for a specific provider have been moved
   to extra (optional) dependencies. See the installation instructions for
   further details.
+- Added support for MercadoPago.
 
 v0.14.0
 -------
