@@ -36,30 +36,7 @@ Add ``payments`` to your ``settings.py``:
         ...
       ]
 
-Additionally, you'll need to configure these too:
-
-    .. code-block:: python
-
-      # This can be a callable, and should return a base host that will be used
-      # when receiving callbacks and notifications from payment providers.
-      PAYMENT_HOST = 'localhost:8000'
-      # Whether to use TLS (HTTPS). If false, will use plain-text HTTP.
-      PAYMENT_USES_SSL = False
-      # A dotted path to your Payment class (see below).
-      PAYMENT_MODEL = 'mypaymentapp.Payment'
-      # Named configuration for your payment provider(s).
-      # See Backends for # details.
-      PAYMENT_VARIANTS = {
-          'default': ('payments.dummy.DummyProvider', {})
-      }
-
-Variants are named pairs of payment providers and their configuration.
-
-   .. note::
-
-      Variant names are used in URLs so it's best to stick to ASCII.
-
-Add the callback processor to your URL router:
+Add the callback processor to your URL router (``urls.py``):
 
     .. code-block:: python
 
@@ -147,3 +124,41 @@ Prepare a template that displays the form using its ``action`` and ``method``:
           {{ form.as_p }}
           <p><input type="submit" value="Proceed" /></p>
       </form>
+
+Additional Django settings
+--------------------------
+
+Additionally, you'll need to configure a few extra settings:
+
+    .. code-block:: python
+
+      # This can be a string or callable, and should return a base host that
+      # will be used when receiving callbacks and notifications from payment
+      # providers.
+      #
+      # Keep in mind that if you use `localhost`, external servers won't be
+      # able to reach you for webhook notifications.
+      PAYMENT_HOST = 'localhost:8000'
+
+      # Whether to use TLS (HTTPS). If false, will use plain-text HTTP.
+      # Defaults to ``not settings.DEBUG``.
+      PAYMENT_USES_SSL = False
+
+      # A dotted path to your Payment class (see above).
+      PAYMENT_MODEL = 'mypaymentapp.Payment'
+
+      # Named configuration for your payment provider(s).
+      #
+      # Each payment processor takes different arguments.
+      # This setting is a tuple, where the first element is the variant's name
+      # (this is just a local alias), and the second element is a dict with
+      # the provider-specific attributes (generally API keys or alike).
+      #
+      # See Backends for details.
+      PAYMENT_VARIANTS = {
+          'default': ('payments.dummy.DummyProvider', {})
+      }
+
+   .. hint::
+
+      Variant names are used in URLs so it's best to stick to ASCII.
