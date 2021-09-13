@@ -18,6 +18,11 @@ should run:
 
 Note the quotes to avoid the shell parsing the square brackets.
 
+.. versionchanged:: 0.15
+
+   Each provider now has extra/optional dependencies. Previously, dependencies
+   for **all** providers was installed by default.
+
 Configure Django
 ----------------
 
