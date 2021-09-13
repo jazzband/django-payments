@@ -340,10 +340,23 @@ def test_get_preference_internal_error(mp_provider: MercadoPagoProvider):
     assert get_preference.call_args == call(payment.transaction_id)
 
 
-def test_get_form_for_existing_preference(mp_provider: MercadoPagoProvider):
+@pytest.mark.parametrize(
+    "is_sandbox,url_attr",
+    [
+        (False, "init_point"),
+        (True, "sandbox_init_point"),
+    ],
+)
+def test_get_form_for_existing_preference(
+    mp_provider: MercadoPagoProvider,
+    is_sandbox: bool,
+    url_attr: str,
+):
+    mp_provider.is_sandbox = is_sandbox
+
     mocked_response = {
         "status": 200,
-        "response": {"sandbox_init_point": "https://example.com/pay"},
+        "response": {url_attr: "https://example.com/pay"},
     }
 
     payment = Payment()
