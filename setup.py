@@ -26,7 +26,10 @@ setup(
         "version_scheme": "post-release",
         "write_to": "payments/version.py",
     },
-    setup_requires=["setuptools_scm"],
+    setup_requires=[
+        "setuptools_scm",
+        "setuptools<58",
+    ],
     url="http://github.com/jazzband/django-payments",
     packages=PACKAGES,
     include_package_data=True,
