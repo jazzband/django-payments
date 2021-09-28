@@ -14,6 +14,8 @@ v0.15.0
   to extra (optional) dependencies. See the installation instructions for
   further details.
 - Added support for MercadoPago.
+- ``suds-jurko`` has been replaced with `suds-community`, since the former
+  no longer installs with recent ``setuptools``.
 
 v0.14.0
 -------
