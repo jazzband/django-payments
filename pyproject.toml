@@ -1,5 +1,0 @@
-[build-system]
-# Pin setuptools to an older version, since suds-jarko
-# doesn't build with the latest.
-requires = ["setuptools<58"]
-build-backend = "setuptools.build_meta"
