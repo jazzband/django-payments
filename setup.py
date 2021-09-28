@@ -54,7 +54,7 @@ setup(
     ],
     extras_require={
         "braintree": ["braintree>=3.14.0"],
-        "cybersource": ["suds-jurko>=0.6"],
+        "cybersource": ["suds-community>=0.6"],
         "docs": ["sphinx_rtd_theme"],
         "mercadopago": ["mercadopago>=2.0.0,<3.0.0"],
         "sagepay": ["cryptography>=1.1.0"],
