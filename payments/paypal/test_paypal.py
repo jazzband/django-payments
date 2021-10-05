@@ -42,6 +42,15 @@ class Payment(Mock):
     variant = VARIANT
     transaction_id = None
     message = ""
+    billing_first_name = "John"
+    billing_last_name = "Doe"
+    billing_address_1 = "Unit 4"
+    billing_address_2 = "5 Green Street"
+    billing_city = "Greenville"
+    billing_postcode = "1234"
+    billing_country_code = "US"
+    billing_country_area = "Some state"
+    billing_email = "john@example.com"
     extra_data = json.dumps(
         {
             "links": {
