@@ -189,6 +189,21 @@ class PaypalProvider(BasicProvider):
         total = payment.total.quantize(CENTS, rounding=ROUND_HALF_UP)
         tax = payment.tax.quantize(CENTS, rounding=ROUND_HALF_UP)
         delivery = payment.delivery.quantize(CENTS, rounding=ROUND_HALF_UP)
+        # Pre-fill the PayPal billing address so the customer doesn't have to
+        # type it in again. Although the PayPal API calls this
+        # "shipping_address", the PayPal payment form labels it as "Billing
+        # address", hence we're passing the billing address.
+        #
+        # See: https://developer.paypal.com/docs/api/payments/v1/#definition-item_list
+        billing_address = {
+            "recipient_name": " ".join([payment.billing_first_name, payment.billing_last_name]),
+            "line1": payment.billing_address_1,
+            "line2": payment.billing_address_2,
+            "city": payment.billing_city,
+            "state": payment.billing_country_area,
+            "postal_code": payment.billing_postcode,
+            "country_code": payment.billing_country_code,
+        }
         data = {
             "intent": "sale" if self._capture else "authorize",
             "transactions": [
@@ -202,7 +217,10 @@ class PaypalProvider(BasicProvider):
                             "shipping": str(delivery),
                         },
                     },
-                    "item_list": {"items": items},
+                    "item_list": {
+                        "items": items,
+                        "shipping_address": billing_address,  # See comment above.
+                    },
                     "description": payment.description,
                 }
             ],
@@ -213,7 +231,12 @@ class PaypalProvider(BasicProvider):
         return_url = self.get_return_url(payment)
         data = self.get_transactions_data(payment)
         data["redirect_urls"] = {"return_url": return_url, "cancel_url": return_url}
-        data["payer"] = {"payment_method": "paypal"}
+        data["payer"] = {
+            "payment_method": "paypal",
+            "payer_info": {
+                "email": payment.billing_email,
+            },
+        }
         return data
 
     def get_form(self, payment, data=None):
