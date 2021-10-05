@@ -196,7 +196,9 @@ class PaypalProvider(BasicProvider):
         #
         # See: https://developer.paypal.com/docs/api/payments/v1/#definition-item_list
         billing_address = {
-            "recipient_name": " ".join([payment.billing_first_name, payment.billing_last_name]),
+            "recipient_name": " ".join(
+                [payment.billing_first_name, payment.billing_last_name]
+            ),
             "line1": payment.billing_address_1,
             "line2": payment.billing_address_2,
             "city": payment.billing_city,
