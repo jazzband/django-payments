@@ -63,17 +63,20 @@ class PaypalProvider(BasicProvider):
     """
 
     def __init__(
-        self, client_id, secret, endpoint="https://api.sandbox.paypal.com", capture=True
+        self, client_id, secret, endpoint="https://api.sandbox.paypal.com", capture=True, **kwargs
     ):
         self.secret = secret
         self.client_id = client_id
         self.endpoint = endpoint
         self.oauth2_url = self.endpoint + "/v1/oauth2/token"
         self.payments_url = self.endpoint + "/v1/payments/payment"
+        self.subscriptions_url = self.endpoint + "/v1/billing/subscriptions"
+        self.plans_url = self.endpoint + "/v1/billing/plans"
         self.payment_execute_url = self.payments_url + "/%(id)s/execute/"
         self.payment_refund_url = (
             self.endpoint + "/v1/payments/capture/{captureId}/refund"
         )
+        self.plan_id = kwargs.get('plan_id', None)
         super().__init__(capture=capture)
 
     def set_response_data(self, payment, response, is_auth=False):
@@ -113,13 +116,15 @@ class PaypalProvider(BasicProvider):
         }
         if "data" in kwargs:
             kwargs["data"] = json.dumps(kwargs["data"])
-        response = requests.post(*args, **kwargs)
+        http_method = kwargs.pop('http_method', requests.post)
+        response = http_method(*args, **kwargs)
         try:
             data = response.json()
         except ValueError:
             data = {}
         if 400 <= response.status_code <= 500:
-            self.set_error_data(payment, data)
+            if payment:
+                self.set_error_data(payment, data)
             logger.debug(data)
             message = "Paypal error"
             if response.status_code == 400:
@@ -131,11 +136,16 @@ class PaypalProvider(BasicProvider):
                 message = error_data.get("message", message)
             else:
                 logger.warning(message, extra={"status_code": response.status_code})
-            payment.change_status(PaymentStatus.ERROR, message)
+            if payment:
+                payment.change_status(PaymentStatus.ERROR, message)
             raise PaymentError(message)
         else:
-            self.set_response_data(payment, data)
+            if payment:
+                self.set_response_data(payment, data)
         return data
+
+    def get(self, payment, *args, **kwargs):
+        return self.post(payment, http_method=requests.get, *args, **kwargs)
 
     def get_last_response(self, payment, is_auth=False):
         extra_data = json.loads(payment.extra_data or "{}")
@@ -144,8 +154,11 @@ class PaypalProvider(BasicProvider):
         return extra_data.get("response", {})
 
     def get_access_token(self, payment):
-        last_auth_response = self.get_last_response(payment, is_auth=True)
-        created = payment.created
+        if payment:
+            last_auth_response = self.get_last_response(payment, is_auth=True)
+            created = payment.created
+        else:
+            last_auth_response = {}
         now = timezone.now()
         if (
             "access_token" in last_auth_response
@@ -167,7 +180,8 @@ class PaypalProvider(BasicProvider):
             response.raise_for_status()
             data = response.json()
             last_auth_response.update(data)
-            self.set_response_data(payment, last_auth_response, is_auth=True)
+            if payment:
+                self.set_response_data(payment, last_auth_response, is_auth=True)
             return "{} {}".format(data["token_type"], data["access_token"])
 
     def get_transactions_items(self, payment):
@@ -209,10 +223,13 @@ class PaypalProvider(BasicProvider):
         }
         return data
 
-    def get_product_data(self, payment, extra_data=None):
+    def get_redirect_urls(self, payment):
         return_url = self.get_return_url(payment)
+        return {"return_url": return_url, "cancel_url": return_url}
+
+    def get_product_data(self, payment, extra_data=None):
         data = self.get_transactions_data(payment)
-        data["redirect_urls"] = {"return_url": return_url, "cancel_url": return_url}
+        data["redirect_urls"] = self.get_redirect_urls(payment)
         data["payer"] = {"payment_method": "paypal"}
         return data
 
@@ -222,10 +239,15 @@ class PaypalProvider(BasicProvider):
         links = self._get_links(payment)
         redirect_to = links.get("approval_url")
         if not redirect_to:
-            payment_data = self.create_payment(payment)
+            if payment.is_recurring():
+                payment_data = self.create_subscription(payment)
+                links = self._get_links(payment)
+                redirect_to = links["approve"]
+            else:
+                payment_data = self.create_payment(payment)
+                links = self._get_links(payment)
+                redirect_to = links["approval_url"]
             payment.transaction_id = payment_data["id"]
-            links = self._get_links(payment)
-            redirect_to = links["approval_url"]
         payment.change_status(PaymentStatus.WAITING)
         raise RedirectNeeded(redirect_to["href"])
 
@@ -234,6 +256,8 @@ class PaypalProvider(BasicProvider):
         failure_url = payment.get_failure_url()
         if "token" not in request.GET:
             return HttpResponseForbidden("FAILED")
+        if payment.is_recurring():
+            self.process_subscription_data(payment, request)
         payer_id = request.GET.get("PayerID")
         if not payer_id:
             if payment.status != PaymentStatus.CONFIRMED:
@@ -254,6 +278,54 @@ class PaypalProvider(BasicProvider):
             payment.change_status(PaymentStatus.PREAUTH)
         return redirect(success_url)
 
+    def process_subscription_data(self, payment, request):
+        success_url = payment.get_success_url()
+        failure_url = payment.get_failure_url()
+        subscription_id = request.GET.get("subscription_id")
+        if not subscription_id:
+            if payment.status != PaymentStatus.CONFIRMED:
+                payment.change_status(PaymentStatus.REJECTED)
+                return redirect(failure_url)
+            else:
+                return redirect(success_url)
+        try:
+            subscription_data = self.get_subscription(payment)
+        except PaymentError:
+            return redirect(failure_url)
+        if subscription_data['status'] == 'ACTIVE':
+            payment.captured_amount = payment.total
+            payment.change_status(PaymentStatus.CONFIRMED)
+            return redirect(success_url)
+        payment.change_status(PaymentStatus.REJECTED)
+        return redirect(failure_url)
+
+    def create_subscription(self, payment, extra_data=None):
+        redirect_urls = self.get_redirect_urls(payment)
+        if callable(self.plan_id):
+            plan_id = self.plan_id(payment)
+        else:
+            plan_id = self.plan_id
+        plan_data = {
+            "plan_id": plan_id,
+            "application_context": {
+                'shipping_preference': 'NO_SHIPPING',
+                "user_action": "SUBSCRIBE_NOW",
+                "payment_method": {
+                    "payer_selected": "PAYPAL",
+                    "payee_preferred": "IMMEDIATE_PAYMENT_REQUIRED"
+                },
+                **redirect_urls,
+            }
+        }
+        payment_data = self.post(payment, self.subscriptions_url, data=plan_data)
+        subscription = payment.get_subscription()
+        subscription.set_recurrence(payment_data['id'])
+        return payment_data
+
+    def cancel_subscription(self, subscription):
+        subscription_id = subscription.get_token()
+        self.post(None, f"{self.subscriptions_url}/{subscription_id}/cancel")
+
     def create_payment(self, payment, extra_data=None):
         product_data = self.get_product_data(payment, extra_data)
         payment = self.post(payment, self.payments_url, data=product_data)
@@ -264,6 +336,11 @@ class PaypalProvider(BasicProvider):
         links = self._get_links(payment)
         execute_url = links["execute"]["href"]
         return self.post(payment, execute_url, data=post)
+
+    def get_subscription(self, payment):
+        links = self._get_links(payment)
+        execute_url = links["edit"]["href"]
+        return self.get(payment, execute_url)
 
     def get_amount_data(self, payment, amount=None):
         return {
