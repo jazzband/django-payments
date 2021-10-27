@@ -312,6 +312,22 @@ class PaypalProvider(BasicProvider):
             plan_id = self.plan_id
         plan_data = {
             "plan_id": plan_id,
+            "plan": {  # Override plan values
+                "billing_cycles": [{
+                    "sequence": 1,
+                    # TODO: This doesn't work:
+                    # "frequency": {
+                    #     "interval_unit": payment.get_subscription().get_unit(),
+                    #     "interval_count": payment.get_subscription().get_period(),
+                    # },
+                    "pricing_scheme": {
+                        "fixed_price": {
+                            "currency_code": payment.currency,
+                            "value": str(payment.total.quantize(CENTS, rounding=ROUND_HALF_UP)),
+                        },
+                    },
+                }],
+            },
             "application_context": {
                 "shipping_preference": "NO_SHIPPING",
                 "user_action": "SUBSCRIBE_NOW",
