@@ -48,8 +48,8 @@ class BaseSubscription(models.Model):
         blank=True,
     )
     payment_provider = models.CharField(
-        _('payment provider'),
-        help_text=_('Provider variant, that will be used for payment renewal'),
+        _("payment provider"),
+        help_text=_("Provider variant, that will be used for payment renewal"),
         max_length=255,
         default=None,
         null=True,

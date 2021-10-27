@@ -63,7 +63,12 @@ class PaypalProvider(BasicProvider):
     """
 
     def __init__(
-        self, client_id, secret, endpoint="https://api.sandbox.paypal.com", capture=True, **kwargs
+        self,
+        client_id,
+        secret,
+        endpoint="https://api.sandbox.paypal.com",
+        capture=True,
+        **kwargs,
     ):
         self.secret = secret
         self.client_id = client_id
@@ -76,7 +81,7 @@ class PaypalProvider(BasicProvider):
         self.payment_refund_url = (
             self.endpoint + "/v1/payments/capture/{captureId}/refund"
         )
-        self.plan_id = kwargs.get('plan_id', None)
+        self.plan_id = kwargs.get("plan_id", None)
         super().__init__(capture=capture)
 
     def set_response_data(self, payment, response, is_auth=False):
@@ -116,7 +121,7 @@ class PaypalProvider(BasicProvider):
         }
         if "data" in kwargs:
             kwargs["data"] = json.dumps(kwargs["data"])
-        http_method = kwargs.pop('http_method', requests.post)
+        http_method = kwargs.pop("http_method", requests.post)
         response = http_method(*args, **kwargs)
         try:
             data = response.json()
@@ -292,7 +297,7 @@ class PaypalProvider(BasicProvider):
             subscription_data = self.get_subscription(payment)
         except PaymentError:
             return redirect(failure_url)
-        if subscription_data['status'] == 'ACTIVE':
+        if subscription_data["status"] == "ACTIVE":
             payment.captured_amount = payment.total
             payment.change_status(PaymentStatus.CONFIRMED)
             return redirect(success_url)
@@ -308,18 +313,18 @@ class PaypalProvider(BasicProvider):
         plan_data = {
             "plan_id": plan_id,
             "application_context": {
-                'shipping_preference': 'NO_SHIPPING',
+                "shipping_preference": "NO_SHIPPING",
                 "user_action": "SUBSCRIBE_NOW",
                 "payment_method": {
                     "payer_selected": "PAYPAL",
-                    "payee_preferred": "IMMEDIATE_PAYMENT_REQUIRED"
+                    "payee_preferred": "IMMEDIATE_PAYMENT_REQUIRED",
                 },
                 **redirect_urls,
-            }
+            },
         }
         payment_data = self.post(payment, self.subscriptions_url, data=plan_data)
         subscription = payment.get_subscription()
-        subscription.set_recurrence(payment_data['id'])
+        subscription.set_recurrence(payment_data["id"])
         return payment_data
 
     def cancel_subscription(self, subscription):
