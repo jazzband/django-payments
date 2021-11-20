@@ -61,9 +61,6 @@ class BaseSubscription(models.Model):
         month = "month"
         day = "day"
 
-    def get_token(self) -> str:
-        return self.token
-
     def set_recurrence(self, token: str, **kwargs):
         """
         Sets token and other values associated with subscription recurrence
@@ -220,9 +217,14 @@ class BasePayment(models.Model):
     def autocomplete_with_subscription(self):
         """
         Complete the payment with subscription
-        Used by providers, that use server initiated subscription workflow
 
-        Throws RedirectNeeded if there is problem with the payment that needs to be solved by user
+        If the provider uses workflow such that the payments are initiated from
+        implementer's side.
+        Call this function right before the subscription end to
+        make a new subscription payment.
+
+        Throws RedirectNeeded if there is problem with the payment
+        that needs to be solved by user
         """
         provider = provider_factory(self.variant)
         provider.autocomplete_with_subscription(self)

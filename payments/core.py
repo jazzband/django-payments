@@ -122,9 +122,14 @@ class BasicProvider:
     def autocomplete_with_subscription(self, payment):
         """
         Complete the payment with subscription
-        Used by providers, that use server initiated subscription workflow
 
-        Throws RedirectNeeded if there is problem with the payment that needs to be solved by user
+        If the provider uses workflow such that the payments are initiated from
+        implementer's side.
+        The users of django-payments will create a payment and call
+        Payment.autocomplete_with_subscription() right before the subscription end.
+
+        Throws RedirectNeeded if there is problem with the payment
+        that needs to be solved by user.
         """
         raise NotImplementedError()
 
