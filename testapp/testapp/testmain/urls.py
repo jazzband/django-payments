@@ -9,4 +9,5 @@ urlpatterns = [
         "payment-failure",
         views.payment_failure,
     ),
+    path("", views.create_test_payment),
 ]

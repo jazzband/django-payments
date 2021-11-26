@@ -1,6 +1,3 @@
-# Create your models here.
-from decimal import Decimal
-
 from payments import PurchasedItem
 from payments.models import BasePayment
 
@@ -14,9 +11,9 @@ class Payment(BasePayment):
 
     def get_purchased_items(self):
         yield PurchasedItem(
-            name="The Hound of the Baskervilles",
+            name=self.description,
             sku="BSKV",
-            quantity=9,
-            price=Decimal(10),
-            currency="USD",
+            quantity=1,
+            price=self.total,
+            currency=self.currency,
         )
