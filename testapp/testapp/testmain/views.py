@@ -1,4 +1,4 @@
-# Create your views here.
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -21,8 +21,8 @@ def payment_details(request, payment_id):
 
 
 def payment_success(request):
-    raise NotImplementedError()
+    return HttpResponse("Payment succeeded.")
 
 
 def payment_failure(request):
-    raise NotImplementedError()
+    return HttpResponse("Payment failed.")
