@@ -38,12 +38,13 @@ def create_test_payment(request):
     to the payment details view where the get_form() method is called,
     or a redirect to the providers link is triggered.
     """
-    payment = get_payment_model()
     form = TestPaymentForm(
         initial={"variant": "default", "currency": "USD", "total": 10.0},
         data=request.POST or None,
     )
     if request.method == "POST" and form.is_valid():
-        p = payment.objects.create(description="Product", **form.cleaned_data)
+        p = form.instance
+        p.description = "Product"
+        p.save()
         return redirect(f"/test/payment-details/{p.id}")
     return TemplateResponse(request, "create_payment.html", {"form": form})
