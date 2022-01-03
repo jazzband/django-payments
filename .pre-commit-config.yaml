@@ -3,7 +3,7 @@
 # vim: set nospell:
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.1.0
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -24,12 +24,12 @@ repos:
           - flake8-bugbear
         exclude: docs\/.*
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.1
+    rev: v2.31.0
     hooks:
     -   id: pyupgrade
         args: [--py3-plus]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v0.910-1"
+    rev: "v0.930"
     hooks:
       - id: mypy
         additional_dependencies:
