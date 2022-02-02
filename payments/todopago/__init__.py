@@ -1,9 +1,12 @@
 from decimal import Decimal
 from uuid import uuid4
 
+from django.http import HttpRequest
 from python_todopago import TodoPagoConnector
 from python_todopago.helpers import Item
 
+from payments import PaymentError
+from payments import RedirectNeeded
 from payments.core import BasicProvider
 from payments.models import BasePayment
 
@@ -33,7 +36,7 @@ class TodoPagoProvider(BasicProvider):
             amount=payment.total,
             city=payment.billing_city,
             country_code=payment.billing_country_code,
-            state_code="D",  # TODO: add state code to payment model
+            state_code=payment.billing_country_area,
             billing_first_name=payment.billing_first_name,
             billing_last_name=payment.billing_last_name,
             billing_email=payment.billing_email,
@@ -41,7 +44,7 @@ class TodoPagoProvider(BasicProvider):
             billing_postcode=payment.billing_postcode,
             billing_address_1=payment.billing_address_1,
             billing_address_2=payment.billing_address_2,
-            customer_id="1",
+            customer_id=payment.pk,
             customer_ip_address=payment.customer_ip_address,
             items=[
                 Item(
@@ -56,11 +59,36 @@ class TodoPagoProvider(BasicProvider):
             ],
         )
 
-        if authorization.status_code == -1:
-            payment.attrs.request_key = authorization.request_key
-            payment.attrs.public_request_key = authorization.public_request_key
+        if authorization.status_code != -1:
+            raise PaymentError(
+                message="Failed to authorize TodoPago operation.",
+                code=authorization.status_code,
+                gateway_message=authorization.status_message,
+            )
 
-            payment.transaction_id = transaction_id
-            payment.save()
+        payment.attrs.request_key = authorization.request_key
+        payment.attrs.public_request_key = authorization.public_request_key
+        payment.attrs.form_url = authorization.form_url
+
+        payment.transaction_id = transaction_id
+        payment.save()
 
         return authorization
+
+    def get_action(self, payment: BasePayment):
+        # This is the form-action. But we don't use a form.
+        raise NotImplementedError()
+
+    def process_data(self, payment: BasePayment, request: HttpRequest):
+        raise NotImplementedError()
+
+    def get_form(self, payment: BasePayment, data=None):
+        url = self.autorize_operation(payment)
+
+        raise RedirectNeeded(url)
+
+    def capture(self, payment: BasePayment, amount=None):
+        raise NotImplementedError()
+
+    def refund(self, payment: BasePayment, amount=None):
+        raise NotImplementedError()
