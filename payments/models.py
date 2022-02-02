@@ -136,15 +136,27 @@ class BasePayment(models.Model):
         return []
 
     def get_failure_url(self) -> str:
+        """A URL where users will be redirected after a failed payment.
+
+        Subclasses MUST implement this method.
+        """
         raise NotImplementedError()
 
     def get_success_url(self) -> str:
+        """A URL where users will be redirected after a successful payment.
+
+        Subclasses MUST implement this method.
+        """
         raise NotImplementedError()
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
 
     def capture(self, amount=None):
+        """Capture a pre-authorized payment.
+
+        Note that not all providers support this method.
+        """
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError("Only pre-authorized payments can be captured.")
         provider = provider_factory(self.variant)
@@ -154,6 +166,10 @@ class BasePayment(models.Model):
             self.change_status(PaymentStatus.CONFIRMED)
 
     def release(self):
+        """Release a pre-authorized payment.
+
+        Note that not all providers support this method.
+        """
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError("Only pre-authorized payments can be released.")
         provider = provider_factory(self.variant)
