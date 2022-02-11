@@ -46,7 +46,7 @@ class TodoPagoProvider(BasicProvider):
             billing_first_name=payment.billing_first_name,
             billing_last_name=payment.billing_last_name,
             billing_email=payment.billing_email,
-            billing_phone="+543513000000",  # TODO: add phone to payment model
+            billing_phone=str(payment.billing_phone),
             billing_postcode=payment.billing_postcode,
             billing_address_1=payment.billing_address_1,
             billing_address_2=payment.billing_address_2,
