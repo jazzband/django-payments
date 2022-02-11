@@ -58,7 +58,7 @@ setup(
         "cybersource": ["suds-community>=0.6"],
         "docs": ["sphinx_rtd_theme"],
         "mercadopago": ["mercadopago>=2.0.0,<3.0.0"],
-        "todopago": ["python-todopago>=1.0.0,<2.0.0"],
+        "todopago": ["python-todopago>=1.0.3,<2.0.0"],
         "sagepay": ["cryptography>=1.1.0"],
         "sofort": ["xmltodict>=0.9.2"],
         "stripe": ["stripe>=2.6.0"],
