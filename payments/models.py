@@ -136,15 +136,27 @@ class BasePayment(models.Model):
         return []
 
     def get_failure_url(self) -> str:
+        """A URL where users will be redirected after a failed payment.
+
+        Subclasses MUST implement this method.
+        """
         raise NotImplementedError()
 
     def get_success_url(self) -> str:
+        """A URL where users will be redirected after a successful payment.
+
+        Subclasses MUST implement this method.
+        """
         raise NotImplementedError()
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
 
     def capture(self, amount=None):
+        """Capture a pre-authorized payment.
+
+        Note that not all providers support this method.
+        """
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError("Only pre-authorized payments can be captured.")
         provider = provider_factory(self.variant)
@@ -154,6 +166,10 @@ class BasePayment(models.Model):
             self.change_status(PaymentStatus.CONFIRMED)
 
     def release(self):
+        """Release a pre-authorized payment.
+
+        Note that not all providers support this method.
+        """
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError("Only pre-authorized payments can be released.")
         provider = provider_factory(self.variant)
@@ -177,4 +193,14 @@ class BasePayment(models.Model):
 
     @property
     def attrs(self):
+        """A JSON-serialised wrapper around `extra_data`.
+
+        This property exposes a a dict or list which is serialised into the `extra_data`
+        text field. Usage of this wrapper is preferred over accessing the underlying
+        field directly.
+
+        You may think of this as a `JSONField` which is saved to the `extra_data`
+        column.
+        """
+        # TODO: Deprecate in favour of JSONField when we drop support for django 2.2.
         return PaymentAttributeProxy(self)
