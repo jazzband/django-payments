@@ -38,7 +38,7 @@ class TodoPagoProvider(BasicProvider):
             success_url=self.get_return_url(payment),
             failure_url=self.get_return_url(payment),
             operation_id=transaction_id,
-            currency=int(payment.currency),
+            currency=payment.currency,
             amount=payment.total,
             city=payment.billing_city,
             country_code=payment.billing_country_code,
@@ -67,7 +67,7 @@ class TodoPagoProvider(BasicProvider):
 
         if authorization.status_code != -1:
             raise PaymentError(
-                message="Failed to authorize TodoPago operation.",
+                message=f"Failed to authorize TodoPago operation. [{authorization.status_message}]",
                 code=authorization.status_code,
                 gateway_message=authorization.status_message,
             )
