@@ -8,8 +8,10 @@ v0.15.1
 -------
 
 - Added support for Python 3.10.
+- Added support for Django 4.0.
 - billing_phone field added to BasePayment.
 - Added TodoPago provider.
+
 
 v0.15.0
 -------
