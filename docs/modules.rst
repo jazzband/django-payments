@@ -242,3 +242,26 @@ Example::
 
 Note that the API sandbox does not return Payment details, so all payments
 will seem unpaid.
+
+
+TodoPago
+-----------
+
+.. autoclass:: payments.todopago.TodoPagoProvider
+
+Example::
+
+    PAYMENT_VARIANTS: = {
+        "todopago": (
+            "payments.todopago.TodoPagoProvider",
+            {
+                "token": "TODOPAGO fd82155d7d57416195bb5afca28d2747",
+                "merchant": 1036372,
+                "sandbox": DEBUG,
+            },
+        ),
+    }
+
+It seems that the API sandbox is not working, so in order to test the
+implementation you will need to set `"sandbox": False` and use production
+credentials.

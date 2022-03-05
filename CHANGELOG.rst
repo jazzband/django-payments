@@ -8,6 +8,7 @@ v0.15.1
 -------
 
 - Added support for Python 3.10.
+- Added TodoPago provider.
 
 v0.15.0
 -------
