@@ -32,7 +32,7 @@ class TodoPagoProvider(BasicProvider):
         self.client = TodoPagoConnector(token, merchant, sandbox=sandbox)
         self.sandbox = sandbox
 
-    def autorize_operation(self, payment: BasePayment):
+    def authorize_operation(self, payment: BasePayment):
         transaction_id = uuid4().hex
         authorization = self.client.authorize_operation(
             success_url=self.get_return_url(payment),
@@ -134,7 +134,7 @@ class TodoPagoProvider(BasicProvider):
 
     def get_form(self, payment: BasePayment, data=None):
         if not hasattr(payment.attrs, "form_url"):
-            _ = self.autorize_operation(payment)
+            _ = self.authorize_operation(payment)
 
         url = payment.attrs.form_url
 
