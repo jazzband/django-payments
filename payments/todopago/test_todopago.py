@@ -6,6 +6,7 @@ import pytest
 from python_todopago.helpers import Authorization
 from python_todopago.helpers import OperationStatus
 
+from payments import PaymentError
 from payments import PaymentStatus
 from payments import PurchasedItem
 from payments.todopago import TodoPagoProvider
@@ -114,3 +115,30 @@ def test_approved_payment_notification(rf, tp_provider):
         rv = tp_provider.process_callback(payment, request)
 
     assert rv == redirect(payment.get_success_url())
+
+
+def test_rejected_payment_notification(rf, tp_provider):
+    payment = Payment()
+    payment.attrs.request_key = "1fb7cc9a-14dd-42ec-bf1e-6d5820799642"
+    payment.attrs.form_url = (
+        "https://forms.todopago.com.ar/formulario/commands?command=formulario&amp;m=a6104bad3-1be7-4e8e-932e-e927100b2e86&amp;fr=1",
+    )
+    payment.save()
+
+    request = rf.get(
+        "/payments/process/d16695e8-b76d-4438-bd10-634545ecb1d6/",
+        {"Answer": "44caba31-1373-4544-aa6b-42abff696944"},
+    )
+
+    operation_status = OperationStatus(
+        status_code=99998,
+        status_message="-",
+        authorization_key="-",
+    )
+
+    with patch(
+        "python_todopago.TodoPagoConnector.get_operation_status",
+        spec=True,
+        return_value=operation_status,
+    ), pytest.raises(PaymentError, match="didn't approve the payment"):
+        _ = tp_provider.process_callback(payment, request)
