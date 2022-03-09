@@ -22,6 +22,7 @@ class Payment(Mock):
     transaction_id = None
     captured_amount = 0
     billing_first_name = "John"
+    description = "foo bar"
 
     def get_process_url(self):
         return "http://example.com"
