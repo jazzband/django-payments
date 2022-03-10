@@ -25,7 +25,7 @@ class TodoPagoProvider(BasicProvider):
 
     :param token: The token provided by TP
     :param merchant: The merchant ID provided by TP
-    :param sandbox: Whether to use sandbox more.
+    :param sandbox: Whether to use sandbox mode.
     """
 
     def __init__(self, token: str, merchant: str, sandbox: bool):
