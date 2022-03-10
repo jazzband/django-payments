@@ -1,5 +1,6 @@
 import re
 from typing import Dict
+from typing import Optional
 from typing import Tuple
 from urllib.parse import urlencode
 from urllib.parse import urljoin
@@ -23,10 +24,13 @@ PAYMENT_USES_SSL = getattr(settings, "PAYMENT_USES_SSL", not settings.DEBUG)
 
 
 def get_base_url() -> str:
-    """
-    Returns host url according to project settings. Protocol is chosen by
-    checking PAYMENT_USES_SSL variable.
-    If PAYMENT_HOST is not specified, gets domain from Sites.
+    """Returns host url according to project settings.
+
+    Protocol is chosen by checking ``PAYMENT_USES_SSL`` variable, and will fall
+    back to plain text (``http``).
+
+    If the ``PAYMENT_HOST`` setting is not specified, gets domain from Sites.
+
     Otherwise checks if it's callable and returns it's result. If it's not a
     callable treats it as domain.
     """
@@ -42,15 +46,17 @@ def get_base_url() -> str:
 
 
 class BasicProvider:
-    """
-    This class defines the provider API. It should not be instantiated
-    directly. Use factory instead.
+    """Defined a base provider API.
+
+    All providers backends should subclass this class.
+
+    ``BasicProvider`` should not be instantiated directly. Use factory instead.
     """
 
     _method = "post"
 
     def get_action(self, payment):
-        """The `action` for the HTML form element."""
+        """The ``action`` for the HTML form element."""
         return self.get_return_url(payment)
 
     def __init__(self, capture=True):
@@ -63,8 +69,9 @@ class BasicProvider:
 
     def get_hidden_fields(self, payment):
         """
-        Converts a payment into a dict containing transaction data. Use
-        get_form instead to get a form suitable for templates.
+        Converts a payment into a dict containing transaction data
+
+        Use get_form instead to get a form suitable for templates.
 
         When implementing a new payment provider, overload this method to
         transfer provider-specific data.
@@ -72,8 +79,10 @@ class BasicProvider:
         raise NotImplementedError()
 
     def get_form(self, payment, data=None):
-        """
-        Converts *payment* into a form suitable for Django templates.
+        """Converts ``payment`` into a form suitable for Django templates.
+
+        This function may raise :class:`~.RedirectNeeded`, which indicates that
+        the user should be redirected to a specific page.
         """
         from .forms import PaymentForm
 
@@ -85,7 +94,7 @@ class BasicProvider:
         """Process callback request from a payment provider.
 
         This method should handle checking the status of the payment, and
-        update the `payment` instance.
+        update the ``payment`` instance.
 
         If a client is redirected here after making a payment, then this view
         should redirect them to either :meth:`Payment.get_success_url` or
@@ -94,9 +103,7 @@ class BasicProvider:
         raise NotImplementedError()
 
     def get_token_from_request(self, payment, request):
-        """
-        Return payment token from provider request.
-        """
+        """Return payment token from provider request."""
         raise NotImplementedError()
 
     def get_return_url(self, payment, extra_data=None):
@@ -132,9 +139,10 @@ class BasicProvider:
 PROVIDER_CACHE = {}
 
 
-def provider_factory(variant):
-    """
-    Return the provider instance based on variant
+def provider_factory(variant: str):
+    """Return the provider instance based on ``variant``.
+
+    :arg variant: The name of a variant defined in ``PAYMENT_VARIANTS``.
     """
     variants = getattr(settings, "PAYMENT_VARIANTS", PAYMENT_VARIANTS)
     handler, config = variants.get(variant, (None, None))
@@ -163,7 +171,7 @@ CARD_TYPES = [
 ]
 
 
-def get_credit_card_issuer(number):
+def get_credit_card_issuer(number: str) -> Tuple[Optional[str], Optional[str]]:
     for regexp, card_type, name in CARD_TYPES:
         if re.match(regexp, number):
             return card_type, name
