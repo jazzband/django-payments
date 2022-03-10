@@ -9,6 +9,8 @@ v0.15.1
 
 - Added support for Python 3.10.
 - Added support for Django 4.0.
+- Fixed bad usage of return URLs for Sofort provider.
+- Fixed handling of very long descriptions with Sofort.
 
 v0.15.0
 -------
