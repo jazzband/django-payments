@@ -4,6 +4,11 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v0.16.0
+-------
+
+- Dropped support for Python 3.6.
+
 v0.15.1
 -------
 
