@@ -57,8 +57,8 @@ class SofortProvider(BasicProvider):
                 "amount": payment.total,
                 "currency": payment.currency,
                 "description": payment.description,
-                "success_url": payment.get_process_url(),
-                "abort_url": payment.get_process_url(),
+                "success_url": self.get_return_url(payment),
+                "abort_url": self.get_return_url(payment),
                 "customer_protection": "0",
             },
         )
