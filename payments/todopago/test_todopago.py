@@ -82,7 +82,7 @@ def test_authorize_operation(tp_provider):
         spec=True,
         return_value=authorization,
     ):
-        _ = tp_provider.authorize_operation(payment)
+        tp_provider.authorize_operation(payment)
 
     assert payment.status == PaymentStatus.WAITING
     assert payment.attrs.request_key == "f5ad41bc-92ba-40ff-889d-8a23fe562a28"
