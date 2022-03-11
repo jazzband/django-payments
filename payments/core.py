@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.module_loading import import_string
 
 PAYMENT_VARIANTS: Dict[str, Tuple[str, Dict]] = {
     "default": ("payments.dummy.DummyProvider", {})
@@ -139,7 +140,7 @@ class BasicProvider:
 PROVIDER_CACHE = {}
 
 
-def provider_factory(variant: str):
+def _default_provider_factory(variant: str):
     """Return the provider instance based on ``variant``.
 
     :arg variant: The name of a variant defined in ``PAYMENT_VARIANTS``.
@@ -155,6 +156,11 @@ def provider_factory(variant: str):
         PROVIDER_CACHE[variant] = class_(**config)
     return PROVIDER_CACHE[variant]
 
+PAYMENT_VARIANT_FACTORY = getattr(settings, "PAYMENT_VARIANT_FACTORY", None)
+if PAYMENT_VARIANT_FACTORY:
+    provider_factory = import_string(PAYMENT_VARIANT_FACTORY)
+else:
+    provider_factory = _default_provider_factory
 
 CARD_TYPES = [
     (r"^4[0-9]{12}(?:[0-9]{3,6})?$", "visa", "VISA"),
