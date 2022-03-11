@@ -2,12 +2,16 @@ import re
 from typing import Dict
 from typing import Optional
 from typing import Tuple
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
+
+if TYPE_CHECKING:
+    from .models import BasePayment
 
 PAYMENT_VARIANTS: Dict[str, Tuple[str, Dict]] = {
     "default": ("payments.dummy.DummyProvider", {})
@@ -140,7 +144,7 @@ class BasicProvider:
 PROVIDER_CACHE = {}
 
 
-def _default_provider_factory(variant: str):
+def _default_provider_factory(variant: str, payment: Optional["BasePayment"] = None):
     """Return the provider instance based on ``variant``.
 
     :arg variant: The name of a variant defined in ``PAYMENT_VARIANTS``.

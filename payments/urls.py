@@ -25,7 +25,7 @@ def process_data(request, token, provider=None):
     payment = get_object_or_404(Payment, token=token)
     if not provider:
         try:
-            provider = provider_factory(payment.variant)
+            provider = provider_factory(payment.variant, payment)
         except ValueError:
             raise Http404("No such payment")
     return provider.process_data(payment, request)
