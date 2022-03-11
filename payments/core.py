@@ -1,8 +1,8 @@
 import re
+from typing import TYPE_CHECKING
 from typing import Dict
 from typing import Optional
 from typing import Tuple
-from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 from urllib.parse import urljoin
 
@@ -159,6 +159,7 @@ def _default_provider_factory(variant: str, payment: Optional["BasePayment"] = N
         class_ = getattr(module, class_name)
         PROVIDER_CACHE[variant] = class_(**config)
     return PROVIDER_CACHE[variant]
+
 
 PAYMENT_VARIANT_FACTORY = getattr(settings, "PAYMENT_VARIANT_FACTORY", None)
 if PAYMENT_VARIANT_FACTORY:
