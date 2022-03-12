@@ -56,9 +56,11 @@ class SofortProvider(BasicProvider):
                 "interface_version": "django-payments",
                 "amount": payment.total,
                 "currency": payment.currency,
-                "description": payment.description,
-                "success_url": payment.get_process_url(),
-                "abort_url": payment.get_process_url(),
+                "description": payment.description
+                if len(payment.description) <= 40
+                else (payment.description[:37] + "..."),
+                "success_url": self.get_return_url(payment),
+                "abort_url": self.get_return_url(payment),
                 "customer_protection": "0",
             },
         )
