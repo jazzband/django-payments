@@ -4,13 +4,19 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v0.16.0
+-------
+
+- billing_phone field added to BasePayment. A migration will be needed since,
+BasePayment is abstract.
+- Added TodoPago provider.
+
+
 v0.15.1
 -------
 
 - Added support for Python 3.10.
 - Added support for Django 4.0.
-- billing_phone field added to BasePayment.
-- Added TodoPago provider.
 
 
 v0.15.0
