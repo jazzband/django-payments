@@ -4,7 +4,9 @@ from uuid import uuid4
 from django.http import HttpRequest
 from django.shortcuts import redirect
 from python_todopago import TodoPagoConnector
+from python_todopago.helpers import Authorization
 from python_todopago.helpers import Item
+from python_todopago.helpers import OperationStatus
 
 from payments import PaymentError
 from payments import PaymentStatus
@@ -32,7 +34,7 @@ class TodoPagoProvider(BasicProvider):
         self.client = TodoPagoConnector(token, merchant, sandbox=sandbox)
         self.sandbox = sandbox
 
-    def authorize_operation(self, payment: BasePayment):
+    def authorize_operation(self, payment: BasePayment) -> Authorization:
         transaction_id = uuid4().hex
         authorization = self.client.authorize_operation(
             success_url=self.get_return_url(payment),
@@ -81,7 +83,7 @@ class TodoPagoProvider(BasicProvider):
 
         return authorization
 
-    def fetch_operation_status(self, payment: BasePayment):
+    def fetch_operation_status(self, payment: BasePayment) -> OperationStatus:
         request_key = payment.attrs.request_key
         answer_key = payment.attrs.answer_key
 
@@ -94,6 +96,8 @@ class TodoPagoProvider(BasicProvider):
 
         upstream_status = status.status_message
         payment.change_status(STATUS_MAP[upstream_status])
+
+        return status
 
     def get_action(self, payment: BasePayment):
         # This is the form-action. But we don't use a form.
@@ -133,8 +137,8 @@ class TodoPagoProvider(BasicProvider):
             return self.process_callback(payment, request)
 
     def get_form(self, payment: BasePayment, data=None):
-        if not hasattr(payment.attrs, "form_url"):
-            _ = self.authorize_operation(payment)
+        if "form_url" not in payment.attrs:
+            self.authorize_operation(payment)
 
         url = payment.attrs.form_url
 
