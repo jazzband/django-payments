@@ -159,7 +159,7 @@ Additionally, you'll need to configure a few extra settings:
           'default': ('payments.dummy.DummyProvider', {})
       }
 
-      # Callable to retrieve payment provider
+      # Callable to retrieve payment provider instance
       #
       # This is an advanced setting. It is required if defining provider
       # credentials in the settings file is unsuitable. Implementations may choose
