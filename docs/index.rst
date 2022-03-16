@@ -26,3 +26,4 @@ Contents:
    preauth.rst
    modules.rst
    api.rst
+   changelog.rst
