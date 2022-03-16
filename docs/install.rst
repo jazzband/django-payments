@@ -125,6 +125,8 @@ Prepare a template that displays the form using its ``action`` and ``method``:
           <p><input type="submit" value="Proceed" /></p>
       </form>
 
+.. _settings:
+
 Additional Django settings
 --------------------------
 
