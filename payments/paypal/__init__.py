@@ -85,6 +85,7 @@ class PaypalProvider(BasicProvider):
             if "links" in response:
                 extra_data["links"] = {link["rel"]: link for link in response["links"]}
         payment.extra_data = json.dumps(extra_data)
+        payment.save()
 
     def set_response_links(self, payment, response):
         transaction = response["transactions"][0]
@@ -94,11 +95,13 @@ class PaypalProvider(BasicProvider):
         extra_data = json.loads(payment.extra_data or "{}")
         extra_data["links"] = {link["rel"]: link for link in links}
         payment.extra_data = json.dumps(extra_data)
+        payment.save()
 
     def set_error_data(self, payment, error):
         extra_data = json.loads(payment.extra_data or "{}")
         extra_data["error"] = error
         payment.extra_data = json.dumps(extra_data)
+        payment.save()
 
     def _get_links(self, payment):
         extra_data = json.loads(payment.extra_data or "{}")
