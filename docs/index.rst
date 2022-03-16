@@ -18,7 +18,6 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
 
    install.rst
    usage.rst
@@ -26,3 +25,4 @@ Contents:
    preauth.rst
    modules.rst
    api.rst
+   changelog.rst

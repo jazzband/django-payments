@@ -16,7 +16,15 @@ should run:
 
       $ pip install "django-payments[stripe]"
 
-Note the quotes to avoid the shell parsing the square brackets.
+Multiple providers can be specified comma-separated, e.g.:
+
+   .. code-block:: bash
+
+      $ pip install "django-payments[mercadopago,todopago]"
+
+   .. hint::
+
+      Use quotes as above to prevent your shell from parsing the square brackets.
 
 .. versionchanged:: 0.15
 
@@ -26,7 +34,8 @@ Note the quotes to avoid the shell parsing the square brackets.
 Configure Django
 ----------------
 
-Add ``payments`` to your ``settings.py``:
+``payments`` needs to be registered as a Django app by adding it to
+``settings.py``:
 
     .. code-block:: python
 
@@ -36,7 +45,7 @@ Add ``payments`` to your ``settings.py``:
         ...
       ]
 
-Add the callback processor to your URL router (``urls.py``):
+Add the callback processor to your URL router (``urls.py``).
 
     .. code-block:: python
 
@@ -47,14 +56,16 @@ Add the callback processor to your URL router (``urls.py``):
           path('payments/', include('payments.urls')),
       ]
 
+These are URLs where notifications from payment providers will be received and
+where user will be redirected after completing payments.
+
 Create a "Payment" class
 ------------------------
 
-You'll need to create your own ``Payment`` model by subclassing the
-:class:`payments.models.BasePayment`:: class shipped with this model.
-
-You may include any extra payment-related fields on this model. We suggest
-adding a foreign key to your existing purchase or order model.
+Django-payments ship an abstract :class:`payments.models.BasePayment`:: class.
+Individual projects need to subclass it and implement a few methods and may
+include any extra payment-related fields on this model. It is also possible to
+add a foreign key to an existing purchase or order model.
 
     .. code-block:: python
 
@@ -124,6 +135,8 @@ Prepare a template that displays the form using its ``action`` and ``method``:
           {{ form.as_p }}
           <p><input type="submit" value="Proceed" /></p>
       </form>
+
+.. _settings:
 
 Additional Django settings
 --------------------------

@@ -7,10 +7,12 @@ releases, in reverse chronological order.
 v0.16.0
 -------
 
-- billing_phone field added to BasePayment. A migration will be needed since,
-BasePayment is abstract.
+- ``billing_phone`` field added to :class:`~.BasePayment`. A migration will be needed
+  since, BasePayment is abstract.
 - Added TodoPago provider.
 - Dropped support for Python 3.6.
+- The provider factory is not configurable. See ``PAYMENT_VARIANT_FACTORY`` in
+  the :ref:`settings docs <settings>` for details.
 
 v0.15.1
 -------
