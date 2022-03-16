@@ -6,9 +6,9 @@ build:
     python: "3.9"
 
 python:
-   install:
-   - method: pip
-     path: .
+  install:
+    - method: pip
+      path: .
       extra_requirements:
         - docs
         - braintree
