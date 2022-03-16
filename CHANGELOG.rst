@@ -13,6 +13,7 @@ v0.16.0
 - Dropped support for Python 3.6.
 - The provider factory is now configurable. See ``PAYMENT_VARIANT_FACTORY`` in
   the :ref:`settings docs <settings>` for details.
+- Fix a PayPal error.
 
 v0.15.1
 -------
