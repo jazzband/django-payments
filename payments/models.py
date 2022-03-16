@@ -131,7 +131,7 @@ class BasePayment(models.Model):
         return self.variant
 
     def get_form(self, data=None):
-        provider = provider_factory(self.variant)
+        provider = provider_factory(self.variant, self)
         return provider.get_form(self, data=data)
 
     def get_purchased_items(self) -> Iterable[PurchasedItem]:
@@ -161,7 +161,7 @@ class BasePayment(models.Model):
         """
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError("Only pre-authorized payments can be captured.")
-        provider = provider_factory(self.variant)
+        provider = provider_factory(self.variant, self)
         amount = provider.capture(self, amount)
         if amount:
             self.captured_amount = amount
@@ -174,7 +174,7 @@ class BasePayment(models.Model):
         """
         if self.status != PaymentStatus.PREAUTH:
             raise ValueError("Only pre-authorized payments can be released.")
-        provider = provider_factory(self.variant)
+        provider = provider_factory(self.variant, self)
         provider.release(self)
         self.change_status(PaymentStatus.REFUNDED)
 
@@ -186,7 +186,7 @@ class BasePayment(models.Model):
                 raise ValueError(
                     "Refund amount can not be greater then captured amount"
                 )
-            provider = provider_factory(self.variant)
+            provider = provider_factory(self.variant, self)
             amount = provider.refund(self, amount)
             self.captured_amount -= amount
         if self.captured_amount == 0 and self.status != PaymentStatus.REFUNDED:

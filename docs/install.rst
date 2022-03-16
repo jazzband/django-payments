@@ -159,6 +159,21 @@ Additionally, you'll need to configure a few extra settings:
           'default': ('payments.dummy.DummyProvider', {})
       }
 
+      # Callable to retrieve payment provider instance
+      #
+      # This is an advanced setting. It is required if defining provider
+      # credentials in the settings file is unsuitable. Implementations may choose
+      # to read provider credentials from the database or any other source that's
+      # suitable.
+      #
+      # Alternatively, you can provide a callable that takes two arguments:
+      # variant (string) and an optional payment (BasePayment).
+      # The callback has to return an instance of the desired payment provider.
+      #
+      # For inspiration, see the payments.core.payment_factory function, which
+      # retrieves the variant from the above dictionary.
+      PAYMENT_VARIANT_FACTORY = "mypaymentapp.provider_factory"
+
    .. hint::
 
       Variant names are used in URLs so it's best to stick to ASCII.
