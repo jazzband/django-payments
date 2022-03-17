@@ -4,8 +4,22 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
-v0.16.0
--------
+v1.0.0
+------
+
+So far we've been bumping the minor version each time we introduced breaking
+changes. This can result in downstream breakage for tools and setups that
+expect semantic versioning.
+
+From now on we'll be using semantic versioning and bump the major version
+whenever we introduce any breaking changes. Increasing the major number does
+not imply that it's a huge release with a lots of changes; it implies that
+there is at least one backwards-incompatible change, or a change that requires
+intervention.
+
+In this case we've introduced a new field to the abstract Payment class, so
+applications will need to create a new migration to apply it (django's
+`makemigrations` should handle this perfectly).
 
 - ``billing_phone`` field added to :class:`~.BasePayment`. A migration will be needed
   since, BasePayment is abstract.
