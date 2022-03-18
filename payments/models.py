@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-import json
 import logging
+import warnings
 from uuid import uuid4
 
 from django.db import models
@@ -28,7 +28,7 @@ class PaymentAttributeProxy:
         super().__init__()
 
     def __getattr__(self, item):
-        data = json.loads(self._payment.extra_data or "{}")
+        data = self._payment.extra_data or {}
         try:
             return data[item]
         except KeyError as e:
@@ -37,12 +37,9 @@ class PaymentAttributeProxy:
     def __setattr__(self, key, value) -> None:
         if key == "_payment":
             return super().__setattr__(key, value)
-        try:
-            data = json.loads(self._payment.extra_data)
-        except ValueError:
-            data = {}
+        data = self._payment.extra_data or {}
         data[key] = value
-        self._payment.extra_data = json.dumps(data)
+        self._payment.extra_data = data
         return None
 
 
@@ -87,7 +84,7 @@ class BasePayment(models.Model):
     billing_email = models.EmailField(blank=True)
     billing_phone = PhoneNumberField(blank=True)
     customer_ip_address = models.GenericIPAddressField(blank=True, null=True)
-    extra_data = models.TextField(blank=True, default="")
+    extra_data = models.JSONField(blank=True, default=dict)
     message = models.TextField(blank=True, default="")
     token = models.CharField(max_length=36, blank=True, default="")
     captured_amount = models.DecimalField(max_digits=9, decimal_places=2, default="0.0")
@@ -261,14 +258,18 @@ class BasePayment(models.Model):
 
     @property
     def attrs(self):
-        """A JSON-serialised wrapper around `extra_data`.
+        warnings.warn(
+            "Using BasePayment.attrs is deprecated. Use BasePayment.extra_data instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.extra_data
 
-        This property exposes a a dict or list which is serialised into the `extra_data`
-        text field. Usage of this wrapper is preferred over accessing the underlying
-        field directly.
-
-        You may think of this as a `JSONField` which is saved to the `extra_data`
-        column.
-        """
-        # TODO: Deprecate in favour of JSONField when we drop support for django 2.2.
-        return PaymentAttributeProxy(self)
+    @attrs.setter
+    def attrs(self, value):
+        warnings.warn(
+            "Using BasePayment.attrs is deprecated. Use BasePayment.extra_data instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.extra_data = value

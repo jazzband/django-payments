@@ -18,10 +18,6 @@ API_KEY = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
 API_KEY_BAD = "aaaaaaa123"
 
 
-class payment_attrs:
-    session: dict = {}
-
-
 class Payment(Mock):
     id = 1
     description = "payment"
@@ -34,7 +30,10 @@ class Payment(Mock):
     captured_amount = 0
     transaction_id: str | None = None
     billing_email = "john@doe.com"
-    attrs = payment_attrs()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra_data = {"session": {}}
 
     def change_status(self, status: str, message: str = "") -> None:
         self.status = status
@@ -69,8 +68,8 @@ def test_provider_create_session_success() -> None:
     ):
         provider.get_form(payment)
 
-    assert "url" in payment.attrs.session
-    assert "id" in payment.attrs.session
+    assert "url" in payment.extra_data["session"]
+    assert "id" in payment.extra_data["session"]
     assert payment.status == PaymentStatus.WAITING
 
 
@@ -100,8 +99,8 @@ def test_provider_create_session_failure_no_url() -> None:
     ):
         provider.get_form(payment)
 
-    assert "url" not in payment.attrs.session
-    assert "id" not in payment.attrs.session
+    assert "url" not in payment.extra_data["session"]
+    assert "id" not in payment.extra_data["session"]
 
 
 def test_provider_create_session_failure_with_transaction_id() -> None:
@@ -122,7 +121,7 @@ def test_provider_create_session_success_with_billing_name() -> None:
 
 def test_provider_status_confirmed():
     payment = Payment()
-    payment.attrs = payment_attrs()
+    payment.extra_data = {"session": {}}
     payment.transaction_id = "cs_test_..."
     provider = StripeProviderV3(api_key=API_KEY)
 
@@ -161,8 +160,8 @@ def test_provider_refund_failure_bad_status() -> None:
 def test_provider_refund_failure_no_payment_intent() -> None:
     payment = Payment()
     payment.status = PaymentStatus.CONFIRMED
-    assert isinstance(payment.attrs.session, dict)
-    del payment.attrs.session["payment_intent"]
+    assert isinstance(payment.extra_data["session"], dict)
+    assert "payment_intent" not in payment.extra_data["session"]
     provider = StripeProviderV3(api_key=API_KEY)
     with pytest.raises(PaymentError):
         provider.refund(payment)
@@ -184,7 +183,7 @@ def test_provider_refund_failure_stripe_error() -> None:
 def test_provider_refund_success() -> None:
     payment = Payment()
     payment.status = PaymentStatus.CONFIRMED
-    payment.attrs.session["payment_intent"] = "pi_..."
+    payment.extra_data["session"]["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
     return_value = {
         "id": "re_...",
@@ -203,7 +202,7 @@ def test_provider_refund_returns_currency_units():
     payment.status = PaymentStatus.CONFIRMED
     payment.total = 30
     payment.currency = "USD"
-    payment.attrs.session["payment_intent"] = "pi_..."
+    payment.extra_data["session"]["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
     return_value = {
         "id": "re_...",
@@ -227,7 +226,7 @@ def test_provider_refund_partial_returns_currency_units():
     payment.status = PaymentStatus.CONFIRMED
     payment.total = 30
     payment.currency = "USD"
-    payment.attrs.session["payment_intent"] = "pi_..."
+    payment.extra_data["session"]["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
     return_value = {
         "id": "re_...",
@@ -251,7 +250,7 @@ def test_provider_refund_zero_decimal_currency_returns_currency_units():
     payment.status = PaymentStatus.CONFIRMED
     payment.total = 3000
     payment.currency = "JPY"
-    payment.attrs.session["payment_intent"] = "pi_..."
+    payment.extra_data["session"]["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
     return_value = {
         "id": "re_...",
