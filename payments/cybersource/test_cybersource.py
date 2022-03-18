@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import types
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
@@ -43,10 +42,13 @@ class Payment(Mock):
     captured_amount = 0
     message = ""
 
-    attrs = types.SimpleNamespace(
-        fingerprint_session_id="fake",
-        merchant_defined_data={},
-    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra_data = {
+            "fingerprint_session_id": "fake",
+            "merchant_defined_data": {},
+            "capture": True,
+        }
 
     def get_process_url(self) -> str:
         return "http://example.com"
@@ -193,7 +195,7 @@ def test_provider_redirects_on_success_captured_payment(
     payment, prov = provider
     transaction_id = 1234
     xid = "abc"
-    payment.attrs.xid = xid
+    payment.extra_data["xid"] = xid
 
     response = MagicMock()
     response.requestID = transaction_id
@@ -231,7 +233,8 @@ def test_provider_redirects_on_success_preauth_payment(
     )
     transaction_id = 1234
     xid = "abc"
-    payment.attrs.xid = xid
+    payment.extra_data["xid"] = xid
+    payment.extra_data["capture"] = False
 
     response = MagicMock()
     response.requestID = transaction_id
@@ -267,7 +270,7 @@ def test_provider_redirects_on_failure(
     payment, prov = provider
     transaction_id = 1234
     xid = "abc"
-    payment.attrs.xid = xid
+    payment.extra_data["xid"] = xid
 
     response = MagicMock()
     response.requestID = transaction_id

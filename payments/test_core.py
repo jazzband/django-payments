@@ -48,11 +48,11 @@ class Payment(BasePayment):
 
 
 def test_payment_attributes() -> None:
-    payment = Payment(extra_data='{"attr1": "test1", "attr2": "test2"}')
-    assert payment.attrs.attr1 == "test1"
-    assert payment.attrs.attr2 == "test2"
-    assert getattr(payment.attrs, "attr5", None) is None
-    assert not hasattr(payment.attrs, "attr7")
+    payment = Payment(extra_data={"attr1": "test1", "attr2": "test2"})
+    assert payment.extra_data["attr1"] == "test1"
+    assert payment.extra_data["attr2"] == "test2"
+    assert payment.extra_data.get("attr5") is None
+    assert "attr7" not in payment.extra_data
 
 
 def test_capture_with_wrong_status() -> None:

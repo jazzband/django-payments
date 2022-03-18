@@ -103,14 +103,14 @@ class StripeProviderV3(BasicProvider):
                 payment.change_status(PaymentStatus.ERROR, str(pe))
                 raise pe
             else:
-                payment.attrs.session = session
+                payment.extra_data["session"] = session
                 payment.transaction_id = session.get("id", None)
                 payment.save()
 
-        if "url" not in payment.attrs.session:
+        if "url" not in payment.extra_data["session"]:
             raise PaymentError("Stripe returned a session without a URL")
 
-        raise RedirectNeeded(payment.attrs.session.get("url"))
+        raise RedirectNeeded(payment.extra_data["session"].get("url"))
 
     def create_session(self, payment):
         """Makes the call to Stripe to create the Checkout Session"""
@@ -149,7 +149,7 @@ class StripeProviderV3(BasicProvider):
         if payment.status == PaymentStatus.CONFIRMED:
             to_refund = amount or payment.total
             try:
-                payment_intent = payment.attrs.session["payment_intent"]
+                payment_intent = payment.extra_data["session"]["payment_intent"]
             except Exception as e:
                 raise PaymentError("Can't Refund, payment_intent does not exist") from e
 
@@ -163,7 +163,7 @@ class StripeProviderV3(BasicProvider):
             except stripe.StripeError as e:  # type: ignore[attr-defined]
                 raise PaymentError(e) from e
             else:
-                payment.attrs.refund = json.dumps(refund)
+                payment.extra_data["refund"] = dict(refund)
                 payment.save()
                 return to_refund
 
@@ -176,7 +176,7 @@ class StripeProviderV3(BasicProvider):
             if session.payment_status == "paid":
                 payment.captured_amount = payment.total
                 payment.change_status(PaymentStatus.CONFIRMED)
-                payment.attrs.session = session
+                payment.extra_data["session"] = session
                 payment.save()
 
         return payment
@@ -241,7 +241,7 @@ class StripeProviderV3(BasicProvider):
     def process_data(self, payment, request):
         """Processes the event sent by stripe.
 
-        Updates the payment status and adds the event to the attrs property
+        Updates the payment status and adds the event to the extra_data property
         """
         event = self.return_event_payload(request)
         if event.get("type") in stripe_enabled_events:
@@ -261,6 +261,6 @@ class StripeProviderV3(BasicProvider):
                 payment.captured_amount = payment.total
                 payment.change_status(PaymentStatus.CONFIRMED)
 
-            payment.attrs.session = session_info
+            payment.extra_data["session"] = session_info
             payment.save()
         return JsonResponse({"status": "OK"})
