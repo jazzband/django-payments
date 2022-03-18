@@ -60,19 +60,19 @@ class StripeProvider(BasicProvider):
         except stripe.InvalidRequestError as e:
             payment.change_status(PaymentStatus.REFUNDED)
             raise PaymentError("Payment already refunded") from e
-        payment.attrs.capture = json.dumps(charge)
+        payment.extra_data["capture"] = json.dumps(charge)
         return Decimal(amount) / 100
 
     def release(self, payment):
         charge = stripe.Charge.retrieve(payment.transaction_id)
         charge.refund()
-        payment.attrs.release = json.dumps(charge)
+        payment.extra_data["release"] = json.dumps(charge)
 
     def refund(self, payment, amount=None):
         amount = int((amount or payment.total) * 100)
         charge = stripe.Charge.retrieve(payment.transaction_id)
         charge.refund(amount=amount)
-        payment.attrs.refund = json.dumps(charge)
+        payment.extra_data["refund"] = json.dumps(charge)
         return Decimal(amount) / 100
 
 

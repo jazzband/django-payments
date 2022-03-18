@@ -82,14 +82,14 @@ class PaypalProvider(BasicProvider):
         super().__init__(capture=capture)
 
     def set_response_data(self, payment, response, is_auth=False):
-        extra_data = json.loads(payment.extra_data or "{}")
+        extra_data = payment.extra_data or {}
         if is_auth:
             extra_data["auth_response"] = response
         else:
             extra_data["response"] = response
             if "links" in response:
                 extra_data["links"] = {link["rel"]: link for link in response["links"]}
-        payment.extra_data = json.dumps(extra_data)
+        payment.extra_data = extra_data
         payment.save()
 
     def set_response_links(self, payment, response):
@@ -97,19 +97,19 @@ class PaypalProvider(BasicProvider):
         related_resources = transaction["related_resources"][0]
         resource_key = "sale" if self._capture else "authorization"
         links = related_resources[resource_key]["links"]
-        extra_data = json.loads(payment.extra_data or "{}")
+        extra_data = payment.extra_data or {}
         extra_data["links"] = {link["rel"]: link for link in links}
-        payment.extra_data = json.dumps(extra_data)
+        payment.extra_data = extra_data
         payment.save()
 
     def set_error_data(self, payment, error):
-        extra_data = json.loads(payment.extra_data or "{}")
+        extra_data = payment.extra_data or {}
         extra_data["error"] = error
-        payment.extra_data = json.dumps(extra_data)
+        payment.extra_data = extra_data
         payment.save()
 
     def _get_links(self, payment):
-        extra_data = json.loads(payment.extra_data or "{}")
+        extra_data = payment.extra_data or {}
         return extra_data.get("links", {})
 
     @authorize
@@ -144,7 +144,7 @@ class PaypalProvider(BasicProvider):
         return data
 
     def get_last_response(self, payment, is_auth=False):
-        extra_data = json.loads(payment.extra_data or "{}")
+        extra_data = payment.extra_data or {}
         if is_auth:
             return extra_data.get("auth_response", {})
         return extra_data.get("response", {})
@@ -249,7 +249,7 @@ class PaypalProvider(BasicProvider):
         except PaymentError:
             return redirect(failure_url)
         self.set_response_links(payment, executed_payment)
-        payment.attrs.payer_info = executed_payment["payer"]["payer_info"]
+        payment.extra_data["payer_info"] = executed_payment["payer"]["payer_info"]
         if self._capture:
             payment.captured_amount = payment.total
             payment.change_status(PaymentStatus.CONFIRMED)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from datetime import date
 from decimal import Decimal
 from unittest import TestCase
@@ -46,16 +45,14 @@ class Payment(Mock):
     variant = VARIANT
     transaction_id = None
     message = ""
-    extra_data = json.dumps(
-        {
-            "links": {
-                "approval_url": None,
-                "capture": {"href": "http://capture.com"},
-                "refund": {"href": "http://refund.com"},
-                "execute": {"href": "http://execute.com"},
-            }
+    extra_data = {
+        "links": {
+            "approval_url": None,
+            "capture": {"href": "http://capture.com"},
+            "refund": {"href": "http://refund.com"},
+            "execute": {"href": "http://execute.com"},
         }
-    )
+    }
 
     def change_status(self, status, message=""):
         self.status = status
@@ -225,23 +222,22 @@ class TestPaypalProvider(TestCase):
         mocked_post.side_effect = [HTTPError(response=response401), response, response]
 
         self.payment.created = timezone.now()
-        self.payment.extra_data = json.dumps(
-            {
-                "auth_response": {
-                    "access_token": "expired_token",
-                    "token_type": "token type",
-                    "expires_in": 99999,
-                }
+        self.payment.extra_data = {
+            "auth_response": {
+                "access_token": "expired_token",
+                "token_type": "token type",
+                "expires_in": 99999,
             }
-        )
+        }
+
         self.provider.create_payment(self.payment)
-        payment_response = json.loads(self.payment.extra_data)["auth_response"]
+        payment_response = self.payment.extra_data["auth_response"]
         self.assertEqual(payment_response["access_token"], new_token)
 
 
 class TestPaypalCardProvider(TestCase):
     def setUp(self):
-        self.payment = Payment(extra_data="")
+        self.payment = Payment(extra_data={})
         self.provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID)
 
     def test_provider_raises_redirect_needed_on_success_captured_payment(self):

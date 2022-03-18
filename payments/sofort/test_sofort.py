@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import Mock
@@ -99,21 +98,20 @@ class TestSofortProvider(TestCase):
     @patch("xmltodict.parse")
     @patch("requests.post")
     def test_provider_refunds_payment(self, mocked_post, mocked_parser):
-        self.payment.extra_data = json.dumps(
-            {
-                "transactions": {
-                    "transaction_details": {
-                        "status": "ok",
-                        "sender": {
-                            "holder": "John Doe",
-                            "country_code": "EN",
-                            "bic": "1234",
-                            "iban": "abcd",
-                        },
-                    }
+        self.payment.extra_data = {
+            "transactions": {
+                "transaction_details": {
+                    "status": "ok",
+                    "sender": {
+                        "holder": "John Doe",
+                        "country_code": "EN",
+                        "bic": "1234",
+                        "iban": "abcd",
+                    },
                 }
             }
-        )
+        }
+
         mocked_parser.return_value = {}
         self.provider.refund(self.payment)
         self.assertEqual(self.payment.status, PaymentStatus.REFUNDED)
