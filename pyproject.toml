@@ -13,11 +13,7 @@ keywords = ["payments"]
 license = {text = "BSD"}
 classifiers = [
     "Environment :: Web Environment",
-    "Framework :: Django :: 2.2",
-    "Framework :: Django :: 3.0",
-    "Framework :: Django :: 3.1",
     "Framework :: Django :: 3.2",
-    "Framework :: Django :: 4.0",
     "Framework :: Django :: 4.1",
     "Framework :: Django :: 4.2",
     "Intended Audience :: Developers",
@@ -33,7 +29,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "Django>=2.2",
+    "Django>=3.2",
     "requests>=1.2.0",
     "django-phonenumber-field[phonenumberslite]>=5.0.0",
 ]
