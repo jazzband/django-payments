@@ -108,13 +108,13 @@ about the payment or the order, such as an order number, additional customer
 information, or a special comment or request from the customer. This can be
 accomplished by passing your data to the :class:`Payment` instance::
 
-      >>> payment.attrs.merchant_defined_data = {'01': 'foo', '02': 'bar'}
+      >>> payment.extra_data.merchant_defined_data = {'01': 'foo', '02': 'bar'}
 
 Fingerprinting::
 
   Cybersource allows you to pass a fingerprint data to help identify fraud
 
-      >>> payment.attrs.fingerprint_session_id
+      >>> payment.extra_data.fingerprint_session_id
 
 
 Dotpay

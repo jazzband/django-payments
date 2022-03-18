@@ -124,21 +124,19 @@ def test_provider_refunds_payment(
     payment: Payment,
     provider: SofortProvider,
 ) -> None:
-    payment.extra_data = json.dumps(
-        {
-            "transactions": {
-                "transaction_details": {
-                    "status": "ok",
-                    "sender": {
-                        "holder": "John Doe",
-                        "country_code": "EN",
-                        "bic": "1234",
-                        "iban": "abcd",
-                    },
-                }
+    payment.extra_data = {
+        "transactions": {
+            "transaction_details": {
+                "status": "ok",
+                "sender": {
+                    "holder": "John Doe",
+                    "country_code": "EN",
+                    "bic": "1234",
+                    "iban": "abcd",
+                },
             }
         }
-    )
+    }
     mocked_parser.return_value = {}
     provider.refund(payment)
     assert payment.status == PaymentStatus.REFUNDED

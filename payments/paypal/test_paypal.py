@@ -103,8 +103,10 @@ class Payment(Mock):
     variant = VARIANT
     transaction_id = None
     message = ""
-    extra_data = json.dumps(
-        {
+
+    def __init__(self, *args, extra_data=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra_data = extra_data if extra_data is not None else {
             "links": {
                 "approval_url": None,
                 "capture": {"href": "http://capture.com"},
@@ -112,7 +114,6 @@ class Payment(Mock):
                 "execute": {"href": "http://execute.com"},
             }
         }
-    )
 
     @property
     def pk(self) -> int:
@@ -421,17 +422,15 @@ def test_provider_renews_access_token(
     mocked_post.side_effect = [HTTPError(response=response401), response, response]
 
     paypal_payment.created = timezone.now()
-    paypal_payment.extra_data = json.dumps(
-        {
-            "auth_response": {
-                "access_token": "expired_token",
-                "token_type": "token type",
-                "expires_in": 99999,
-            }
+    paypal_payment.extra_data = {
+        "auth_response": {
+            "access_token": "expired_token",
+            "token_type": "token type",
+            "expires_in": 99999,
         }
-    )
+    }
     paypal_provider.create_payment(paypal_payment)
-    payment_response = json.loads(paypal_payment.extra_data)["auth_response"]
+    payment_response = paypal_payment.extra_data["auth_response"]
     assert payment_response["access_token"] == new_token
 
 
@@ -440,7 +439,7 @@ def test_provider_renews_access_token(
 
 @pytest.fixture
 def paypal_card_payment() -> Payment:
-    return Payment(extra_data="")
+    return Payment()
 
 
 @pytest.fixture
