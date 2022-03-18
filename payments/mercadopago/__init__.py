@@ -74,7 +74,7 @@ class MercadoPagoProvider(BasicProvider):
         if payment.transaction_id:
             raise ValueError("This payment already has a preference.")
 
-        payment.attrs.external_reference = uuid4().hex
+        payment.extra_data.external_reference = uuid4().hex
 
         payload = {
             "auto_return": "all",
@@ -89,7 +89,7 @@ class MercadoPagoProvider(BasicProvider):
                 }
                 for item in payment.get_purchased_items()
             ],
-            "external_reference": payment.attrs.external_reference,
+            "external_reference": payment.extra_data.external_reference,
             "back_urls": {
                 "success": self.get_return_url(payment),
                 "pending": self.get_return_url(payment),
@@ -218,7 +218,7 @@ class MercadoPagoProvider(BasicProvider):
         """
         data = self.client.payment().search(
             {
-                "external_reference": payment.attrs.external_reference,
+                "external_reference": payment.extra_data.external_reference,
             }
         )
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from typing import Iterable
 from uuid import uuid4
 
@@ -80,7 +81,7 @@ class BasePayment(models.Model):
     billing_email = models.EmailField(blank=True)
     billing_phone = PhoneNumberField(blank=True)
     customer_ip_address = models.GenericIPAddressField(blank=True, null=True)
-    extra_data = models.TextField(blank=True, default="")
+    extra_data = models.JsonField(blank=True, default=dict)
     message = models.TextField(blank=True, default="")
     token = models.CharField(max_length=36, blank=True, default="")
     captured_amount = models.DecimalField(max_digits=9, decimal_places=2, default="0.0")
@@ -226,14 +227,18 @@ class BasePayment(models.Model):
 
     @property
     def attrs(self):
-        """A JSON-serialised wrapper around `extra_data`.
+        warnings.warn(
+            "Using BasePayment.attrs is deprecated. Use BasePayment.extra_data instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.extra_data
 
-        This property exposes a a dict or list which is serialised into the `extra_data`
-        text field. Usage of this wrapper is preferred over accessing the underlying
-        field directly.
-
-        You may think of this as a `JSONField` which is saved to the `extra_data`
-        column.
-        """
-        # TODO: Deprecate in favour of JSONField when we drop support for django 2.2.
-        return PaymentAttributeProxy(self)
+    @attrs.setter
+    def attrs(self, value):
+        warnings.warn(
+            "Using BasePayment.attrs is deprecated. Use BasePayment.extra_data instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.extra_data = value

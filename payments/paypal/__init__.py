@@ -249,7 +249,7 @@ class PaypalProvider(BasicProvider):
         except PaymentError:
             return redirect(failure_url)
         self.set_response_links(payment, executed_payment)
-        payment.attrs.payer_info = executed_payment["payer"]["payer_info"]
+        payment.extra_data.payer_info = executed_payment["payer"]["payer_info"]
         if self._capture:
             payment.captured_amount = payment.total
             payment.change_status(PaymentStatus.CONFIRMED)

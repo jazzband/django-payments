@@ -41,7 +41,7 @@ class PaymentForm(CreditCardPaymentFormWithName):
         super().__init__(*args, **kwargs)
         if self.provider.org_id:
             try:
-                fingerprint_id = self.payment.attrs.fingerprint_session_id
+                fingerprint_id = self.payment.extra_data.fingerprint_session_id
             except KeyError:
                 fingerprint_id = str(uuid4())
             self.fields["fingerprint"] = FingerprintInput(
@@ -57,7 +57,7 @@ class PaymentForm(CreditCardPaymentFormWithName):
         if not self.errors:
             if self.provider.org_id:
                 fingerprint = cleaned_data["fingerprint"]
-                self.payment.attrs.fingerprint_session_id = fingerprint
+                self.payment.extra_data.fingerprint_session_id = fingerprint
             if not self.payment.transaction_id:
                 try:
                     self.provider.charge(self.payment, cleaned_data)
