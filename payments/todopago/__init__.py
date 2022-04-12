@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.http import HttpRequest
 from django.shortcuts import redirect
+from python_todopago import TodoPagoConnector
 from python_todopago.helpers import Authorization
 from python_todopago.helpers import Item
 from python_todopago.helpers import OperationStatus
@@ -12,7 +13,6 @@ from payments import PaymentStatus
 from payments import RedirectNeeded
 from payments.core import BasicProvider
 from payments.models import BasePayment
-from python_todopago import TodoPagoConnector
 
 STATUS_MAP = {
     "APROBADA": PaymentStatus.CONFIRMED,
