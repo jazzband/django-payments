@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from django.http import HttpRequest
 from django.shortcuts import redirect
-from python_todopago import TodoPagoConnector
 from python_todopago.helpers import Authorization
 from python_todopago.helpers import Item
 from python_todopago.helpers import OperationStatus
@@ -13,6 +12,7 @@ from payments import PaymentStatus
 from payments import RedirectNeeded
 from payments.core import BasicProvider
 from payments.models import BasePayment
+from python_todopago import TodoPagoConnector
 
 STATUS_MAP = {
     "APROBADA": PaymentStatus.CONFIRMED,
@@ -137,7 +137,7 @@ class TodoPagoProvider(BasicProvider):
             return self.process_callback(payment, request)
 
     def get_form(self, payment: BasePayment, data=None):
-        if "form_url" not in payment.attrs:
+        if not hasattr(payment.attrs, "form_url"):
             self.authorize_operation(payment)
 
         url = payment.attrs.form_url
