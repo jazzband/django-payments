@@ -52,7 +52,10 @@ class TodoPagoProvider(BasicProvider):
             billing_postcode=payment.billing_postcode,
             billing_address_1=payment.billing_address_1,
             billing_address_2=payment.billing_address_2,
-            customer_id=payment.pk,
+            # A UUID won't fit into the maximum length of this field.
+            # It _will_ fit if the dashes are removed.
+            # For primary keys of other data types, this has no effect.
+            customer_id=str(payment.pk).replace("-", ""),
             customer_ip_address=payment.customer_ip_address,
             items=[
                 Item(
