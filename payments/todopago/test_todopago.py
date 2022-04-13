@@ -9,6 +9,7 @@ from python_todopago.helpers import OperationStatus
 from payments import PaymentError
 from payments import PaymentStatus
 from payments import PurchasedItem
+from payments import RedirectNeeded
 from payments.todopago import TodoPagoProvider
 
 
@@ -59,10 +60,16 @@ class Payment(Mock):
         )
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def tp_provider():
+    """
+    Returns a TodoPagoProvider instance with a zeep client.
+    We use module scope to avoid creating a new client for each test.
+    Also it seems that https://apis.developers.todopago.com.ar/ is not working
+    anymore, so we use https://apis.todopago.com.ar/ instead with sandbox=False.
+    """
     return TodoPagoProvider(
-        "PRISMA f3d8b72c94ab4a06be2ef7c95490f7d3", 2153, sandbox=True
+        "PRISMA f3d8b72c94ab4a06be2ef7c95490f7d3", 2153, sandbox=False
     )
 
 
@@ -141,4 +148,16 @@ def test_rejected_payment_notification(rf, tp_provider):
         spec=True,
         return_value=operation_status,
     ), pytest.raises(PaymentError, match="didn't approve the payment"):
-        _ = tp_provider.process_callback(payment, request)
+        tp_provider.process_callback(payment, request)
+
+
+def test_get_form_for_payment(rf, tp_provider):
+    payment = Payment()
+    payment.attrs.request_key = "1fb7cc9a-14dd-42ec-bf1e-6d5820799642"
+    payment.attrs.form_url = (
+        "https://forms.todopago.com.ar/formulario/commands?command=formulario&amp;m=a6104bad3-1be7-4e8e-932e-e927100b2e86&amp;fr=1",
+    )
+    payment.save()
+
+    with pytest.raises(RedirectNeeded):
+        tp_provider.get_form(payment)
