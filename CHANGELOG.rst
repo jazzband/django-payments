@@ -51,6 +51,12 @@ v0.15.0
 - ``suds-jurko`` has been replaced with `suds-community`, since the former
   no longer installs with recent ``setuptools``.
 
+**Errata**
+
+This version changed how the ``status_changed`` works. It now only updates the
+affected columns. Code that relied on the implicit save within this function
+will likely break. See #309 for discussion on this.
+
 v0.14.0
 -------
 
