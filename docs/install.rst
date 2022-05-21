@@ -136,6 +136,25 @@ Prepare a template that displays the form using its ``action`` and ``method``:
           <p><input type="submit" value="Proceed" /></p>
       </form>
 
+Mutating a `Payment` instance
+-----------------------------
+
+When operating `BasePayment` instances, care should be take to only save
+changes atomically. If you were to load an instance into memory, mutate, and
+then save it, you might overwrite fields that have been updated due to handling
+a notification from the processor. Keep in mind that some processors implement
+"at least once" notification delivery.
+
+In general, you should either:
+
+- Use atomic updates only specifying the relevant fields. For example, if the
+  application-local ``Payment`` class has a custom field named
+  ``discount_card_code``, use
+  ``BasePayment.objects.filter(pk=payment_id).update(discount_card_code="123XYZ")``.
+  This is the recommended approach.
+- Lock the database row while mutating a python instance of ``BasePayment`` (may
+  negatively affect performance at scale).
+
 .. _settings:
 
 Additional Django settings
