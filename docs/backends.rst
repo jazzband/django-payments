@@ -1,9 +1,11 @@
-Provided backends
+.. _backends:
+
+Provider backends
 =================
 
-These are the payment provider implementations included in this package. Note that you
-should not usually instantiate these yourself, but use :func:`provider_factory`
-instead.
+These are the payment provider backend implementations included in this
+package. Note that you should not usually instantiate these yourself, but use
+:func:`.provider_factory` instead.
 
 Dummy
 -----

@@ -131,21 +131,51 @@ class BasePayment(models.Model):
         return self.variant
 
     def get_form(self, data=None):
+        """Return a form to be rendered to complete this payment.
+
+        Please note that this may raise a :class:`~.RedirectNeeded` exception. In this
+        case, the user should be redirected to the supplied URL.
+
+        Note that not all providers support a pure form-based flow; some will
+        immediately raise ``RedirectNeeded``.
+        """
         provider = provider_factory(self.variant, self)
         return provider.get_form(self, data=data)
 
     def get_purchased_items(self) -> Iterable[PurchasedItem]:
+        """Return an iterable of purchased items.
+
+        This information is sent to the payment processor when initiating the payment
+        flow. See :class:`.PurchasedItem` for details.
+
+        Subclasses MUST implement this method.
+        """
+
         return []
 
     def get_failure_url(self) -> str:
-        """A URL where users will be redirected after a failed payment.
+        """URL where users will be redirected after a failed payment.
+
+        Return the URL where users will be redirected after a failed attempt to complete a
+        payment. This is usually a page explaining the situation to the user with an
+        option to retry the payment.
+
+        Note that the URL may contain the ID of this payment, allowing
+        the target page to show relevant contextual information.
 
         Subclasses MUST implement this method.
         """
         raise NotImplementedError()
 
     def get_success_url(self) -> str:
-        """A URL where users will be redirected after a successful payment.
+        """URL where users will be redirected after a successful payment.
+
+        Return the URL where users will be redirected after a successful payment. This
+        is usually a page showing a payment summary, though it's application-dependant
+        what to show on it.
+
+        Note that the URL may contain the ID of this payment, allowing
+        the target page to show relevant contextual information.
 
         Subclasses MUST implement this method.
         """
