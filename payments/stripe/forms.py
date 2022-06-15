@@ -45,6 +45,7 @@ class StripeFormMixin:
                             self.payment.billing_last_name,
                             self.payment.billing_first_name,
                         ),
+                        "metadata": self.payment.order.get_metadata(),
                     }
 
                     # Patch charge with billing email if exists
