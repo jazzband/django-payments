@@ -20,7 +20,7 @@ Multiple providers can be specified comma-separated, e.g.:
 
 .. code-block:: bash
 
-  $ pip install "django-payments[mercadopago,todopago]"
+  $ pip install "django-payments[mercadopago,stripe]"
 
 .. hint::
 
