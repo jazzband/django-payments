@@ -280,7 +280,7 @@ class CyberSourceProvider(BasicProvider):
         }
         try:
             fingerprint_id = payment.attrs.fingerprint_session_id
-        except KeyError:
+        except AttributeError:
             pass
         else:
             params["deviceFingerprintID"] = fingerprint_id
@@ -446,7 +446,7 @@ class CyberSourceProvider(BasicProvider):
     def _prepare_merchant_defined_data(self, payment):
         try:
             merchant_defined_data = payment.attrs.merchant_defined_data
-        except KeyError:
+        except AttributeError:
             return
         else:
             data = self.client.factory.create("data:MerchantDefinedData")
