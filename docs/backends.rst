@@ -110,6 +110,12 @@ accomplished by passing your data to the :class:`Payment` instance::
 
       >>> payment.attrs.merchant_defined_data = {'01': 'foo', '02': 'bar'}
 
+Fingerprinting::
+
+Cybersource allows you to pass a fingerprint data to help identify fraud
+
+      >>> payment.attrs.fingerprint_session_id
+
 
 Dotpay
 ------
