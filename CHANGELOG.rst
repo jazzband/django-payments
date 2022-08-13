@@ -4,6 +4,12 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v2.0.0
+------
+
+- **Breaking**: The `todopago` backend has been dropped. The payment provider
+  has [quite suddenly] announced it's shutting down.
+
 v1.0.0
 ------
 
