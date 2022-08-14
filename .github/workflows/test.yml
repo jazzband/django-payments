@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "main"
-      - "master"  # TODO: rename to `main`
   pull_request:
     types: [opened, synchronize, reopened]
 

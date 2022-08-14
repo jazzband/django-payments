@@ -9,7 +9,7 @@ django-payments
    :target: https://github.com/jazzband/django-payments/actions
    :alt: GitHub Actions
 
-.. image:: https://codecov.io/gh/jazzband/django-payments/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/jazzband/django-payments/branch/main/graph/badge.svg
   :target: https://codecov.io/gh/jazzband/django-payments
   :alt: Build coverage
 
@@ -26,7 +26,7 @@ django-payments
   :alt: downloads
 
 .. image:: https://img.shields.io/pypi/l/django-payments.svg
-  :target: https://github.com/jazzband/django-payments/blob/master/LICENSE
+  :target: https://github.com/jazzband/django-payments/blob/main/LICENSE
   :alt: licence
 
 Universal payment handling for Django
