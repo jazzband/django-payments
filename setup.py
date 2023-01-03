@@ -52,7 +52,7 @@ setup(
     install_requires=[
         "Django>=2.2",
         "requests>=1.2.0",
-        "django-phonenumber-field[phonenumberslite]>=6.0.0",
+        "django-phonenumber-field[phonenumberslite]>=5.0.0",
     ],
     extras_require={
         "braintree": ["braintree>=3.14.0"],
