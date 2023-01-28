@@ -9,6 +9,10 @@ v2.0.0
 
 - **Breaking**: The `todopago` backend has been dropped. The payment provider
   has [quite suddenly] announced it's shutting down.
+- Older versions of ``django-phonenumber-field`` are now also supported. There
+  was no intrinsic incompatibility; the pinned version was merely too
+  restrictive.
+- Various documentation improvements.
 
 v1.0.0
 ------
