@@ -41,7 +41,6 @@ class PaymentForm(forms.Form):
 
 
 class CreditCardPaymentForm(PaymentForm):
-
     number = CreditCardNumberField(label=_("Card Number"), max_length=32, required=True)
     expiration = CreditCardExpiryField()
     cvv2 = CreditCardVerificationField(
@@ -60,7 +59,6 @@ class CreditCardPaymentForm(PaymentForm):
 
 
 class CreditCardPaymentFormWithName(CreditCardPaymentForm):
-
     name = CreditCardNameField(label=_("Name on Credit Card"), max_length=128)
 
     def __init__(self, *args, **kwargs):

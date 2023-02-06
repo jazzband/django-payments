@@ -14,7 +14,6 @@ from .widgets import CreditCardNumberWidget
 
 
 class CreditCardNumberField(forms.CharField):
-
     widget = CreditCardNumberWidget(
         attrs={"autocomplete": "cc-number", "required": "required"}
     )
@@ -64,7 +63,6 @@ class CreditCardNumberField(forms.CharField):
 
 
 class CreditCardExpiryField(forms.MultiValueField):
-
     default_error_messages = {
         "invalid_month": "Enter a valid month.",
         "invalid_year": "Enter a valid year.",
@@ -122,7 +120,6 @@ class CreditCardExpiryField(forms.MultiValueField):
 
 
 class CreditCardVerificationField(forms.CharField):
-
     widget = forms.TextInput(attrs={"autocomplete": "cc-csc"})
     default_error_messages = {"invalid": _("Enter a valid security number.")}
 
@@ -138,5 +135,4 @@ class CreditCardVerificationField(forms.CharField):
 
 
 class CreditCardNameField(forms.CharField):
-
     widget = forms.TextInput(attrs={"autocomplete": "cc-name", "required": "required"})

@@ -6,7 +6,6 @@ from ..forms import CreditCardPaymentFormWithName
 
 
 class PaymentForm(CreditCardPaymentFormWithName):
-
     VALID_TYPES = ["visa", "mastercard", "discover", "amex"]
 
     def clean(self):

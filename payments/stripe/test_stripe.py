@@ -16,7 +16,6 @@ PUBLIC_KEY = "abcd1234"
 
 
 class Payment(Mock):
-
     id = 1
     description = "payment"
     currency = "USD"
