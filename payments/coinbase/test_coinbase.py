@@ -27,7 +27,6 @@ COINBASE_REQUEST = {
 
 
 class Payment:
-
     id = 1
     description = "payment"
     currency = "BTC"

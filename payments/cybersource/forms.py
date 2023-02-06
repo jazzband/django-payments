@@ -17,7 +17,6 @@ class FingerprintWidget(forms.HiddenInput):
 
 
 class FingerprintInput(forms.CharField):
-
     widget = FingerprintWidget
     hidden_widget = FingerprintWidget
 

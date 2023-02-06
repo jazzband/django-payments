@@ -34,7 +34,6 @@ def process_data(request, token, provider=None):
 @csrf_exempt
 @atomic
 def static_callback(request, variant):
-
     try:
         provider = provider_factory(variant)
     except ValueError:

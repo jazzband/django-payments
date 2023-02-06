@@ -19,7 +19,6 @@ from .widgets import StripeWidget
 
 
 class StripeFormMixin:
-
     charge = None
 
     def _handle_potentially_fraudulent_charge(self, charge, commit=True):
@@ -96,7 +95,6 @@ class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
 
 
 class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
-
     stripeToken = forms.CharField(widget=StripeWidget())
 
     def __init__(self, *args, **kwargs):

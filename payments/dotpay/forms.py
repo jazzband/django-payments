@@ -13,7 +13,6 @@ PROCESSING_REALIZATION = "processing_realization"
 
 
 class ProcessPaymentForm(forms.Form):
-
     id = forms.CharField(required=False)
     operation_number = forms.CharField(required=False)
     operation_type = forms.CharField(required=False)

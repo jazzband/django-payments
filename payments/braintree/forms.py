@@ -5,7 +5,6 @@ from ..forms import CreditCardPaymentFormWithName
 
 
 class BraintreePaymentForm(CreditCardPaymentFormWithName):
-
     transaction_id = None
 
     def clean(self):
