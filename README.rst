@@ -9,10 +9,6 @@ django-payments
    :target: https://github.com/jazzband/django-payments/actions
    :alt: GitHub Actions
 
-.. image:: https://codecov.io/gh/jazzband/django-payments/branch/main/graph/badge.svg
-  :target: https://codecov.io/gh/jazzband/django-payments
-  :alt: Build coverage
-
 .. image:: https://readthedocs.org/projects/django-payments/badge/?version=latest
   :target: http://django-payments.readthedocs.io/en/latest/?badge=latest
   :alt: Documentation Status
