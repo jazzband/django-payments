@@ -44,7 +44,7 @@ class StripeFormMixin:
                             self.payment.billing_last_name,
                             self.payment.billing_first_name,
                         ),
-                        "metadata": self.payment.order.get_metadata(),
+                        "metadata": {"order_id": self.payment.pk},
                     }
 
                     # Patch charge with billing email if exists
@@ -118,11 +118,17 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
             "expiration": CreditCardExpiryWidget(
                 widgets=[
                     SensitiveSelect(
-                        attrs={"autocomplete": "cc-exp-month", "required": "required"},
+                        attrs={
+                            "autocomplete": "cc-exp-month",
+                            "required": "required",
+                        },
                         choices=get_month_choices(),
                     ),
                     SensitiveSelect(
-                        attrs={"autocomplete": "cc-exp-year", "required": "required"},
+                        attrs={
+                            "autocomplete": "cc-exp-year",
+                            "required": "required",
+                        },
                         choices=get_year_choices(),
                     ),
                 ]
