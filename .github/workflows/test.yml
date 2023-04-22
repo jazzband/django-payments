@@ -3,7 +3,7 @@ name: Test
 on:
   push:
     branches:
-      - "main"
+      - "issue-346"
   pull_request:
     types: [opened, synchronize, reopened]
 
