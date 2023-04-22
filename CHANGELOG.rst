@@ -4,6 +4,10 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v2.0.1
+------
+- Stripe backends now sends order_id in the metadata parameter
+
 v2.0.0
 ------
 
