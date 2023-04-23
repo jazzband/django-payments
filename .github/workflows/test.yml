@@ -29,7 +29,7 @@ jobs:
     - name: Get pip cache dir
       id: pip-cache
       run: |
-        echo "::set-output name=dir::$(pip cache dir)"
+        echo "dir=$(pip cache dir)" >> $GIHUB_OUTPUT
 
     - name: Cache
       uses: actions/cache@v2

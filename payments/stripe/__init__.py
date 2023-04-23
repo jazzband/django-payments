@@ -1,7 +1,15 @@
 import json
 from decimal import Decimal
+from dataclasses import dataclass, field, asdict
+from typing import Optional
 
-import stripe
+
+try:
+    import stripe
+except ImportError as exc:
+    raise ImportError(
+        "You need to install `stripe>=2.6.0` onto your environment"
+    ) from exc
 
 from .. import PaymentError
 from .. import PaymentStatus
@@ -9,6 +17,33 @@ from .. import RedirectNeeded
 from ..core import BasicProvider
 from .forms import ModalPaymentForm
 from .forms import PaymentForm
+
+
+@dataclass
+class StripeProductData:
+    name: str
+    description: Optional[str] = field(init=False, repr=False, default=None)
+    images: Optional[list[str]] = field(init=False, repr=False, default=None)
+    metadata: Optional[dict] = field(init=False, repr=False, default=None)
+    tax_code: Optional[str] = field(init=False, repr=False, default=None)
+
+
+@dataclass
+class StripePriceData:
+    currency: str
+    product_data: StripeProductData
+    unit_amount_decimal: Decimal
+    recurring: Optional[dict] = field(init=False, repr=False, default=None)
+    tax_behavior: Optional[str] = field(init=False, repr=False, default=None)
+
+
+@dataclass
+class StripeLineItem:
+    price_data: StripePriceData
+    quantity: int
+    adjustable_quantity: Optional[dict] = field(init=False, repr=False, default=None)
+    dynamic_tax_rates: Optional[dict] = field(init=False, repr=False, default=None)
+    tax_rates: Optional[str] = field(init=False, repr=False, default=None)
 
 
 class StripeProvider(BasicProvider):
@@ -20,16 +55,28 @@ class StripeProvider(BasicProvider):
     :param public_key: Public key assigned by Stripe.
     :param name: A friendly name for your store.
     :param image: Your logo.
+    :param show_form: Shows the Pay Now button, default True
+    :param payment_method_types: From Stripe API, default ["card"]
     """
 
-    form_class = ModalPaymentForm
+    form_class = PaymentForm
 
-    def __init__(self, public_key, secret_key, image="", name="", **kwargs):
-        stripe.api_key = secret_key
+    def __init__(
+        self,
+        public_key,
+        secret_key,
+        image="",
+        name="",
+        show_form=True,
+        payment_method_types=["card"],
+        **kwargs,
+    ):
         self.secret_key = secret_key
         self.public_key = public_key
         self.image = image
         self.name = name
+        self.show_form = show_form
+        self.payment_method_types = payment_method_types
         super().__init__(**kwargs)
 
     def get_form(self, payment, data=None):
@@ -43,15 +90,8 @@ class StripeProvider(BasicProvider):
         return form
 
     def capture(self, payment, amount=None):
-        amount = int((amount or payment.total) * 100)
-        charge = stripe.Charge.retrieve(payment.transaction_id)
-        try:
-            charge.capture(amount=amount)
-        except stripe.InvalidRequestError:
-            payment.change_status(PaymentStatus.REFUNDED)
-            raise PaymentError("Payment already refunded")
-        payment.attrs.capture = json.dumps(charge)
-        return Decimal(amount) / 100
+        # API v3 does not support Capture
+        pass
 
     def release(self, payment):
         charge = stripe.Charge.retrieve(payment.transaction_id)
@@ -64,6 +104,19 @@ class StripeProvider(BasicProvider):
         charge.refund(amount=amount)
         payment.attrs.refund = json.dumps(charge)
         return Decimal(amount) / 100
+
+    def get_line_items(self, payment):
+        product_data = StripeProductData(name="Order #{}".format(payment.pk))
+        price_data = StripePriceData(
+            currency=payment.currency,
+            unit_amount_decimal=payment.total,
+            product_data=product_data,
+        )
+        line_item = StripeLineItem(
+            quantity=1,
+            price_data=price_data,
+        )
+        return [asdict(line_item)]
 
 
 class StripeCardProvider(StripeProvider):

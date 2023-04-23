@@ -1,0 +1,6 @@
+<form action="{{ form.action }}" method="{{ form.method }}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p><input type="submit" value="Proceed with Payment" /></p>
+</form>
+{{ form.media }}

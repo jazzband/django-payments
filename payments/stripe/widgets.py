@@ -28,7 +28,9 @@ class StripeCheckoutWidget(Input):
     def render(self, name, value, attrs=None, renderer=None):
         if value is None:
             value = ""
-        final_attrs = dict(attrs or {}, src="https://checkout.stripe.com/checkout.js")
+        final_attrs = dict(
+            attrs or {}, src="https://checkout.stripe.com/checkout.js"
+        )
         final_attrs.update(self.attrs)
         del final_attrs["id"]
         if value != "":
@@ -39,7 +41,7 @@ class StripeCheckoutWidget(Input):
 
 class StripeWidget(HiddenInput):
     class Media:
-        js = ["https://js.stripe.com/v2/", "js/payments/stripe.js"]
+        js = ["https://js.stripe.com/v3", "js/payments/stripe.js"]
 
     def __init__(self, attrs=None):
         attrs = dict(attrs or {}, id="id_stripe_token")
