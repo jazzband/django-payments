@@ -4,9 +4,10 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
-v2.0.1
+v2.1.0
 ------
 - Stripe backends now sends order_id in the metadata parameter
+- Added support for Python 3.11, Django 4.1 and Django 4.2.
 
 v2.0.0
 ------
