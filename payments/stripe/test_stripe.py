@@ -97,7 +97,7 @@ class TestStripeProvider(TestCase):
             in str(form)
         )
 
-    def test_form_contains_stripe_script_withou_billing_email(self):
+    def test_form_contains_stripe_script_without_billing_email(self):
         """
         If billing email is not set, it should generate the script as expected
         """
