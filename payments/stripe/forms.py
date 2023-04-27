@@ -20,15 +20,13 @@ from .widgets import StripeWidget
 
 class StripeFormMixin:
     charge = None
-    session = None
 
     def _handle_potentially_fraudulent_charge(self, charge, commit=True):
-        # fraud_details = charge["fraud_details"]
-        # if fraud_details.get("stripe_report", None) == "fraudulent":
-        #     self.payment.change_fraud_status(FraudStatus.REJECT, commit=commit)
-        # else:
-        #     self.payment.change_fraud_status(FraudStatus.ACCEPT, commit=commit)
-        pass
+        fraud_details = charge["fraud_details"]
+        if fraud_details.get("stripe_report", None) == "fraudulent":
+            self.payment.change_fraud_status(FraudStatus.REJECT, commit=commit)
+        else:
+            self.payment.change_fraud_status(FraudStatus.ACCEPT, commit=commit)
 
     def clean(self):
         data = self.cleaned_data
@@ -36,32 +34,40 @@ class StripeFormMixin:
         if not self.errors:
             if not self.payment.transaction_id:
                 stripe.api_key = self.provider.secret_key
-                session_data = {
-                    "payment_method_types": self.provider.payment_method_types,
-                    "line_items": self.provider.get_line_items(self.payment),
-                    "mode": "payment",
-                    "success_url": self.payment.get_success_url(),
-                    "cancel_url": self.payment.get_failure_url(),
-                    "client_reference_id": self.payment.id,
-                }
-                # Patch session with billing email if exists
-                if self.payment.billing_email:
-                    session_data.update(
-                        {"customer_email": self.payment.billing_email}
-                    )
                 try:
-                    print(f"stripe.checkout.Session.create({session_data=})")
-                    self.session = stripe.checkout.Session.create(**session_data)
+                    charge_data = {
+                        "capture": False,
+                        "amount": int(self.payment.total * 100),
+                        "currency": self.payment.currency,
+                        "card": data["stripeToken"],
+                        "description": "{} {}".format(
+                            self.payment.billing_last_name,
+                            self.payment.billing_first_name,
+                        ),
+                        "metadata": "Order #{}".format(self.payment.pk),
+                    }
 
-                except stripe.error.StripeError as e:
-                    # Payment has been declined
+                    # Patch charge with billing email if exists
+                    if self.payment.billing_email:
+                        charge_data.update(
+                            {
+                                "receipt_email": self.payment.billing_email,
+                            }
+                        )
+
+                    self.charge = stripe.Charge.create(**charge_data)
+
+                except stripe.error.CardError as e:
+                    # Making sure we retrieve the charge
+                    charge_id = e.json_body["error"]["charge"]
+                    self.charge = stripe.Charge.retrieve(charge_id)
+                    # Checking if the charge was fraudulent
+                    self._handle_potentially_fraudulent_charge(
+                        self.charge, commit=False
+                    )
+                    # The card has been declined
                     self._errors["__all__"] = self.error_class([str(e)])
                     self.payment.change_status(PaymentStatus.ERROR, str(e))
-                else:
-                    print(f"{self.session=}")
-                    if not self.provider.show_form:
-                        raise RedirectNeeded(self.session.get_url)
-
             else:
                 msg = _("This payment has already been processed.")
                 self._errors["__all__"] = self.error_class([msg])
@@ -69,18 +75,25 @@ class StripeFormMixin:
         return data
 
     def save(self):
-        self.payment.transaction_id = self.session.id
-        self.payment.attrs.session = json.dumps(self.session)
+        self.payment.transaction_id = self.charge.id
+        self.payment.attrs.charge = json.dumps(self.charge)
         self.payment.change_status(PaymentStatus.PREAUTH)
         if self.provider._capture:
             self.payment.capture()
         # Make sure we store the info of the charge being marked as fraudulent
-        # self._handle_potentially_fraudulent_charge(self.charge)
+        self._handle_potentially_fraudulent_charge(self.charge)
+
+
+class StripeFormMixinV3:
+    session = None
+
+    def clean(self):
+        data = self.cleaned_data
+        return data
 
 
 class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
     def __init__(self, *args, **kwargs):
-        print("hello there ModalPaymentForm.__init__")
         super(StripeFormMixin, self).__init__(hidden_inputs=False, *args, **kwargs)
         widget = StripeCheckoutWidget(provider=self.provider, payment=self.payment)
         self.fields["stripeToken"] = forms.CharField(widget=widget)
@@ -89,20 +102,52 @@ class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
             raise RedirectNeeded(self.payment.get_failure_url())
 
 
-class PaymentForm(StripeFormMixin, BasePaymentForm):
+class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
     stripeToken = forms.CharField(widget=StripeWidget())
-    session_id = forms.CharField(widget=StripeWidget())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print("hello there PaymentForm.__init__")
-
         stripe_attrs = self.fields["stripeToken"].widget.attrs
         stripe_attrs["data-publishable-key"] = self.provider.public_key
+        stripe_attrs["data-address-line1"] = self.payment.billing_address_1
+        stripe_attrs["data-address-line2"] = self.payment.billing_address_2
+        stripe_attrs["data-address-city"] = self.payment.billing_city
+        stripe_attrs["data-address-state"] = self.payment.billing_country_area
+        stripe_attrs["data-address-zip"] = self.payment.billing_postcode
+        stripe_attrs["data-address-country"] = self.payment.billing_country_code
+        widget_map = {
+            "name": SensitiveTextInput(
+                attrs={"autocomplete": "cc-name", "required": "required"}
+            ),
+            "cvv2": SensitiveTextInput(attrs={"autocomplete": "cc-csc"}),
+            "number": SensitiveTextInput(
+                attrs={"autocomplete": "cc-number", "required": "required"}
+            ),
+            "expiration": CreditCardExpiryWidget(
+                widgets=[
+                    SensitiveSelect(
+                        attrs={"autocomplete": "cc-exp-month", "required": "required"},
+                        choices=get_month_choices(),
+                    ),
+                    SensitiveSelect(
+                        attrs={"autocomplete": "cc-exp-year", "required": "required"},
+                        choices=get_year_choices(),
+                    ),
+                ]
+            ),
+        }
+        for field_name, widget in widget_map.items():
+            self.fields[field_name].widget = widget
+            self.fields[field_name].required = False
 
-        session_attrs = self.fields["session_id"].widget.attrs
-        session_attrs["data-session-id"] = self.payment.transaction_id
-        session_attrs["id"] = "stripe_session_id"
+
+class PaymentFormV3(StripeFormMixinV3):
+    stripe_pub_key = forms.CharField(widget=forms.widgets.HiddenInput())
+    stripe_session_id = forms.CharField(widget=forms.widgets.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        print(f"payments.stripe.forms.PaymentForm.__init__")
+        super().__init__(*args, **kwargs)
 
     class Media:
-        js = ["https://js.stripe.com/v3", "js/payments/stripe.js"]
+        js = ["https://js.stripe.com/v3", "js/payments/stripe.v3.js"]
