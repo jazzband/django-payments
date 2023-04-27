@@ -3,7 +3,7 @@ name: Test
 on:
   push:
     branches:
-      - "issue-346"
+      - "main"
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -29,7 +29,7 @@ jobs:
     - name: Get pip cache dir
       id: pip-cache
       run: |
-        echo "dir=$(pip cache dir)" >> $GIHUB_OUTPUT
+        echo "::set-output name=dir::$(pip cache dir)"
 
     - name: Cache
       uses: actions/cache@v2

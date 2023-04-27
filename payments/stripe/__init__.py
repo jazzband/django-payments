@@ -41,7 +41,9 @@ class StripeProvider(BasicProvider):
         self.name = name
         super().__init__(**kwargs)
         warnings.warn(
-            "This provider uses the deprecated v2 API, please use `payments.stripe.StripeProviderV3`",
+            _(
+                "This provider uses the deprecated v2 API, please use `payments.stripe.StripeProviderV3`"
+            ),
             DeprecationWarning,
             stacklevel=2,
         )
@@ -159,13 +161,13 @@ class StripeProviderV3(BasicProvider):
                 raise PaymentError(pe)
             else:
                 if not self.session:
-                    raise PaymentError("self.session is None")
+                    raise PaymentError(_("self.session can't be None"))
                 payment.attrs.session = self.session
                 payment.transaction_id = self.session.get("id", None)
                 payment.save()
 
         if "url" not in payment.attrs.session:
-            raise PaymentError("No `url` in stripe.session.")
+            raise PaymentError(_("No `url` in payment.attrs.session"))
 
         raise RedirectNeeded(payment.attrs.session.get("url"))
 
@@ -202,11 +204,36 @@ class StripeProviderV3(BasicProvider):
         pass
 
     def refund(self, payment, amount=None):
-        amount = int((amount or payment.total) * 100)
-        charge = stripe.Charge.retrieve(payment.transaction_id)
-        charge.refund(amount=amount)
-        payment.attrs.refund = json.dumps(charge)
-        return Decimal(amount) / 100
+        if payment.status == PaymentStatus.CONFIRMED:
+            amount = int((amount or payment.total) * 100)
+            payment_intent = payment.attrs.session.get("payment_intent", None)
+            if not payment_intent:
+                raise PaymentError(_("Can't Refund, no payment_intent"))
+            stripe.api_key = self.secret_key
+            try:
+                refund = stripe.Refund.create(
+                    payment_intent=payment_intent,
+                    amount=amount,
+                    reason="requested_by_customer",
+                )
+            except stripe.StripeError as e:
+                raise PaymentError(e)
+            else:
+                payment.attrs.refund = json.dumps(refund)
+                payment.save()
+                payment.change_status(PaymentStatus.REFUNDED)
+                return Decimal(amount) / 100
+
+        raise PaymentError(_("Only Confirmed payments can be refunded"))
+
+    def status(self, payment):
+        if payment.status == PaymentStatus.WAITING:
+            stripe.api_key = self.secret_key
+            session = stripe.checkout.Session.retrieve(payment.transaction_id)
+            if session.payment_status == "paid":
+                payment.change_status(PaymentStatus.CONFIRMED)
+
+        return payment
 
     def get_line_items(self, payment):
         order_no = payment.token if self.use_token else payment.pk
