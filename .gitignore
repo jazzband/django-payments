@@ -6,4 +6,6 @@
 *\.egg*
 docs/_build
 payments/version.py
+.coverage
 coverage.xml
+build

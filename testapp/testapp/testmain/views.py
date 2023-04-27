@@ -10,8 +10,8 @@ from testapp.testmain.forms import TestPaymentForm
 
 def payment_details(request, payment_id):
     """
-    Defautl view implemented from docs.
-    This view is intented only for interactive testing purposes.
+    Default view implemented from docs.
+    This view is intended only for interactive testing purposes.
     """
     payment = get_object_or_404(get_payment_model(), id=payment_id)
     try:
