@@ -6,11 +6,13 @@ from unittest.mock import patch
 import stripe
 
 from .. import PaymentStatus
+from .. import PaymentError
 from .. import RedirectNeeded
 from . import StripeProviderV3
 
 # Secret key from https://stripe.com/docs/api/authentication
 SECRET_KEY = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+SECRET_KEY_BAD = "aaaaaaa123"
 
 
 class Payment(Mock):
@@ -57,47 +59,28 @@ def mock_stripe_Session_create(error_msg=None):
 
 
 class TestStripeProviderV3(TestCase):
-    # def test_provider_raises_redirect_needed_when_token_does_not_exist(self):
-    #     payment = Payment()
-    #     provider = StripeProviderV3(name="Example.com store", secret_key=SECRET_KEY)
-    #     data = {}
-    #     with self.assertRaises(RedirectNeeded) as exc:
-    #         provider.get_form(payment, data)
-    #         self.assertEqual(exc.args[0], payment.get_failure_url())
-    #     self.assertEqual(payment.status, PaymentStatus.REJECTED)
-
-    # def test_provider_raises_redirect_needed_on_success(self):
-    #     payment = Payment()
-    #     provider = StripeProviderV3(name="Example.com store", secret_key=SECRET_KEY)
-    #     data = {"stripeToken": "abcd"}
-    #     with patch("json.dumps"):
-    #         with patch("stripe.Charge.create"):
-    #             with self.assertRaises(RedirectNeeded) as exc:
-    #                 provider.get_form(payment, data)
-    #                 self.assertEqual(exc.args[0], payment.get_success_url())
-    #     self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
-    #     self.assertEqual(payment.captured_amount, payment.total)
-
-    # def test_provider_shows_validation_error_message(self):
-    #     error_msg = "Error message"
-
-    #     payment = Payment()
-    #     provider = StripeProviderV3(name="Example.com store", secret_key=SECRET_KEY)
-    #     data = {"stripeToken": "abcd"}
-    #     with mock_stripe_Session_create(error_msg=error_msg):
-    #         with mock_stripe_Charge_retrieve():
-    #             form = provider.get_form(payment, data=data)
-    #             self.assertEqual(form.errors["__all__"][0], error_msg)
-    #     self.assertEqual(payment.status, PaymentStatus.ERROR)
-    #     self.assertEqual(payment.message, error_msg)
-    #     self.assertEqual(payment.captured_amount, 0)
-
-    def test_provider_detect_already_processed_payment(self):
+    def test_provider_create_session_success(self):
         payment = Payment()
-        payment.transaction_id = "existing_transaction_id"
-        provider = StripeProviderV3(name="Example.com store", secret_key=SECRET_KEY)
-        data = {"stripeToken": "abcd"}
-        with mock_stripe_Session_create():
-            form = provider.get_form(payment, data=data)
-            msg = "This payment has already been processed."
-            self.assertEqual(form.errors["__all__"][0], msg)
+        provider = StripeProviderV3(secret_key=SECRET_KEY)
+        return_value = {
+            "id": "cs_test_a1IFfCFshMozn2NWE5a5g3P4NpJQOMuqxBbwpuWwCDXXcJm0MP2eaY0cLI",
+            "url": "https://checkout.stripe.com/c/pay/cs_test_a1IFfCFshMozn2NWE5a5g3P4NpJQOMuqxBbwpuWwCDXXcJm0MP2eaY0cLI",
+            "status": "open",
+            "payment_status": "unpaid",
+            "payment_intent": "pi_1IuobHAAvpvfo7rv9xqrPPE2",
+        }
+        with patch("json.dumps"):
+            with patch("stripe.checkout.Session.create", return_value=return_value):
+                with self.assertRaises(RedirectNeeded):
+                    provider.get_form(payment)
+                    self.assertTrue("url" in payment.attrs.session)
+                    self.assertTrue("id" in payment.attrs.session)
+        self.assertEqual(payment.status, PaymentStatus.WAITING)
+
+    def test_provider_create_session_bad_key(self):
+        payment = Payment()
+        provider = StripeProviderV3(secret_key=SECRET_KEY_BAD)
+        with patch("stripe.checkout.Session.create"):
+            with self.assertRaises(PaymentError):
+                provider.get_form(payment)
+        self.assertEqual(payment.status, PaymentStatus.WAITING)
