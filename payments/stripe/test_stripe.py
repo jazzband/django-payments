@@ -1,15 +1,11 @@
 from contextlib import contextmanager
 from unittest import TestCase
-from unittest.mock import Mock
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import stripe
 
-from .. import FraudStatus
-from .. import PaymentStatus
-from .. import RedirectNeeded
-from . import StripeCardProvider
-from . import StripeProvider
+from .. import FraudStatus, PaymentStatus, RedirectNeeded
+from . import StripeCardProvider, StripeProvider
 
 SECRET_KEY = "1234abcd"
 PUBLIC_KEY = "abcd1234"

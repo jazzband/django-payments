@@ -1,17 +1,14 @@
 import json
 import warnings
-from typing import Optional
+from dataclasses import asdict, dataclass, field
 from decimal import Decimal
-from dataclasses import dataclass, field, asdict
-from django.utils.translation import gettext as _
-from .. import PaymentError
-from .. import PaymentStatus
-from .. import RedirectNeeded
-from ..core import BasicProvider
-from .forms import ModalPaymentForm
-from .forms import PaymentForm
-from .forms import PaymentFormV3
+from typing import Optional
 
+from django.utils.translation import gettext as _
+
+from .. import PaymentError, PaymentStatus, RedirectNeeded
+from ..core import BasicProvider
+from .forms import ModalPaymentForm, PaymentForm, PaymentFormV3
 
 try:
     import stripe
@@ -99,7 +96,7 @@ class StripeCardProvider(StripeProvider):
 class StripeProductData:
     name: str
     description: Optional[str] = field(init=False, repr=False, default=None)
-    images: Optional[list[str]] = field(init=False, repr=False, default=None)
+    images: Optional[str] = field(init=False, repr=False, default=None)
     metadata: Optional[dict] = field(init=False, repr=False, default=None)
     tax_code: Optional[str] = field(init=False, repr=False, default=None)
 
@@ -128,7 +125,7 @@ class StripeProviderV3(BasicProvider):
     This backend does not support fraud detection.
 
     :param secret_key: Secret key assigned by Stripe.
-    :param payment_method_types: From Stripe API
+    :param payment_method_types: From Stripe API, comma separated
     :param use_token: Use instance.token instead of instance.pk in client_reference_id
     """
 
@@ -138,13 +135,13 @@ class StripeProviderV3(BasicProvider):
     def __init__(
         self,
         secret_key,
-        payment_method_types=["card"],
+        payment_method_types="card",
         use_token=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.secret_key = secret_key
-        self.payment_method_types = payment_method_types
+        self.payment_method_types = payment_method_types.split(",")
         self.use_token = use_token
 
     def get_form(self, payment, data=None):

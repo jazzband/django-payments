@@ -1,13 +1,10 @@
 from contextlib import contextmanager
 from unittest import TestCase
-from unittest.mock import Mock
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import stripe
 
-from .. import PaymentStatus
-from .. import PaymentError
-from .. import RedirectNeeded
+from .. import PaymentError, PaymentStatus, RedirectNeeded
 from . import StripeProviderV3
 
 # Secret key from https://stripe.com/docs/api/authentication
