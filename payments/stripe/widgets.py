@@ -1,6 +1,5 @@
 from django.forms.utils import flatatt
-from django.forms.widgets import HiddenInput
-from django.forms.widgets import Input
+from django.forms.widgets import HiddenInput, Input
 from django.utils.encoding import force_str
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
