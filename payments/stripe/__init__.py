@@ -12,6 +12,7 @@ from .forms import ModalPaymentForm
 from .forms import PaymentForm
 from .forms import PaymentFormV3
 
+
 try:
     import stripe
 except ImportError as exc:
@@ -127,8 +128,6 @@ class StripeProviderV3(BasicProvider):
     This backend does not support fraud detection.
 
     :param secret_key: Secret key assigned by Stripe.
-    :param name: A friendly name for your store.
-    :param image: Your logo.
     :param payment_method_types: From Stripe API
     :param use_token: Use instance.token instead of instance.pk in client_reference_id
     """
@@ -139,16 +138,12 @@ class StripeProviderV3(BasicProvider):
     def __init__(
         self,
         secret_key,
-        image="",
-        name="",
         payment_method_types=["card"],
         use_token=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.secret_key = secret_key
-        self.image = image
-        self.name = name
         self.payment_method_types = payment_method_types
         self.use_token = use_token
 
@@ -194,14 +189,6 @@ class StripeProviderV3(BasicProvider):
                 raise PaymentError(e)
         else:
             raise PaymentError(_("This payment has already been processed."))
-
-    def capture(self, payment, amount=None):
-        # API v3 does not support Capture
-        pass
-
-    def release(self, payment):
-        # API v3 does not support Capture
-        pass
 
     def refund(self, payment, amount=None):
         if payment.status == PaymentStatus.CONFIRMED:
