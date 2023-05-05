@@ -13,9 +13,7 @@ from .forms import ModalPaymentForm, PaymentForm, PaymentFormV3
 try:
     import stripe
 except ImportError as exc:
-    raise ImportError(
-        "You need to install `stripe>=5.4.0` onto your environment"
-    ) from exc
+    raise ImportError("You need to install `stripe` onto your environment") from exc
 
 
 class StripeProvider(BasicProvider):
@@ -124,38 +122,33 @@ class StripeProviderV3(BasicProvider):
 
     This backend does not support fraud detection.
 
-    :param secret_key: Secret key assigned by Stripe.
+    :param api_key: Secret key assigned by Stripe.
     :param payment_method_types: From Stripe API, comma separated
     :param use_token: Use instance.token instead of instance.pk in client_reference_id
     """
 
     form_class = PaymentFormV3
-    session = None
 
     def __init__(
         self,
-        secret_key,
-        payment_method_types="card",
+        api_key,
         use_token=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.secret_key = secret_key
-        self.payment_method_types = payment_method_types.split(",")
+        self.api_key = api_key
         self.use_token = use_token
 
     def get_form(self, payment, data=None):
         if not payment.transaction_id:
             try:
-                self.create_session(payment)
+                session = self.create_session(payment)
             except PaymentError as pe:
                 payment.change_status(PaymentStatus.ERROR, str(pe))
                 raise PaymentError(pe)
             else:
-                if not self.session:
-                    raise PaymentError(_("self.session can't be None"))
-                payment.attrs.session = self.session
-                payment.transaction_id = self.session.get("id", None)
+                payment.attrs.session = session
+                payment.transaction_id = session.get("id", None)
                 payment.save()
 
         if "url" not in payment.attrs.session:
@@ -166,9 +159,8 @@ class StripeProviderV3(BasicProvider):
     def create_session(self, payment):
         """Makes the call to Stripe to create the Checkout Session"""
         if not payment.transaction_id:
-            stripe.api_key = self.secret_key
+            stripe.api_key = self.api_key
             session_data = {
-                "payment_method_types": self.payment_method_types,
                 "line_items": self.get_line_items(payment),
                 "mode": "payment",
                 "success_url": payment.get_success_url(),
@@ -179,11 +171,12 @@ class StripeProviderV3(BasicProvider):
             if payment.billing_email:
                 session_data.update({"customer_email": payment.billing_email})
             try:
-                self.session = stripe.checkout.Session.create(**session_data)
-
+                session = stripe.checkout.Session.create(**session_data)
             except stripe.error.StripeError as e:
                 # Payment has been declined
                 raise PaymentError(e)
+            else:
+                return session
         else:
             raise PaymentError(_("This payment has already been processed."))
 
@@ -193,7 +186,7 @@ class StripeProviderV3(BasicProvider):
             payment_intent = payment.attrs.session.get("payment_intent", None)
             if not payment_intent:
                 raise PaymentError(_("Can't Refund, no payment_intent"))
-            stripe.api_key = self.secret_key
+            stripe.api_key = self.api_key
             try:
                 refund = stripe.Refund.create(
                     payment_intent=payment_intent,
@@ -212,7 +205,7 @@ class StripeProviderV3(BasicProvider):
 
     def status(self, payment):
         if payment.status == PaymentStatus.WAITING:
-            stripe.api_key = self.secret_key
+            stripe.api_key = self.api_key
             session = stripe.checkout.Session.retrieve(payment.transaction_id)
             if session.payment_status == "paid":
                 payment.change_status(PaymentStatus.CONFIRMED)
