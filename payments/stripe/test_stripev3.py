@@ -11,8 +11,8 @@ from .. import RedirectNeeded
 from . import StripeProviderV3
 
 # Secret key from https://stripe.com/docs/api/authentication
-SECRET_KEY = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
-SECRET_KEY_BAD = "aaaaaaa123"
+API_KEY = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+API_KEY_BAD = "aaaaaaa123"
 
 
 class Payment(Mock):
@@ -61,7 +61,7 @@ def mock_stripe_Session_create(error_msg=None):
 class TestStripeProviderV3(TestCase):
     def test_provider_create_session_success(self):
         payment = Payment()
-        provider = StripeProviderV3(secret_key=SECRET_KEY)
+        provider = StripeProviderV3(api_key=API_KEY)
         return_value = {
             "id": "cs_test_a1IFfCFshMozn2NWE5a5g3P4NpJQOMuqxBbwpuWwCDXXcJm0MP2eaY0cLI",
             "url": "https://checkout.stripe.com/c/pay/cs_test_a1IFfCFshMozn2NWE5a5g3P4NpJQOMuqxBbwpuWwCDXXcJm0MP2eaY0cLI",
@@ -79,7 +79,7 @@ class TestStripeProviderV3(TestCase):
 
     def test_provider_create_session_bad_key(self):
         payment = Payment()
-        provider = StripeProviderV3(secret_key=SECRET_KEY_BAD)
+        provider = StripeProviderV3(api_key=API_KEY_BAD)
         with patch("stripe.checkout.Session.create"):
             with self.assertRaises(PaymentError):
                 provider.get_form(payment)
