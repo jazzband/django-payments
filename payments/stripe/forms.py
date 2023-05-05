@@ -29,6 +29,14 @@ class StripeFormMixin:
         if not self.errors:
             if not self.payment.transaction_id:
                 stripe.api_key = self.provider.secret_key
+                stripe_metadata = None
+                try:
+                    stripe_metadata = self.payment.order.get_metadata()
+                except AttributeError:
+                    # If it exists, fill the variable, if not, fill with
+                    # the information from the payment model
+                    stripe_metadata = {"order_id": self.payment.pk}
+
                 try:
                     charge_data = {
                         "capture": False,
@@ -39,7 +47,7 @@ class StripeFormMixin:
                             self.payment.billing_last_name,
                             self.payment.billing_first_name,
                         ),
-                        "metadata": "Order #{}".format(self.payment.pk),
+                        "metadata": stripe_metadata,
                     }
 
                     # Patch charge with billing email if exists
