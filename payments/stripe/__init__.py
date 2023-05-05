@@ -1,14 +1,20 @@
 import json
 import warnings
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict
+from dataclasses import dataclass
+from dataclasses import field
 from decimal import Decimal
 from typing import Optional
 
 from django.utils.translation import gettext as _
 
-from .. import PaymentError, PaymentStatus, RedirectNeeded
+from .. import PaymentError
+from .. import PaymentStatus
+from .. import RedirectNeeded
 from ..core import BasicProvider
-from .forms import ModalPaymentForm, PaymentForm, PaymentFormV3
+from .forms import ModalPaymentForm
+from .forms import PaymentForm
+from .forms import PaymentFormV3
 
 try:
     import stripe
