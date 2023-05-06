@@ -1,8 +1,7 @@
+import json
 from unittest import TestCase
 from unittest.mock import Mock
 from unittest.mock import patch
-
-import json
 
 from .. import PaymentError
 from .. import PaymentStatus

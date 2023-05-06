@@ -6,6 +6,8 @@ from dataclasses import field
 from decimal import Decimal
 from typing import Optional
 
+import stripe
+
 from .. import PaymentError
 from .. import PaymentStatus
 from .. import RedirectNeeded
@@ -13,8 +15,6 @@ from ..core import BasicProvider
 from .forms import ModalPaymentForm
 from .forms import PaymentForm
 from .forms import PaymentFormV3
-
-import stripe
 
 
 class StripeProvider(BasicProvider):
