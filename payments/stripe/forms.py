@@ -92,14 +92,6 @@ class StripeFormMixin:
         self._handle_potentially_fraudulent_charge(self.charge)
 
 
-class StripeFormMixinV3:
-    session = None
-
-    def clean(self):
-        data = self.cleaned_data
-        return data
-
-
 class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
     def __init__(self, *args, **kwargs):
         super(StripeFormMixin, self).__init__(hidden_inputs=False, *args, **kwargs)
@@ -149,12 +141,5 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
             self.fields[field_name].required = False
 
 
-class PaymentFormV3(StripeFormMixinV3):
-    stripe_pub_key = forms.CharField(widget=forms.widgets.HiddenInput())
-    stripe_session_id = forms.CharField(widget=forms.widgets.HiddenInput())
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    class Media:
-        js = ["https://js.stripe.com/v3", "js/payments/stripe.v3.js"]
+class PaymentFormV3(BasePaymentForm):
+    stripe_pubic_key = forms.CharField(widget=forms.widgets.HiddenInput())

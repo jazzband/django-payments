@@ -1,9 +1,8 @@
-from contextlib import contextmanager
 from unittest import TestCase
 from unittest.mock import Mock
 from unittest.mock import patch
 
-import stripe
+import json
 
 from .. import PaymentError
 from .. import PaymentStatus
@@ -13,6 +12,10 @@ from . import StripeProviderV3
 # Secret key from https://stripe.com/docs/api/authentication
 API_KEY = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
 API_KEY_BAD = "aaaaaaa123"
+
+
+class payment_attrs:
+    session = dict
 
 
 class Payment(Mock):
@@ -27,6 +30,7 @@ class Payment(Mock):
     captured_amount = 0
     transaction_id = None
     billing_email = "john@doe.com"
+    attrs = payment_attrs()
 
     def change_status(self, status, message=""):
         self.status = status
@@ -45,42 +49,68 @@ class Payment(Mock):
         return "http://success.com"
 
 
-@contextmanager
-def mock_stripe_Session_create(error_msg=None):
-    json_body = {"error": {"session": "session_id"}}
-    with patch("stripe.checkout.Session.create") as mocked_session_create:
-        if error_msg:
-            mocked_session_create.side_effect = stripe.error.StripeError(
-                error_msg, code=None, json_body=json_body
-            )
-        else:
-            mocked_session_create.side_effect = lambda **kwargs: {}
-        yield mocked_session_create
-
-
 class TestStripeProviderV3(TestCase):
     def test_provider_create_session_success(self):
         payment = Payment()
         provider = StripeProviderV3(api_key=API_KEY)
         return_value = {
-            "id": "cs_test_a1IFfCFshMozn2NWE5a5g3P4NpJQOMuqxBbwpuWwCDXXcJm0MP2eaY0cLI",
-            "url": "https://checkout.stripe.com/c/pay/cs_test_a1IFfCFshMozn2NWE5a5g3P4NpJQOMuqxBbwpuWwCDXXcJm0MP2eaY0cLI",
+            "id": "cs_test_...",
+            "url": "https://checkout.stripe.com/c/pay/cs_test_...",
             "status": "open",
             "payment_status": "unpaid",
-            "payment_intent": "pi_1IuobHAAvpvfo7rv9xqrPPE2",
+            "payment_intent": "pi_...",
         }
-        with patch("json.dumps"):
-            with patch("stripe.checkout.Session.create", return_value=return_value):
-                with self.assertRaises(RedirectNeeded):
-                    provider.get_form(payment)
-                    self.assertTrue("url" in payment.attrs.session)
-                    self.assertTrue("id" in payment.attrs.session)
+        with patch("stripe.checkout.Session.create", return_value=return_value):
+            with self.assertRaises(RedirectNeeded):
+                provider.get_form(payment)
+                self.assertTrue("url" in payment.attrs.session)
+                self.assertTrue("id" in payment.attrs.session)
         self.assertEqual(payment.status, PaymentStatus.WAITING)
 
-    def test_provider_create_session_bad_key(self):
+    def test_provider_create_session_failure(self):
         payment = Payment()
-        provider = StripeProviderV3(api_key=API_KEY_BAD)
-        with patch("stripe.checkout.Session.create"):
+        provider = StripeProviderV3(api_key=API_KEY)
+        return_value = {
+            "status": "open",
+            "payment_status": "unpaid",
+            "payment_intent": "pi_...",
+        }
+        with patch(
+            "stripe.checkout.Session.create", return_value=return_value
+        ) as f_session:
+            f_session.side_effect = PaymentError("Error")
             with self.assertRaises(PaymentError):
                 provider.get_form(payment)
-        self.assertEqual(payment.status, PaymentStatus.WAITING)
+
+            self.assertEqual(payment.status, PaymentStatus.ERROR)
+
+    def test_provider_create_session_failure_no_url(self):
+        payment = Payment()
+        provider = StripeProviderV3(api_key=API_KEY)
+        return_value = {
+            "status": "open",
+            "payment_status": "unpaid",
+            "payment_intent": "pi_...",
+        }
+        with patch("stripe.checkout.Session.create", return_value=return_value):
+            with self.assertRaises(PaymentError):
+                provider.get_form(payment)
+
+            self.assertFalse("url" in payment.attrs.session)
+            self.assertFalse("id" in payment.attrs.session)
+
+    def test_provider_status(self):
+        payment = Payment()
+        provider = StripeProviderV3(api_key=API_KEY)
+
+        class return_value:
+            payment_status = "paid"
+
+        with patch("stripe.checkout.Session.retrieve", return_value=return_value):
+            provider.status(payment)
+
+    def test_provider_refund_failure_bad_status(self):
+        payment = Payment()
+        provider = StripeProviderV3(api_key=API_KEY)
+        with self.assertRaises(PaymentError):
+            provider.refund(payment)

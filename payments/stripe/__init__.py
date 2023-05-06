@@ -6,8 +6,6 @@ from dataclasses import field
 from decimal import Decimal
 from typing import Optional
 
-from django.utils.translation import gettext as _
-
 from .. import PaymentError
 from .. import PaymentStatus
 from .. import RedirectNeeded
@@ -16,10 +14,7 @@ from .forms import ModalPaymentForm
 from .forms import PaymentForm
 from .forms import PaymentFormV3
 
-try:
-    import stripe
-except ImportError as exc:
-    raise ImportError("You need to install `stripe` onto your environment") from exc
+import stripe
 
 
 class StripeProvider(BasicProvider):
@@ -43,9 +38,7 @@ class StripeProvider(BasicProvider):
         self.name = name
         super().__init__(**kwargs)
         warnings.warn(
-            _(
-                "This provider uses the deprecated v2 API, please use `payments.stripe.StripeProviderV3`"
-            ),
+            "This provider uses the deprecated v2 API, please use `payments.stripe.StripeProviderV3`",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -129,7 +122,6 @@ class StripeProviderV3(BasicProvider):
     This backend does not support fraud detection.
 
     :param api_key: Secret key assigned by Stripe.
-    :param payment_method_types: From Stripe API, comma separated
     :param use_token: Use instance.token instead of instance.pk in client_reference_id
     """
 
@@ -158,7 +150,7 @@ class StripeProviderV3(BasicProvider):
                 payment.save()
 
         if "url" not in payment.attrs.session:
-            raise PaymentError(_("No `url` in payment.attrs.session"))
+            raise PaymentError("Stripe returned a session without a URL")
 
         raise RedirectNeeded(payment.attrs.session.get("url"))
 
@@ -177,21 +169,19 @@ class StripeProviderV3(BasicProvider):
             if payment.billing_email:
                 session_data.update({"customer_email": payment.billing_email})
             try:
-                session = stripe.checkout.Session.create(**session_data)
+                return stripe.checkout.Session.create(**session_data)
             except stripe.error.StripeError as e:
                 # Payment has been declined
                 raise PaymentError(e)
-            else:
-                return session
         else:
-            raise PaymentError(_("This payment has already been processed."))
+            raise PaymentError("This payment has already been processed.")
 
     def refund(self, payment, amount=None):
         if payment.status == PaymentStatus.CONFIRMED:
             amount = int((amount or payment.total) * 100)
             payment_intent = payment.attrs.session.get("payment_intent", None)
             if not payment_intent:
-                raise PaymentError(_("Can't Refund, no payment_intent"))
+                raise PaymentError("Can't Refund, payment_intent does not exist")
             stripe.api_key = self.api_key
             try:
                 refund = stripe.Refund.create(
@@ -207,7 +197,7 @@ class StripeProviderV3(BasicProvider):
                 payment.change_status(PaymentStatus.REFUNDED)
                 return Decimal(amount) / 100
 
-        raise PaymentError(_("Only Confirmed payments can be refunded"))
+        raise PaymentError("Only Confirmed payments can be refunded")
 
     def status(self, payment):
         if payment.status == PaymentStatus.WAITING:
