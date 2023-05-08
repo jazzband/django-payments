@@ -243,7 +243,7 @@ class StripeProviderV3(BasicProvider):
         )
         return [asdict(line_item)]
 
-    def convert_amount(currency, amount):
+    def convert_amount(self, currency, amount):
         # Check if the currency has to be converted to cents
         factor = 100 if currency.lower() not in zero_decimal_currency else 1
 
