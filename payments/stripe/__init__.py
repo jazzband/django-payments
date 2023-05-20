@@ -116,6 +116,26 @@ class StripeLineItem:
     tax_rates: Optional[str] = field(init=False, repr=False, default=None)
 
 
+zero_decimal_currency = [
+    "bif",
+    "clp",
+    "djf",
+    "gnf",
+    "jpy",
+    "kmf",
+    "krw",
+    "mga",
+    "pyg",
+    "rwf",
+    "ugx",
+    "vnd",
+    "vuv",
+    "xaf",
+    "xof",
+    "xpf",
+]
+
+
 class StripeProviderV3(BasicProvider):
     """Provider backend using `Stripe <https://stripe.com/>` api version 3_.
 
@@ -178,7 +198,7 @@ class StripeProviderV3(BasicProvider):
 
     def refund(self, payment, amount=None):
         if payment.status == PaymentStatus.CONFIRMED:
-            amount = int((amount or payment.total) * 100)
+            to_refund = amount or payment.total
             payment_intent = payment.attrs.session.get("payment_intent", None)
             if not payment_intent:
                 raise PaymentError("Can't Refund, payment_intent does not exist")
@@ -186,7 +206,7 @@ class StripeProviderV3(BasicProvider):
             try:
                 refund = stripe.Refund.create(
                     payment_intent=payment_intent,
-                    amount=amount,
+                    amount=self.convert_amount(payment.currency, to_refund),
                     reason="requested_by_customer",
                 )
             except stripe.StripeError as e:
@@ -195,7 +215,7 @@ class StripeProviderV3(BasicProvider):
                 payment.attrs.refund = json.dumps(refund)
                 payment.save()
                 payment.change_status(PaymentStatus.REFUNDED)
-                return Decimal(amount) / 100
+                return self.convert_amount(payment.currency, to_refund)
 
         raise PaymentError("Only Confirmed payments can be refunded")
 
@@ -213,8 +233,8 @@ class StripeProviderV3(BasicProvider):
         product_data = StripeProductData(name="Order #{}".format(order_no))
 
         price_data = StripePriceData(
-            currency=payment.currency,
-            unit_amount=int(payment.total * 100),
+            currency=payment.currency.lower(),
+            unit_amount=self.convert_amount(payment.currency, payment.total),
             product_data=product_data,
         )
         line_item = StripeLineItem(
@@ -222,3 +242,9 @@ class StripeProviderV3(BasicProvider):
             price_data=price_data,
         )
         return [asdict(line_item)]
+
+    def convert_amount(self, currency, amount):
+        # Check if the currency has to be converted to cents
+        factor = 100 if currency.lower() not in zero_decimal_currency else 1
+
+        return int(amount * factor)
