@@ -99,7 +99,7 @@ class StripeProviderV3(BasicProvider):
                 session = self.create_session(payment)
             except PaymentError as pe:
                 payment.change_status(PaymentStatus.ERROR, str(pe))
-                raise PaymentError(pe)
+                raise pe
             else:
                 payment.attrs.session = session
                 payment.transaction_id = session.get("id", None)
@@ -140,7 +140,7 @@ class StripeProviderV3(BasicProvider):
                 return stripe.checkout.Session.create(**session_data)
             except stripe.error.StripeError as e:
                 # Payment has been declined by Stripe, check Stripe Dashboard
-                raise PaymentError(e)
+                raise PaymentError(e) from e
         else:
             raise PaymentError("This payment has already been processed.")
 
@@ -149,8 +149,8 @@ class StripeProviderV3(BasicProvider):
             to_refund = amount or payment.total
             try:
                 payment_intent = payment.attrs.session["payment_intent"]
-            except Exception:
-                raise PaymentError("Can't Refund, payment_intent does not exist")
+            except Exception as e:
+                raise PaymentError("Can't Refund, payment_intent does not exist") from e
 
             stripe.api_key = self.api_key
             try:
@@ -160,7 +160,7 @@ class StripeProviderV3(BasicProvider):
                     reason="requested_by_customer",
                 )
             except stripe.error.StripeError as e:
-                raise PaymentError(e)
+                raise PaymentError(e) from e
             else:
                 payment.attrs.refund = json.dumps(refund)
                 payment.save()
@@ -231,11 +231,11 @@ class StripeProviderV3(BasicProvider):
 
         try:
             return event["data"]["object"]["client_reference_id"]
-        except Exception:
+        except Exception as e:
             raise PaymentError(
                 code=400,
                 message="client_reference_id is not present, check Stripe Dashboard.",
-            )
+            ) from e
 
     def process_data(self, payment, request):
         """Processes the event sent by stripe.
@@ -246,10 +246,10 @@ class StripeProviderV3(BasicProvider):
         if event.get("type") in stripe_enabled_events:
             try:
                 session_info = event["data"]["object"]
-            except Exception:
+            except Exception as e:
                 raise PaymentError(
                     code=400, message="session not present, check Stripe Dashboard"
-                )
+                ) from e
 
             if session_info["status"] == "expired":
                 # Expired Order

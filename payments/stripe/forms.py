@@ -94,7 +94,7 @@ class StripeFormMixin:
 
 class ModalPaymentForm(StripeFormMixin, BasePaymentForm):
     def __init__(self, *args, **kwargs):
-        super(StripeFormMixin, self).__init__(hidden_inputs=False, *args, **kwargs)
+        super(StripeFormMixin, self).__init__(*args, hidden_inputs=False, **kwargs)
         widget = StripeCheckoutWidget(provider=self.provider, payment=self.payment)
         self.fields["stripeToken"] = forms.CharField(widget=widget)
         if self.is_bound and not self.data.get("stripeToken"):

@@ -7,7 +7,7 @@ select = [
     "C4",
 ]
 target-version = "py38"
-ignore = ["E501", "B904", "B026"]
+ignore = ["E501"]
 
 [tool.ruff.isort]
 force-single-line = true

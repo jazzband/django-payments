@@ -26,8 +26,8 @@ def process_data(request, token, provider=None):
     if not provider:
         try:
             provider = provider_factory(payment.variant, payment)
-        except ValueError:
-            raise Http404("No such payment")
+        except ValueError as e:
+            raise Http404("No such payment") from e
     return provider.process_data(payment, request)
 
 
@@ -36,8 +36,8 @@ def process_data(request, token, provider=None):
 def static_callback(request, variant):
     try:
         provider = provider_factory(variant)
-    except ValueError:
-        raise Http404("No such provider")
+    except ValueError as e:
+        raise Http404("No such provider") from e
 
     token = provider.get_token_from_request(request=request, payment=None)
     if not token:
