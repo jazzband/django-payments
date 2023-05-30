@@ -1,0 +1,13 @@
+[tool.ruff]
+select = [
+    "E",
+    "F",
+    "W",
+    "B",
+    "C4",
+]
+target-version = "py38"
+ignore = ["E501", "B904", "B026"]
+
+[tool.ruff.isort]
+force-single-line = true
