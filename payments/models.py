@@ -24,7 +24,7 @@ class PaymentAttributeProxy:
         try:
             return data[item]
         except KeyError as e:
-            raise AttributeError(*e.args)
+            raise AttributeError(*e.args) from e
 
     def __setattr__(self, key, value):
         if key == "_payment":

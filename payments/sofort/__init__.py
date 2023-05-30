@@ -68,13 +68,13 @@ class SofortProvider(BasicProvider):
         if response.status_code == 200:
             try:
                 raise RedirectNeeded(doc["new_transaction"]["payment_url"])
-            except KeyError:
+            except KeyError as e:
                 raise PaymentError(
                     "Error in {}: {}".format(
                         doc["errors"]["error"]["field"],
                         doc["errors"]["error"]["message"],
                     )
-                )
+                ) from e
 
     def process_data(self, payment, request):
         if "trans" not in request.GET:

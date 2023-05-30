@@ -54,9 +54,9 @@ class StripeProvider(BasicProvider):
         charge = stripe.Charge.retrieve(payment.transaction_id)
         try:
             charge.capture(amount=amount)
-        except stripe.InvalidRequestError:
+        except stripe.InvalidRequestError as e:
             payment.change_status(PaymentStatus.REFUNDED)
-            raise PaymentError("Payment already refunded")
+            raise PaymentError("Payment already refunded") from e
         payment.attrs.capture = json.dumps(charge)
         return Decimal(amount) / 100
 
