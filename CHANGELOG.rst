@@ -6,7 +6,8 @@ releases, in reverse chronological order.
 
 v2.0.1
 ------
-- Stripe backends now sends order_id in the metadata parameter
+- Stripe backends now sends order_id in the metadata parameter.
+- A new ``StripeProviderV3`` has been added using the latest Stripe API.
 
 v2.0.0
 ------
