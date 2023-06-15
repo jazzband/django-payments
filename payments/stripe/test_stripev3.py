@@ -20,10 +20,10 @@ class Payment(Mock):
     id = 1
     description = "payment"
     currency = "USD"
-    delivery = 10
+    delivery = 0
     status = PaymentStatus.WAITING
     message = None
-    tax = 10
+    tax = 0
     total = 100
     captured_amount = 0
     transaction_id = None
@@ -97,6 +97,14 @@ class TestStripeProviderV3(TestCase):
             self.assertFalse("url" in payment.attrs.session)
             self.assertFalse("id" in payment.attrs.session)
 
+    def test_provider_create_session_failure_with_transaction_id(self):
+        payment = Payment()
+        payment.transaction_id = "transaction-id"
+        provider = StripeProviderV3(api_key=API_KEY)
+        with patch("stripe.checkout.Session.create"):
+            with self.assertRaises(PaymentError):
+                provider.create_session(payment)
+
     def test_provider_status(self):
         payment = Payment()
         provider = StripeProviderV3(api_key=API_KEY)
@@ -112,3 +120,35 @@ class TestStripeProviderV3(TestCase):
         provider = StripeProviderV3(api_key=API_KEY)
         with self.assertRaises(PaymentError):
             provider.refund(payment)
+
+    def test_provider_refund_failure_no_payment_intent(self):
+        payment = Payment()
+        payment.status = PaymentStatus.CONFIRMED
+        del payment.attrs.session["payment_intent"]
+        provider = StripeProviderV3(api_key=API_KEY)
+        with self.assertRaises(PaymentError):
+            provider.refund(payment)
+
+    def test_provider_refund_failure_stripe_error(self):
+        payment = Payment()
+        payment.status = PaymentStatus.CONFIRMED
+
+        provider = StripeProviderV3(api_key=API_KEY)
+        with patch("stripe.Refund.create"):
+            with self.assertRaises(PaymentError):
+                provider.refund(payment)
+
+    def test_provider_refund_success(self):
+        payment = Payment()
+        payment.status = PaymentStatus.CONFIRMED
+        payment.attrs.session["payment_intent"] = "pi_..."
+        provider = StripeProviderV3(api_key=API_KEY)
+        return_value = {
+            "id": "re_...",
+            "payment_status": "succeeded",
+            "amount": 100,
+        }
+
+        with patch("stripe.Refund.create", return_value=return_value):
+            provider.refund(payment)
+            self.assertEqual(payment.status, PaymentStatus.REFUNDED)
