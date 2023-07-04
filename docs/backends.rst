@@ -241,7 +241,7 @@ Example::
           )
       }
 
-      
+
 
 
 MercadoPago
