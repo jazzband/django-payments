@@ -241,21 +241,7 @@ Example::
           )
       }
 
-You can also set up the Webhook to receive status updates directly from Stripe.
-To use this you need to set the option PAYMENT_HOST to match the public URL for your Django Project
-
-Then you need to go to your Stripe Dashboard, then activate Test Mode, finally go to Developers -> Webhooks.
-Click on the button "+ Add endpoint", set the URL from PAYMENT_HOST and add "payments/process/stripe", so your
-final URL should look like this https://example.com/payments/process/stripe
-You must select the following events:
-* checkout.session.async_payment_failed
-* checkout.session.async_payment_succeeded
-* checkout.session.completed
-* checkout.session.expired
-
-You need to take not for the endpoint_secret, clic on "Reveal" under "Signing Secret" after you create the webhook
-
-
+      
 
 
 MercadoPago
