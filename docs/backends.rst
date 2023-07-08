@@ -220,7 +220,7 @@ Example::
       # Settings for Production
       PAYMENT_VARIANTS = {
           'stripe': (
-              'payments.stripe.StripeProvider',
+              'payments.stripe.StripeProviderV3',
               {
                   'api_key': 'sk_test_123456',
                   'use_token': true,
@@ -232,7 +232,7 @@ Example::
       # Settings for Development
       PAYMENT_VARIANTS = {
           'stripe': (
-              'payments.stripe.StripeProvider',
+              'payments.stripe.StripeProviderV3',
               {
                   'api_key': 'sk_test_123456',
                   'use_token': true,
@@ -241,7 +241,25 @@ Example::
           )
       }
 
+.. autoclass:: payments.stripe.StripeProvider
+.. deprecated:: 2.0
 
+Example::
+
+      # use sandbox
+      PAYMENT_VARIANTS = {
+          'stripe': (
+              'payments.stripe.StripeProvider',
+              {
+                  'secret_key': 'sk_test_123456',
+                  'public_key': 'pk_test_123456',
+              }
+          )
+      }
+      
+
+.. autoclass:: payments.stripe.StripeCardProvider
+.. deprecated:: 2.0
 
 
 MercadoPago
