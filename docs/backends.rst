@@ -256,7 +256,7 @@ Example::
               }
           )
       }
-      
+
 
 .. autoclass:: payments.stripe.StripeCardProvider
 .. deprecated:: 2.0
