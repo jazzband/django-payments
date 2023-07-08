@@ -16,11 +16,11 @@ Setting up Webhooks in Stripe
 To receive payment notifications and updates from Stripe, you need to set up webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
 
 * Log in to your Stripe Dashboard <https://dashboard.stripe.com/>_.
-* In the left sidebar, click on "Developers" and then select "Webhooks".
+* In the left sidebar, click on **Developers** and then select **Webhooks**.
 * Click on the "+ Add endpoint" button to create a new webhook listener.
 * In the "Endpoint URL" field, enter the URL for the Stripe variant in your Django Payments application. This URL should be the endpoint where Stripe will send the webhook events. Make sure the URL is accessible from the internet.
     Example: https://your-app.com/payments/stripe/
-* From the "Events to send" dropdown, choose the specific events you want to receive notifications for. You need these events::
+* From the "Events to send" dropdown, choose the specific events you want to receive notifications for. You need (at least) these events::
     checkout.session.async_payment_failed
     checkout.session.async_payment_succeeded
     checkout.session.completed
