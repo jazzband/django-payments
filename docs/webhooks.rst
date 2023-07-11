@@ -52,7 +52,7 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
 .. note::
 
   It's essential to secure your webhook endpoint and verify the authenticity of
-  the events sent by Stripe. It's it not recomended to use `secure_endpoint` 
+  the events sent by Stripe. It's it not recomended to use `secure_endpoint`
   set to false in production.
 
 Make sure to replace **https://your-app.com/payments/stripe/** with the actual
