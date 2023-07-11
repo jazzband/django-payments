@@ -69,7 +69,7 @@ stripe_enabled_events: list = [
 
 
 class StripeProviderV3(BasicProvider):
-    """Provider backend using `Stripe <https://stripe.com/>` api version 3_.
+    """Provider backend using `Stripe <https://stripe.com/>`_ api version 3.
 
     :param api_key: Secret key assigned by Stripe.
     :param use_token: Use instance.token instead of instance.pk in client_reference_id

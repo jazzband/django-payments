@@ -7,53 +7,6 @@ These are the payment provider backend implementations included in this
 package. Note that you should not usually instantiate these yourself, but use
 :func:`.provider_factory` instead.
 
-Community Backends
--------------------
-
-These are the community providers compatible with ``django-payments``
-
-.. list-table:: Community Backends
-  :widths: 30 40 10 20
-  :header-rows: 1
-
-  * - Package Name
-    - Repo
-    - Country
-    - Accepted Currencies
-  * - django-payments-mollie
-    - `fourdigits/django-payments-mollie <https://github.com/fourdigits/django-payments-mollie>`_
-    - UK
-    - `See List <https://docs.mollie.com/payments/multicurrency>`_
-  * - django-payments-redsys
-    - `ajostergaard/django-payments-redsys <https://github.com/ajostergaard/django-payments-redsys>`_
-    - ES
-    - EUR, USD, GBP, YEN
-  * - click
-    - `click-llc/click-integration-django <https://github.com/click-llc/click-integration-django>`_
-    - UZ
-    - See Repo
-  * - django-payments-bnlepos
-    - `esistgut/django-payments-bnlepos <https://github.com/esistgut/django-payments-bnlepos>`_
-    - IT
-    - EUR
-  * - django-payments-payu
-    - `PetrDlouhy/django-payments-payu <https://github.com/PetrDlouhy/django-payments-payu>`_
-    - World Wide
-    - See Repo
-  * - django-payments-razorpay
-    - `NyanKiyoshi/django-payments-razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay>`_
-    - IN
-    - INR
-  * - django-payments-flow
-    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
-    - CL
-    - CLP, USD
-  * - django-payments-khipu
-    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
-    - CL
-    - CLP, USD, ARS, BOB
-
-
 Dummy
 -----
 
@@ -159,7 +112,7 @@ accomplished by passing your data to the :class:`Payment` instance::
 
 Fingerprinting::
 
-Cybersource allows you to pass a fingerprint data to help identify fraud
+  Cybersource allows you to pass a fingerprint data to help identify fraud
 
       >>> payment.attrs.fingerprint_session_id
 
@@ -328,3 +281,119 @@ Example::
 
 Note that the API sandbox does not return Payment details, so all payments
 will seem unpaid.
+
+Community Backends
+------------------
+
+These are the community providers compatible with ``django-payments``
+
+.. list-table:: Community Backends
+  :widths: 30 10 60
+  :header-rows: 1
+
+  * - Payment Backend
+    - Country
+    - Repo
+  * - `mollie <https://www.mollie.com/>`_
+    - UK
+    - `fourdigits/django-payments-mollie <https://github.com/fourdigits/django-payments-mollie>`_
+  * - `Redsys <https://pagosonline.redsys.es/index.html>`_
+    - ES
+    - `ajostergaard/django-payments-redsys <https://github.com/ajostergaard/django-payments-redsys>`_
+  * - `click <https://click.uz>`_
+    - UZ
+    - `click-llc/click-integration-django <https://github.com/click-llc/click-integration-django>`_
+  * - `BNL Positivity <http://www.bnlpositivity.it>`_
+    - IT
+    - `esistgut/django-payments-bnlepos <https://github.com/esistgut/django-payments-bnlepos>`_
+  * - `PayU <https://payu.com>`_
+    - World Wide
+    - `PetrDlouhy/django-payments-payu <https://github.com/PetrDlouhy/django-payments-payu>`_
+  * - `RazorPay <https://razorpay.com/>`_
+    - IN
+    - `NyanKiyoshi/django-payments-razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay>`_
+  * - `Flow Chile <https://flow.cl>`_
+    - CL
+    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
+  * - `Khipu <https://khipu.com>`_
+    - CL
+    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
+
+
+Creating a New Provider Backend
+-------------------------------
+
+Django Payments provides a flexible framework for integrating various payment
+providers into your Django application. This guide will walk you through the
+steps to create a new payment provider in Django Payments.
+
+Create a Provider Class
+"""""""""""""""""""""""
+
+* Create a new Python module for your provider in the Django Payments project.
+* Inside the module, define a class for your provider, inheriting from the base
+  `BaseProvider` class provided by Django Payments.
+
+
+.. code-block:: python
+
+    from payments.providers.base import BaseProvider
+
+    class MyPaymentProvider(BaseProvider):
+    def process_data(self, payment, request):
+        # Implement webhook processing logic
+        pass
+
+    def get_form(self, payment, data=None):
+        # Implement payment form rendering logic
+        pass
+
+    def capture(self, payment, amount=None):
+        # Implement payment capture logic
+        raise NotImplementedError("Capture method not implemented.")
+
+    def refund(self, payment, amount=None):
+        # Implement payment refund logic
+        raise NotImplementedError("Refund method not implemented.")
+
+.. hint::
+
+  Check with the integrator to see if they suppoer capture/refund
+
+Implement the mandatory methods specific to your payment provider. Here are the
+mandatory methods used by Django Payments:
+
+* ``process_data(payment, request)``: This method is responsible for processing
+  webhook calls from the payment gateway. It receives a payment object
+  representing the payment being processed and the request object. Implement the
+  logic to handle the webhook data received from the payment gateway and update
+  the payment status or perform any necessary actions.
+
+* ``get_form(payment, data=None)``: This method is responsible for rendering the
+  payment form to be displayed within your Django application. It receives a
+  payment  object representing the payment being made and an optional data
+  parameter if form submission data is provided. Implement the logic to render
+  the payment form, customize it based on your payment gateway requirements, and
+  handle form submission.
+
+* ``capture(payment, amount=None)``: This method is responsible for capturing the
+  payment amount. It receives a payment object representing the payment to be
+  captured and an optional amount parameter. Implement the logic to interact with
+  your payment gateway's API and perform the necessary actions to capture the
+  payment amount. If capturing is not supported by your payment gateway,
+  set `capture: false.` to skip capture.
+
+* ``refund(payment, amount=None)``: This method is responsible for refunding a
+  payment. It receives a payment object representing the payment to be refunded
+  and an optional amount parameter. Implement the logic to interact with your
+  payment gateway's API and initiate the refund process. If refunding is not
+  supported by your payment gateway, raise a NotImplementedError.
+
+Make sure to implement these methods in your provider class and handle any
+exceptions or errors that may occur during the payment processing or refunding
+process.
+
+By implementing these mandatory methods in your provider class, you can
+integrate your payment gateway with Django Payments and provide the necessary
+functionality to process payments, display payment forms, capture payments, and
+handle refunds.
