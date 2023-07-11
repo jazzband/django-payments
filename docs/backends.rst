@@ -7,27 +7,52 @@ These are the payment provider backend implementations included in this
 package. Note that you should not usually instantiate these yourself, but use
 :func:`.provider_factory` instead.
 
-Community Providers
+Community Backends
 -------------------
 
 These are the community providers compatible with ``django-payments``
 
-+--------------------------+-------------------------------------------------------------------------------------------------+------------+------------------------------------------------------------+
-| Package Name             | Repo                                                                                            | Country    | Accepted Currencies                                        |
-+==========================+=================================================================================================+============+============================================================+
-| django-payments-mollie   | `fourdigits/django-payments-mollie <https://github.com/fourdigits/django-payments-mollie>`_       | UK         | `See List <https://docs.mollie.com/payments/multicurrency>`_|
-| django-payments-redsys   | `ajostergaard/django-payments-redsys <https://github.com/ajostergaard/django-payments-redsys>`_   | ES         | EUR, USD, GBP, YEN                                         |
-| click                    | `click-llc/click-integration-django <https://github.com/click-llc/click-integration-django>`_     | UZ         | See Repo                                                   |
-| django-payments-bnlepos  | `esistgut/django-payments-bnlepos <https://github.com/esistgut/django-payments-bnlepos>`_         | IT         | EUR                                                        |
-| django-payments-payu     | `PetrDlouhy/django-payments-payu <https://github.com/PetrDlouhy/django-payments-payu>`_           | World Wide | See Repo                                                   |
-| django-payments-razorpay | `NyanKiyoshi/django-payments-razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay>`_ | IN         | INR                                                        |
-| django-payments-flow     | `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_               | CL         | CLP, USD                                                   |
-| django-payments-khipu    | `mariofix/django-payments-khipu <https://github.com/mariofix/django-payments-khipu>`_             | CL         | CLP, USD, ARS, BOB                                         |
-+--------------------------+-------------------------------------------------------------------------------------------------+------------+------------------------------------------------------------+
+.. list-table:: Community Backends
+  :widths: 30 40 10 20
+  :header-rows: 1
 
+  * - Package Name
+    - Repo
+    - Country
+    - Accepted Currencies
+  * - django-payments-mollie
+    - `fourdigits/django-payments-mollie <https://github.com/fourdigits/django-payments-mollie>`_
+    - UK
+    - `See List <https://docs.mollie.com/payments/multicurrency>`_
+  * - django-payments-redsys
+    - `ajostergaard/django-payments-redsys <https://github.com/ajostergaard/django-payments-redsys>`_
+    - ES
+    - EUR, USD, GBP, YEN
+  * - click
+    - `click-llc/click-integration-django <https://github.com/click-llc/click-integration-django>`_
+    - UZ
+    - See Repo
+  * - django-payments-bnlepos
+    - `esistgut/django-payments-bnlepos <https://github.com/esistgut/django-payments-bnlepos>`_
+    - IT
+    - EUR
+  * - django-payments-payu
+    - `PetrDlouhy/django-payments-payu <https://github.com/PetrDlouhy/django-payments-payu>`_
+    - World Wide
+    - See Repo
+  * - django-payments-razorpay
+    - `NyanKiyoshi/django-payments-razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay>`_
+    - IN
+    - INR
+  * - django-payments-flow
+    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
+    - CL
+    - CLP, USD
+  * - django-payments-khipu
+    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
+    - CL
+    - CLP, USD, ARS, BOB
 
-Integrated Providers
---------------------
 
 Dummy
 -----
