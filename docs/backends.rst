@@ -317,7 +317,7 @@ These are the community providers compatible with ``django-payments``
     - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
   * - `Khipu <https://khipu.com>`_
     - CL
-    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
+    - `mariofix/django-payments-khipu <https://github.com/mariofix/django-payments-khipu>`_
 
 
 Creating a New Provider Backend
@@ -340,21 +340,21 @@ Create a Provider Class
     from payments.providers.base import BaseProvider
 
     class MyPaymentProvider(BaseProvider):
-    def process_data(self, payment, request):
-        # Implement webhook processing logic
-        pass
+      def process_data(self, payment, request):
+          # Implement webhook processing logic
+          pass
 
-    def get_form(self, payment, data=None):
-        # Implement payment form rendering logic
-        pass
+      def get_form(self, payment, data=None):
+          # Implement payment form rendering logic
+          pass
 
-    def capture(self, payment, amount=None):
-        # Implement payment capture logic
-        raise NotImplementedError("Capture method not implemented.")
+      def capture(self, payment, amount=None):
+          # Implement payment capture logic
+          raise NotImplementedError("Capture method not implemented.")
 
-    def refund(self, payment, amount=None):
-        # Implement payment refund logic
-        raise NotImplementedError("Refund method not implemented.")
+      def refund(self, payment, amount=None):
+          # Implement payment refund logic
+          raise NotImplementedError("Refund method not implemented.")
 
 .. hint::
 

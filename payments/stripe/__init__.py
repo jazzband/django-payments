@@ -83,3 +83,6 @@ class StripeCardProvider(StripeProvider):
     """
 
     form_class = PaymentForm
+
+
+__all__ = ["StripeProviderV3"]
