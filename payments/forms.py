@@ -42,7 +42,7 @@ class PaymentForm(forms.Form):
 
 class CreditCardPaymentForm(PaymentForm):
     number = CreditCardNumberField(label=_("Card Number"), max_length=32, required=True)
-    expiration = CreditCardExpiryField()
+    expiration = CreditCardExpiryField(label=_('Expiration'))
     cvv2 = CreditCardVerificationField(
         label=_("CVV2 Security Number"),
         required=False,
