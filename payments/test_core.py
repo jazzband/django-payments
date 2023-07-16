@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from unittest import TestCase
 from unittest.mock import NonCallableMock
@@ -167,7 +168,7 @@ class TestCreditCardPaymentForm(TestCase):
             "name": "John Doe",
             "number": "4716124728800975",
             "expiration_0": "5",
-            "expiration_1": "2023",
+            "expiration_1": date.today().year+1,
             "cvv2": "123",
         }
 
