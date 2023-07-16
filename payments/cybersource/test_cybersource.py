@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from typing import Dict
 from unittest import TestCase
@@ -23,7 +24,7 @@ PROCESS_DATA = {
     "name": "John Doe",
     "number": "371449635398431",
     "expiration_0": "5",
-    "expiration_1": "2023",
+    "expiration_1": date.today().year + 1,
     "cvv2": "1234",
     "fingerprint": "abcd1234",
 }
