@@ -16,7 +16,7 @@ TRANSACTION_KEY = "1234abdd"
 PROCESS_DATA = {
     "number": "4007000000027",
     "expiration_0": "5",
-    "expiration_1": date.today().year+1,
+    "expiration_1": date.today().year + 1,
     "cvv2": "123",
 }
 

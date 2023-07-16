@@ -1,5 +1,5 @@
-from datetime import date
 import json
+from datetime import date
 from decimal import Decimal
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -25,7 +25,7 @@ PROCESS_DATA = {
     "name": "John Doe",
     "number": "371449635398431",
     "expiration_0": "5",
-    "expiration_1": date.today().year+1,
+    "expiration_1": date.today().year + 1,
     "cvv2": "1234",
 }
 
