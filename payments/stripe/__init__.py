@@ -10,7 +10,7 @@ from .. import RedirectNeeded
 from ..core import BasicProvider
 from .forms import ModalPaymentForm
 from .forms import PaymentForm
-from .providers import StripeProviderV3  # noqa: F401
+from .providers import StripeProviderV3
 
 
 class StripeProvider(BasicProvider):
