@@ -4,6 +4,11 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v2.1.1
+------
+- Stripe backends now supports webhooks
+- New :ref:`webhook settings <webhooks>`
+
 v2.1.0
 ------
 - Stripe backends now sends order_id in the metadata parameter.

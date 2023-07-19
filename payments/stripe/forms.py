@@ -139,7 +139,3 @@ class PaymentForm(StripeFormMixin, CreditCardPaymentFormWithName):
         for field_name, widget in widget_map.items():
             self.fields[field_name].widget = widget
             self.fields[field_name].required = False
-
-
-class PaymentFormV3(BasePaymentForm):
-    stripe_pubic_key = forms.CharField(widget=forms.widgets.HiddenInput())

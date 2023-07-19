@@ -99,7 +99,7 @@ returned by :meth:`~.BasePayment.get_success_url` or
 :meth:`~.BasePayment.get_failure_url`.
 
 Mutating a ``Payment`` instance
------------------------------
+-------------------------------
 
 When operating ``Payment`` instances, care should be take to only save
 changes atomically. If a model is loaded into memory, mutated, and then saved

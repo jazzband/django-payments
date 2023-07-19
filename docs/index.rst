@@ -33,5 +33,6 @@ Contents:
    usage.rst
    refund.rst
    preauth.rst
+   webhooks.rst
    api.rst
    changelog.rst

@@ -1,10 +1,6 @@
 import json
 import warnings
-from dataclasses import asdict
-from dataclasses import dataclass
-from dataclasses import field
 from decimal import Decimal
-from typing import Optional
 
 import stripe
 
@@ -14,7 +10,7 @@ from .. import RedirectNeeded
 from ..core import BasicProvider
 from .forms import ModalPaymentForm
 from .forms import PaymentForm
-from .forms import PaymentFormV3
+from .providers import StripeProviderV3
 
 
 class StripeProvider(BasicProvider):
@@ -89,162 +85,4 @@ class StripeCardProvider(StripeProvider):
     form_class = PaymentForm
 
 
-@dataclass
-class StripeProductData:
-    name: str
-    description: Optional[str] = field(init=False, repr=False, default=None)
-    images: Optional[str] = field(init=False, repr=False, default=None)
-    metadata: Optional[dict] = field(init=False, repr=False, default=None)
-    tax_code: Optional[str] = field(init=False, repr=False, default=None)
-
-
-@dataclass
-class StripePriceData:
-    currency: str
-    product_data: StripeProductData
-    unit_amount: int
-    recurring: Optional[dict] = field(init=False, repr=False, default=None)
-    tax_behavior: Optional[str] = field(init=False, repr=False, default=None)
-
-
-@dataclass
-class StripeLineItem:
-    price_data: StripePriceData
-    quantity: int
-    adjustable_quantity: Optional[dict] = field(init=False, repr=False, default=None)
-    dynamic_tax_rates: Optional[dict] = field(init=False, repr=False, default=None)
-    tax_rates: Optional[str] = field(init=False, repr=False, default=None)
-
-
-zero_decimal_currency = [
-    "bif",
-    "clp",
-    "djf",
-    "gnf",
-    "jpy",
-    "kmf",
-    "krw",
-    "mga",
-    "pyg",
-    "rwf",
-    "ugx",
-    "vnd",
-    "vuv",
-    "xaf",
-    "xof",
-    "xpf",
-]
-
-
-class StripeProviderV3(BasicProvider):
-    """Provider backend using `Stripe <https://stripe.com/>` api version 3_.
-
-    This backend does not support fraud detection.
-
-    :param api_key: Secret key assigned by Stripe.
-    :param use_token: Use instance.token instead of instance.pk in client_reference_id
-    """
-
-    form_class = PaymentFormV3
-
-    def __init__(
-        self,
-        api_key,
-        use_token=True,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.api_key = api_key
-        self.use_token = use_token
-
-    def get_form(self, payment, data=None):
-        if not payment.transaction_id:
-            try:
-                session = self.create_session(payment)
-            except PaymentError as pe:
-                payment.change_status(PaymentStatus.ERROR, str(pe))
-                raise PaymentError(pe)
-            else:
-                payment.attrs.session = session
-                payment.transaction_id = session.get("id", None)
-                payment.save()
-
-        if "url" not in payment.attrs.session:
-            raise PaymentError("Stripe returned a session without a URL")
-
-        raise RedirectNeeded(payment.attrs.session.get("url"))
-
-    def create_session(self, payment):
-        """Makes the call to Stripe to create the Checkout Session"""
-        if not payment.transaction_id:
-            stripe.api_key = self.api_key
-            session_data = {
-                "line_items": self.get_line_items(payment),
-                "mode": "payment",
-                "success_url": payment.get_success_url(),
-                "cancel_url": payment.get_failure_url(),
-                "client_reference_id": payment.token if self.use_token else payment.pk,
-            }
-            # Patch session with billing email if exists
-            if payment.billing_email:
-                session_data.update({"customer_email": payment.billing_email})
-            try:
-                return stripe.checkout.Session.create(**session_data)
-            except stripe.error.StripeError as e:
-                # Payment has been declined
-                raise PaymentError(e)
-        else:
-            raise PaymentError("This payment has already been processed.")
-
-    def refund(self, payment, amount=None):
-        if payment.status == PaymentStatus.CONFIRMED:
-            to_refund = amount or payment.total
-            payment_intent = payment.attrs.session.get("payment_intent", None)
-            if not payment_intent:
-                raise PaymentError("Can't Refund, payment_intent does not exist")
-            stripe.api_key = self.api_key
-            try:
-                refund = stripe.Refund.create(
-                    payment_intent=payment_intent,
-                    amount=self.convert_amount(payment.currency, to_refund),
-                    reason="requested_by_customer",
-                )
-            except stripe.StripeError as e:
-                raise PaymentError(e)
-            else:
-                payment.attrs.refund = json.dumps(refund)
-                payment.save()
-                payment.change_status(PaymentStatus.REFUNDED)
-                return self.convert_amount(payment.currency, to_refund)
-
-        raise PaymentError("Only Confirmed payments can be refunded")
-
-    def status(self, payment):
-        if payment.status == PaymentStatus.WAITING:
-            stripe.api_key = self.api_key
-            session = stripe.checkout.Session.retrieve(payment.transaction_id)
-            if session.payment_status == "paid":
-                payment.change_status(PaymentStatus.CONFIRMED)
-
-        return payment
-
-    def get_line_items(self, payment):
-        order_no = payment.token if self.use_token else payment.pk
-        product_data = StripeProductData(name="Order #{}".format(order_no))
-
-        price_data = StripePriceData(
-            currency=payment.currency.lower(),
-            unit_amount=self.convert_amount(payment.currency, payment.total),
-            product_data=product_data,
-        )
-        line_item = StripeLineItem(
-            quantity=1,
-            price_data=price_data,
-        )
-        return [asdict(line_item)]
-
-    def convert_amount(self, currency, amount):
-        # Check if the currency has to be converted to cents
-        factor = 100 if currency.lower() not in zero_decimal_currency else 1
-
-        return int(amount * factor)
+__all__ = ["StripeProviderV3"]
