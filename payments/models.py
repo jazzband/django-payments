@@ -165,7 +165,7 @@ class BasePayment(models.Model):
 
         Subclasses MUST implement this method.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_success_url(self) -> str:
         """URL where users will be redirected after a successful payment.
@@ -179,7 +179,7 @@ class BasePayment(models.Model):
 
         Subclasses MUST implement this method.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})

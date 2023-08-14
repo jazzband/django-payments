@@ -81,7 +81,7 @@ class BasicProvider:
         When implementing a new payment provider, overload this method to
         transfer provider-specific data.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_form(self, payment, data=None):
         """Converts ``payment`` into a form suitable for Django templates.
@@ -105,11 +105,11 @@ class BasicProvider:
         should redirect them to either :meth:`Payment.get_success_url` or
         :meth:`Payment.get_failure_url`.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_token_from_request(self, payment, request):
         """Return payment token from provider request."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_return_url(self, payment, extra_data=None):
         """Absolute URL where callbacks are delivered.
@@ -132,13 +132,13 @@ class BasicProvider:
         return url
 
     def capture(self, payment, amount=None):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def release(self, payment):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def refund(self, payment, amount=None):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 PROVIDER_CACHE = {}
