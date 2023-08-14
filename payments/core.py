@@ -21,7 +21,7 @@ PAYMENT_HOST = getattr(settings, "PAYMENT_HOST", None)
 if not PAYMENT_HOST:
     if "django.contrib.sites" not in settings.INSTALLED_APPS:
         raise ImproperlyConfigured(
-            "The PAYMENT_HOST setting without " "the sites app must not be empty."
+            "The PAYMENT_HOST setting without the sites app must not be empty."
         )
     from django.contrib.sites.models import Site
 
