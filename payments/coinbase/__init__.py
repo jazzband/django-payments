@@ -74,7 +74,7 @@ class CoinbaseProvider(BasicProvider):
 
     def get_action(self, payment):
         checkout_url = self.checkout_url % {"endpoint": self.endpoint}
-        return "{}/{}".format(checkout_url, self.get_checkout_code(payment))
+        return f"{checkout_url}/{self.get_checkout_code(payment)}"
 
     def get_hidden_fields(self, payment):
         return {}
