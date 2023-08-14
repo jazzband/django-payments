@@ -294,8 +294,8 @@ These are the community providers compatible with ``django-payments``
   * - Payment Backend
     - Country
     - Repo
-  * - `mollie <https://www.mollie.com/>`_
-    - UK
+  * - `Mollie <https://www.mollie.com/>`_
+    - Worldwide
     - `fourdigits/django-payments-mollie <https://github.com/fourdigits/django-payments-mollie>`_
   * - `Redsys <https://pagosonline.redsys.es/index.html>`_
     - ES
