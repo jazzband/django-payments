@@ -39,6 +39,7 @@ class BraintreePaymentForm(CreditCardPaymentFormWithName):
                 "expiration_month": self.cleaned_data.get("expiration").month,
                 "expiration_year": self.cleaned_data.get("expiration").year,
             }
+        return None
 
     def get_billing_data(self):
         return {

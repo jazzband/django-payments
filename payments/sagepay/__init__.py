@@ -113,8 +113,7 @@ class SagepayProvider(BasicProvider):
                 payment.captured_amount = payment.total
                 payment.change_status(PaymentStatus.CONFIRMED)
                 return redirect(success_url)
-            else:
-                # XXX: We should recognize AUTHENTICATED and REGISTERED in the future.
-                payment.change_status(PaymentStatus.REJECTED)
-                return redirect(payment.get_failure_url())
+            # XXX: We should recognize AUTHENTICATED and REGISTERED in the future.
+            payment.change_status(PaymentStatus.REJECTED)
+            return redirect(payment.get_failure_url())
         return redirect(success_url)

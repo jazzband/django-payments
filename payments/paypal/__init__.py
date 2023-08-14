@@ -105,8 +105,7 @@ class PaypalProvider(BasicProvider):
 
     def _get_links(self, payment):
         extra_data = json.loads(payment.extra_data or "{}")
-        links = extra_data.get("links", {})
-        return links
+        return extra_data.get("links", {})
 
     @authorize
     def post(self, payment, *args, **kwargs):
@@ -136,8 +135,7 @@ class PaypalProvider(BasicProvider):
                 logger.warning(message, extra={"status_code": response.status_code})
             payment.change_status(PaymentStatus.ERROR, message)
             raise PaymentError(message)
-        else:
-            self.set_response_data(payment, data)
+        self.set_response_data(payment, data)
         return data
 
     def get_last_response(self, payment, is_auth=False):
@@ -158,20 +156,19 @@ class PaypalProvider(BasicProvider):
             return "{} {}".format(
                 last_auth_response["token_type"], last_auth_response["access_token"]
             )
-        else:
-            headers = {"Accept": "application/json", "Accept-Language": "en_US"}
-            post = {"grant_type": "client_credentials"}
-            response = requests.post(
-                self.oauth2_url,
-                data=post,
-                headers=headers,
-                auth=(self.client_id, self.secret),
-            )
-            response.raise_for_status()
-            data = response.json()
-            last_auth_response.update(data)
-            self.set_response_data(payment, last_auth_response, is_auth=True)
-            return "{} {}".format(data["token_type"], data["access_token"])
+        headers = {"Accept": "application/json", "Accept-Language": "en_US"}
+        post = {"grant_type": "client_credentials"}
+        response = requests.post(
+            self.oauth2_url,
+            data=post,
+            headers=headers,
+            auth=(self.client_id, self.secret),
+        )
+        response.raise_for_status()
+        data = response.json()
+        last_auth_response.update(data)
+        self.set_response_data(payment, last_auth_response, is_auth=True)
+        return "{} {}".format(data["token_type"], data["access_token"])
 
     def get_transactions_items(self, payment):
         for purchased_item in payment.get_purchased_items():
@@ -192,7 +189,7 @@ class PaypalProvider(BasicProvider):
         total = payment.total.quantize(CENTS, rounding=ROUND_HALF_UP)
         tax = payment.tax.quantize(CENTS, rounding=ROUND_HALF_UP)
         delivery = payment.delivery.quantize(CENTS, rounding=ROUND_HALF_UP)
-        data = {
+        return {
             "intent": "sale" if self._capture else "authorize",
             "transactions": [
                 {
@@ -210,7 +207,6 @@ class PaypalProvider(BasicProvider):
                 }
             ],
         }
-        return data
 
     def get_product_data(self, payment, extra_data=None):
         return_url = self.get_return_url(payment)
@@ -242,8 +238,7 @@ class PaypalProvider(BasicProvider):
             if payment.status != PaymentStatus.CONFIRMED:
                 payment.change_status(PaymentStatus.REJECTED)
                 return redirect(failure_url)
-            else:
-                return redirect(success_url)
+            return redirect(success_url)
         try:
             executed_payment = self.execute_payment(payment, payer_id)
         except PaymentError:
@@ -259,8 +254,7 @@ class PaypalProvider(BasicProvider):
 
     def create_payment(self, payment, extra_data=None):
         product_data = self.get_product_data(payment, extra_data)
-        payment = self.post(payment, self.payments_url, data=product_data)
-        return payment
+        return self.post(payment, self.payments_url, data=product_data)
 
     def execute_payment(self, payment, payer_id):
         post = {"payer_id": payer_id}
@@ -295,13 +289,15 @@ class PaypalProvider(BasicProvider):
         if state == "completed":
             payment.change_status(PaymentStatus.CONFIRMED)
             return amount
-        elif state in ["partially_captured", "partially_refunded"]:
+        if state in ["partially_captured", "partially_refunded"]:
             return amount
-        elif state == "pending":
+        if state == "pending":
             payment.change_status(PaymentStatus.WAITING)
-        elif state == "refunded":
+            return None
+        if state == "refunded":
             payment.change_status(PaymentStatus.REFUNDED)
             raise PaymentError("Payment already refunded")
+        return None
 
     def release(self, payment):
         links = self._get_links(payment)

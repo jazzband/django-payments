@@ -28,8 +28,7 @@ class CreditCardExpiryWidget(MultiWidget):
     def decompress(self, value):
         if value:
             return [value.month, value.year]
-        else:
-            return [None, None]
+        return [None, None]
 
 
 class SensitiveTextInput(TextInput):
