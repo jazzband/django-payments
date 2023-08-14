@@ -101,9 +101,7 @@ class TestCybersourceProvider(TestCase):
 
     @patch.object(CyberSourceProvider, "_make_request")
     def test_provider_shows_validation_error_message_response(self, mocked_request):
-        error_message = (
-            "The card you are trying to use was reported " "as lost or stolen."
-        )
+        error_message = "The card you are trying to use was reported as lost or stolen."
         error_code = 205
         response = MagicMock()
         response.reasonCode = error_code

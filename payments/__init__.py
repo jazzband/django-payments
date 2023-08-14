@@ -80,7 +80,7 @@ def get_payment_model():
         app_label, model_name = settings.PAYMENT_MODEL.split(".")
     except (ValueError, AttributeError) as e:
         raise ImproperlyConfigured(
-            "PAYMENT_MODEL must be of the form " '"app_label.model_name"'
+            'PAYMENT_MODEL must be of the form "app_label.model_name"'
         ) from e
     payment_model = apps.get_model(app_label, model_name)
     if payment_model is None:
