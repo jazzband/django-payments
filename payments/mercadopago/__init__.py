@@ -41,7 +41,6 @@ class MercadoPagoProvider(BasicProvider):
     """
 
     def __init__(self, access_token: str, sandbox: bool):
-        # self._capture = True
         self.client = SDK(access_token)
         self.is_sandbox = sandbox
 
@@ -76,7 +75,7 @@ class MercadoPagoProvider(BasicProvider):
             "auto_return": "all",
             "items": [
                 {
-                    # "category_id": "services",
+                    # TODO: "category_id": "services",
                     "currency_id": item.currency,
                     "description": item.sku,
                     "quantity": item.quantity,
