@@ -4,6 +4,7 @@ select = [
     "F",
     "W",
     "B",
+    "UP",
     "C4",
 ]
 target-version = "py38"

@@ -90,7 +90,7 @@ class SagepayProvider(BasicProvider):
         if payment.billing_country_code == "US":
             data["BillingState"] = payment.billing_country_area
             data["DeliveryState"] = payment.billing_country_area
-        udata = "&".join("%s=%s" % kv for kv in data.items())
+        udata = "&".join("{}={}".format(*kv) for kv in data.items())
         crypt = self.aes_enc(udata)
         return {
             "VPSProtocol": self._version,

@@ -18,11 +18,6 @@ repos:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
         exclude: docs\/.*
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
-    hooks:
-    -   id: pyupgrade
-        args: [--py38-plus]
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: "v1.3.0"
     hooks:
