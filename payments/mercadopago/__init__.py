@@ -48,8 +48,7 @@ class MercadoPagoProvider(BasicProvider):
     def get_or_create_preference(self, payment: BasePayment):
         if payment.transaction_id:
             return self.get_preference(payment)
-        else:
-            return self.create_preference(payment)
+        return self.create_preference(payment)
 
     def get_preference(self, payment: BasePayment):
         """Helper to fetch the preference for a payment."""
@@ -183,8 +182,9 @@ class MercadoPagoProvider(BasicProvider):
         """
         if request.method == "GET":
             return self.process_callback(payment, request)
-        elif request.method == "POST":
+        if request.method == "POST":
             return self.process_notification(payment, request)
+        return None
 
     def get_form(self, payment: BasePayment, data=None):
         # There's no form for MP, we need to redirect to their checkout page.

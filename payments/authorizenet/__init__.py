@@ -39,7 +39,7 @@ class AuthorizeNetProvider(BasicProvider):
             )
 
     def get_transactions_data(self, payment):
-        data = {
+        return {
             "x_amount": payment.total,
             "x_currency_code": payment.currency,
             "x_description": payment.description,
@@ -51,7 +51,6 @@ class AuthorizeNetProvider(BasicProvider):
             "x_country": payment.billing_country_area,
             "x_customer_ip": payment.customer_ip_address,
         }
-        return data
 
     def get_product_data(self, payment, extra_data=None):
         data = self.get_transactions_data(payment)

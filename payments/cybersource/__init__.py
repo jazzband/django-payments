@@ -186,10 +186,8 @@ class CyberSourceProvider(BasicProvider):
             }
             form = BaseForm(data=payload, action=action, autosubmit=True)
             raise ExternalPostNeeded(form)
-        else:
-            self._set_proper_payment_status_from_reason_code(
-                payment, response.reasonCode
-            )
+
+        self._set_proper_payment_status_from_reason_code(payment, response.reasonCode)
 
     def capture(self, payment, amount=None):
         if amount is None:
@@ -232,46 +230,45 @@ class CyberSourceProvider(BasicProvider):
             return _(
                 "Our bank has flagged your transaction as unusually suspicious. Please contact us to resolve this issue."
             )  # noqa
-        elif code in [201, 203, 209]:
+        if code in [201, 203, 209]:
             return _(
                 "Your bank has declined the transaction. No additional information was provided."
             )  # noqa
-        elif code == 202:
+        if code == 202:
             return _(
                 "The card has either expired or you have entered an incorrect expiration date."
             )  # noqa
-        elif code in [204, 210, 251]:
+        if code in [204, 210, 251]:
             return _(
                 "There are insufficient funds on your card or it has reached its credit limit."
             )  # noqa
-        elif code == 205:
+        if code == 205:
             return _(
                 "The card you are trying to use was reported as lost or stolen."
             )  # noqa
-        elif code == 208:
+        if code == 208:
             return _(
                 "Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue."
             )  # noqa
-        elif code == 211:
+        if code == 211:
             return _(
                 "Your bank has declined the transaction. Please check the verification number of your card and retry."
             )  # noqa
-        elif code == 231:
+        if code == 231:
             return _(
                 "Your bank has declined the transaction. Please make sure the card number you have entered is correct and retry."
             )  # noqa
-        elif code in [232, 240]:
+        if code in [232, 240]:
             return _(
                 "We are sorry but our bank cannot handle the card type you are using."
             )  # noqa
-        elif code in [450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461]:
+        if code in [450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461]:
             return _(
                 "We were unable to verify your address. Please make sure the address you entered is correct and retry."
             )  # noqa
-        else:
-            return _(
-                "We were unable to complete the transaction. Please try again later."
-            )  # noqa
+        return _(
+            "We were unable to complete the transaction. Please try again later."
+        )  # noqa
 
     def _get_params_for_new_payment(self, payment):
         params = {
@@ -358,54 +355,52 @@ class CyberSourceProvider(BasicProvider):
         service = self.client.factory.create("data:CCCaptureService")
         service._run = "true"
         service.authRequestID = payment.transaction_id
-        params = {
+        return {
             "merchantID": self.merchant_id,
             "merchantReferenceCode": payment.id,
             "ccCaptureService": service,
             "purchaseTotals": self._prepare_totals(payment, amount=amount),
         }
-        return params
 
     def _prepare_release(self, payment):
         service = self.client.factory.create("data:CCAuthReversalService")
         service._run = "true"
         service.authRequestID = payment.transaction_id
-        params = {
+        return {
             "merchantID": self.merchant_id,
             "merchantReferenceCode": payment.id,
             "ccAuthReversalService": service,
             "purchaseTotals": self._prepare_totals(payment),
         }
-        return params
 
     def _prepare_refund(self, payment, amount=None):
         service = self.client.factory.create("data:CCCreditService")
         service._run = "true"
         service.captureRequestID = payment.transaction_id
-        params = {
+        return {
             "merchantID": self.merchant_id,
             "merchantReferenceCode": payment.id,
             "ccCreditService": service,
             "purchaseTotals": self._prepare_totals(payment, amount=amount),
         }
-        return params
 
     def _prepare_card_type(self, card_number):
         card_type, card_name = get_credit_card_issuer(card_number)
         if card_type == "visa":
             return "001"
-        elif card_type == "mastercard":
+        if card_type == "mastercard":
             return "002"
-        elif card_type == "amex":
+        if card_type == "amex":
             return "003"
-        elif card_type == "discover":
+        if card_type == "discover":
             return "004"
-        elif card_type == "diners":
+        if card_type == "diners":
             return "005"
-        elif card_type == "jcb":
+        if card_type == "jcb":
             return "007"
-        elif card_type == "maestro":
+        if card_type == "maestro":
             return "042"
+        return None
 
     def _prepare_card_data(self, data):
         card = self.client.factory.create("data:Card")
@@ -447,7 +442,7 @@ class CyberSourceProvider(BasicProvider):
         try:
             merchant_defined_data = payment.attrs.merchant_defined_data
         except AttributeError:
-            return
+            return None
         else:
             data = self.client.factory.create("data:MerchantDefinedData")
             for i, value in merchant_defined_data.items():
@@ -503,5 +498,4 @@ class CyberSourceProvider(BasicProvider):
             pass
         if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return redirect(payment.get_success_url())
-        else:
-            return redirect(payment.get_failure_url())
+        return redirect(payment.get_failure_url())
