@@ -27,7 +27,7 @@ class AuthorizeNetProvider(BasicProvider):
         login_id,
         transaction_key,
         endpoint="https://test.authorize.net/gateway/transact.dll",
-        **kwargs
+        **kwargs,
     ):
         self.login_id = login_id
         self.transaction_key = transaction_key
@@ -45,9 +45,7 @@ class AuthorizeNetProvider(BasicProvider):
             "x_description": payment.description,
             "x_first_name": payment.billing_first_name,
             "x_last_name": payment.billing_last_name,
-            "x_address": "{}, {}".format(
-                payment.billing_address_1, payment.billing_address_2
-            ),
+            "x_address": f"{payment.billing_address_1}, {payment.billing_address_2}",
             "x_city": payment.billing_city,
             "x_zip": payment.billing_postcode,
             "x_country": payment.billing_country_area,
