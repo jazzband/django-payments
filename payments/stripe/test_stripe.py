@@ -134,11 +134,10 @@ class TestStripeProvider(TestCase):
             name="Example.com store", secret_key=SECRET_KEY, public_key=PUBLIC_KEY
         )
         data = {"stripeToken": "abcd"}
-        with patch("json.dumps"):
-            with patch("stripe.Charge.create"):
-                with self.assertRaises(RedirectNeeded) as exc:
-                    provider.get_form(payment, data)
-                    self.assertEqual(exc.args[0], payment.get_success_url())
+        with patch("json.dumps"), patch("stripe.Charge.create"):
+            with self.assertRaises(RedirectNeeded) as exc:
+                provider.get_form(payment, data)
+                self.assertEqual(exc.args[0], payment.get_success_url())
         self.assertEqual(payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(payment.captured_amount, payment.total)
 
@@ -179,11 +178,10 @@ class TestStripeProvider(TestCase):
             name="Example.com store", secret_key=SECRET_KEY, public_key=PUBLIC_KEY
         )
         data = {"stripeToken": "abcd"}
-        with mock_stripe_Charge_create():
-            with mock_stripe_Charge_retrieve():
-                form = provider.get_form(payment, data=data)
-                msg = "This payment has already been processed."
-                self.assertEqual(form.errors["__all__"][0], msg)
+        with mock_stripe_Charge_create(), mock_stripe_Charge_retrieve():
+            form = provider.get_form(payment, data=data)
+            msg = "This payment has already been processed."
+            self.assertEqual(form.errors["__all__"][0], msg)
 
     def test_form_doesnt_have_name_attributes_on_fields(self):
         payment = Payment()
