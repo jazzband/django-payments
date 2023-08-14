@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from .. import PaymentStatus
+from payments import PaymentStatus
+
 from . import SagepayProvider
 
 VENDOR = "abcd1234"

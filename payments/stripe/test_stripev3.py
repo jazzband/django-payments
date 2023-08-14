@@ -2,9 +2,10 @@ from unittest import TestCase
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from .. import PaymentError
-from .. import PaymentStatus
-from .. import RedirectNeeded
+from payments import PaymentError
+from payments import PaymentStatus
+from payments import RedirectNeeded
+
 from . import StripeProviderV3
 
 # Secret key from https://stripe.com/docs/api/authentication

@@ -1,5 +1,5 @@
-from .. import PaymentStatus
-from ..forms import CreditCardPaymentForm
+from payments import PaymentStatus
+from payments.forms import CreditCardPaymentForm
 
 RESPONSE_STATUS = {
     "1": PaymentStatus.CONFIRMED,

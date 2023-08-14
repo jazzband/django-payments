@@ -6,8 +6,9 @@ from unittest.mock import patch
 
 import pytest
 
-from .. import PaymentStatus
-from .. import RedirectNeeded
+from payments import PaymentStatus
+from payments import RedirectNeeded
+
 from . import AuthorizeNetProvider
 
 LOGIN_ID = "abcd1234"

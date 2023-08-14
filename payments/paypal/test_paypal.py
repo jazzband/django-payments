@@ -9,10 +9,11 @@ from unittest.mock import patch
 from django.utils import timezone
 from requests import HTTPError
 
-from .. import PaymentError
-from .. import PaymentStatus
-from .. import PurchasedItem
-from .. import RedirectNeeded
+from payments import PaymentError
+from payments import PaymentStatus
+from payments import PurchasedItem
+from payments import RedirectNeeded
+
 from . import PaypalCardProvider
 from . import PaypalProvider
 

@@ -1,9 +1,10 @@
 import braintree
 from django.core.exceptions import ImproperlyConfigured
 
-from .. import PaymentStatus
-from .. import RedirectNeeded
-from ..core import BasicProvider
+from payments import PaymentStatus
+from payments import RedirectNeeded
+from payments.core import BasicProvider
+
 from .forms import BraintreePaymentForm
 
 

@@ -2,7 +2,7 @@ import hashlib
 
 from django import forms
 
-from .. import PaymentStatus
+from payments import PaymentStatus
 
 NEW = "new"
 PROCESSING = "processing"

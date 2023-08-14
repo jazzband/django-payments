@@ -4,8 +4,8 @@ from django import forms
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-from .. import PaymentError
-from ..forms import CreditCardPaymentFormWithName
+from payments import PaymentError
+from payments.forms import CreditCardPaymentFormWithName
 
 
 class FingerprintWidget(forms.HiddenInput):
