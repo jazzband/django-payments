@@ -156,8 +156,8 @@ class BasePayment(models.Model):
     def get_failure_url(self) -> str:
         """URL where users will be redirected after a failed payment.
 
-        Return the URL where users will be redirected after a failed attempt to complete a
-        payment. This is usually a page explaining the situation to the user with an
+        Return the URL where users will be redirected after a failed attempt to complete
+        a payment. This is usually a page explaining the situation to the user with an
         option to retry the payment.
 
         Note that the URL may contain the ID of this payment, allowing

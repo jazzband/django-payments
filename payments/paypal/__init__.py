@@ -59,8 +59,10 @@ class PaypalProvider(BasicProvider):
 
     :param client_id: Client ID assigned by PayPal or your email address
     :param secret: Secret assigned by PayPal
-    :param endpoint: The API endpoint to use. For the production environment, use ``'https://api.paypal.com'`` instead
-    :param capture: Whether to capture the payment automatically. See :ref:`capture-payments` for more details.
+    :param endpoint: The API endpoint to use. For the production environment,
+        use ``'https://api.paypal.com'`` instead
+    :param capture: Whether to capture the payment automatically.
+        See :ref:`capture-payments` for more details.
     """
 
     def __init__(

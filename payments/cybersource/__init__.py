@@ -229,47 +229,45 @@ class CyberSourceProvider(BasicProvider):
     def _get_error_message(self, code):
         if code in [221, 222, 700, 701, 702, 703]:
             return _(
-                "Our bank has flagged your transaction as unusually suspicious. Please contact us to resolve this issue."
-            )  # noqa
+                "Our bank has flagged your transaction as unusually suspicious. Please contact us to resolve this issue."  # noqa: E501
+            )
         if code in [201, 203, 209]:
             return _(
-                "Your bank has declined the transaction. No additional information was provided."
-            )  # noqa
+                "Your bank has declined the transaction. No additional information was provided."  # noqa: E501
+            )
         if code == 202:
             return _(
-                "The card has either expired or you have entered an incorrect expiration date."
-            )  # noqa
+                "The card has either expired or you have entered an incorrect expiration date."  # noqa: E501
+            )
         if code in [204, 210, 251]:
             return _(
-                "There are insufficient funds on your card or it has reached its credit limit."
-            )  # noqa
+                "There are insufficient funds on your card or it has reached its credit limit."  # noqa: E501
+            )
         if code == 205:
             return _(
-                "The card you are trying to use was reported as lost or stolen."
-            )  # noqa
+                "The card you are trying to use was reported as lost or stolen."  # noqa: E501
+            )
         if code == 208:
             return _(
-                "Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue."
-            )  # noqa
+                "Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue."  # noqa: E501
+            )
         if code == 211:
             return _(
-                "Your bank has declined the transaction. Please check the verification number of your card and retry."
-            )  # noqa
+                "Your bank has declined the transaction. Please check the verification number of your card and retry."  # noqa: E501
+            )
         if code == 231:
             return _(
-                "Your bank has declined the transaction. Please make sure the card number you have entered is correct and retry."
-            )  # noqa
+                "Your bank has declined the transaction. Please make sure the card number you have entered is correct and retry."  # noqa: E501
+            )
         if code in [232, 240]:
             return _(
-                "We are sorry but our bank cannot handle the card type you are using."
-            )  # noqa
+                "We are sorry but our bank cannot handle the card type you are using."  # noqa: E501
+            )
         if code in [450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461]:
             return _(
-                "We were unable to verify your address. Please make sure the address you entered is correct and retry."
-            )  # noqa
-        return _(
-            "We were unable to complete the transaction. Please try again later."
-        )  # noqa
+                "We were unable to verify your address. Please make sure the address you entered is correct and retry."  # noqa: E501
+            )
+        return _("We were unable to complete the transaction. Please try again later.")
 
     def _get_params_for_new_payment(self, payment):
         params = {
