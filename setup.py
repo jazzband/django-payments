@@ -15,13 +15,15 @@ PACKAGES = [
     "payments.stripe",
 ]
 
+with open("README.rst") as f:
+    readme = f.read()
 
 setup(
     name="django-payments",
     author="Mirumee Software",
     author_email="hello@mirumee.com",
     description="Universal payment handling for Django",
-    long_description=open("README.rst").read(),
+    long_description=readme,
     use_scm_version={
         "version_scheme": "post-release",
         "write_to": "payments/version.py",
