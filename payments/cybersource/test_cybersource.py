@@ -8,9 +8,10 @@ from unittest.mock import patch
 
 from django.core import signing
 
-from .. import PaymentStatus
-from .. import PurchasedItem
-from .. import RedirectNeeded
+from payments import PaymentStatus
+from payments import PurchasedItem
+from payments import RedirectNeeded
+
 from . import ACCEPTED
 from . import AUTHENTICATE_REQUIRED
 from . import TRANSACTION_SETTLED

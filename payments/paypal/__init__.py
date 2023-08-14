@@ -11,11 +11,12 @@ from django.shortcuts import redirect
 from django.utils import timezone
 from requests.exceptions import HTTPError
 
-from .. import PaymentError
-from .. import PaymentStatus
-from .. import RedirectNeeded
-from ..core import BasicProvider
-from ..core import get_credit_card_issuer
+from payments import PaymentError
+from payments import PaymentStatus
+from payments import RedirectNeeded
+from payments.core import BasicProvider
+from payments.core import get_credit_card_issuer
+
 from .forms import PaymentForm
 
 # Get an instance of a logger

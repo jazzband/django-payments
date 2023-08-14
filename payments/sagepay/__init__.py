@@ -8,8 +8,8 @@ from cryptography.hazmat.primitives.ciphers import modes
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
-from .. import PaymentStatus
-from ..core import BasicProvider
+from payments import PaymentStatus
+from payments.core import BasicProvider
 
 
 class SagepayProvider(BasicProvider):

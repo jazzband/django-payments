@@ -4,8 +4,9 @@ from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from .. import PaymentStatus
-from .. import RedirectNeeded
+from payments import PaymentStatus
+from payments import RedirectNeeded
+
 from . import SofortProvider
 
 SECRET = "abcd1234"

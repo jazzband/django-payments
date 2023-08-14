@@ -5,9 +5,10 @@ from unittest.mock import patch
 
 import stripe
 
-from .. import FraudStatus
-from .. import PaymentStatus
-from .. import RedirectNeeded
+from payments import FraudStatus
+from payments import PaymentStatus
+from payments import RedirectNeeded
+
 from . import StripeCardProvider
 from . import StripeProvider
 

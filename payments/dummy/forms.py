@@ -1,8 +1,8 @@
 from django import forms
 
-from .. import FraudStatus
-from .. import PaymentStatus
-from ..forms import PaymentForm
+from payments import FraudStatus
+from payments import PaymentStatus
+from payments.forms import PaymentForm
 
 
 class DummyForm(PaymentForm):

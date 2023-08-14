@@ -8,11 +8,11 @@ from typing import Optional
 import stripe
 from django.http import JsonResponse
 
-from .. import PaymentError
-from .. import PaymentStatus
-from .. import RedirectNeeded
-from ..core import BasicProvider
-from ..forms import PaymentForm as BasePaymentForm
+from payments import PaymentError
+from payments import PaymentStatus
+from payments import RedirectNeeded
+from payments.core import BasicProvider
+from payments.forms import PaymentForm as BasePaymentForm
 
 
 @dataclass

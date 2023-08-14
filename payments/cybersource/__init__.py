@@ -9,14 +9,15 @@ from django.utils.translation import gettext as _
 from suds.sax.element import Element
 from suds.sudsobject import Object
 
-from .. import ExternalPostNeeded
-from .. import FraudStatus
-from .. import PaymentError
-from .. import PaymentStatus
-from .. import RedirectNeeded
-from ..core import BasicProvider
-from ..core import get_credit_card_issuer
-from ..forms import PaymentForm as BaseForm
+from payments import ExternalPostNeeded
+from payments import FraudStatus
+from payments import PaymentError
+from payments import PaymentStatus
+from payments import RedirectNeeded
+from payments.core import BasicProvider
+from payments.core import get_credit_card_issuer
+from payments.forms import PaymentForm as BaseForm
+
 from .forms import PaymentForm
 
 ACCEPTED = 100

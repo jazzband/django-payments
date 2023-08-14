@@ -7,10 +7,10 @@ from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.translation import get_language
 
-from .. import PaymentError
-from .. import PaymentStatus
-from .. import RedirectNeeded
-from ..core import BasicProvider
+from payments import PaymentError
+from payments import PaymentStatus
+from payments import RedirectNeeded
+from payments.core import BasicProvider
 
 
 class SofortProvider(BasicProvider):

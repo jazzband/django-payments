@@ -9,8 +9,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 
-from .. import PaymentStatus
-from ..core import BasicProvider
+from payments import PaymentStatus
+from payments.core import BasicProvider
 
 
 class CoinbaseProvider(BasicProvider):
