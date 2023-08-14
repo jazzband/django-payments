@@ -119,7 +119,7 @@ class MercadoPagoProvider(BasicProvider):
 
     def get_action(self, payment: BasePayment):
         # This is the form-action. But we don't use a form.
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def process_notification(self, payment: BasePayment, request: HttpRequest):
         data = json.loads(request.body)
@@ -200,10 +200,10 @@ class MercadoPagoProvider(BasicProvider):
 
     def capture(self, payment: BasePayment, amount=None):
         # only allow if its PRE_AUTH
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def refund(self, payment: BasePayment, amount=None):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def poll_for_updates(self, payment: BasePayment):
         """Helper method to fetch any updates on MercadoPago.
