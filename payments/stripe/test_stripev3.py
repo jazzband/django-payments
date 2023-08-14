@@ -102,9 +102,8 @@ class TestStripeProviderV3(TestCase):
         payment = Payment()
         payment.transaction_id = "transaction-id"
         provider = StripeProviderV3(api_key=API_KEY)
-        with patch("stripe.checkout.Session.create"):
-            with self.assertRaises(PaymentError):
-                provider.create_session(payment)
+        with patch("stripe.checkout.Session.create"), self.assertRaises(PaymentError):
+            provider.create_session(payment)
 
     def test_provider_status(self):
         payment = Payment()
@@ -135,9 +134,8 @@ class TestStripeProviderV3(TestCase):
         payment.status = PaymentStatus.CONFIRMED
 
         provider = StripeProviderV3(api_key=API_KEY)
-        with patch("stripe.Refund.create"):
-            with self.assertRaises(PaymentError):
-                provider.refund(payment)
+        with patch("stripe.Refund.create"), self.assertRaises(PaymentError):
+            provider.refund(payment)
 
     def test_provider_refund_success(self):
         payment = Payment()
