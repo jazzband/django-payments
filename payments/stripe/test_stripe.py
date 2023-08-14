@@ -91,11 +91,8 @@ class TestStripeProvider(TestCase):
         self.assertTrue(
             '<script class="stripe-button" data-amount="10000" '
             'data-currency="USD" data-description="payment" data-email="john@doe.com" '
-            'data-image="" data-key="{}" data-name="{}" '
-            'src="https://checkout.stripe.com/checkout.js"></script>'.format(
-                PUBLIC_KEY, store_name
-            )
-            in str(form)
+            f'data-image="" data-key="{PUBLIC_KEY}" data-name="{store_name}" '
+            'src="https://checkout.stripe.com/checkout.js"></script>' in str(form)
         )
 
     def test_form_contains_stripe_script_without_billing_email(self):
@@ -115,11 +112,8 @@ class TestStripeProvider(TestCase):
         self.assertTrue(
             '<script class="stripe-button" data-amount="10000" '
             'data-currency="USD" data-description="payment" '
-            'data-image="" data-key="{}" data-name="{}" '
-            'src="https://checkout.stripe.com/checkout.js"></script>'.format(
-                PUBLIC_KEY, store_name
-            )
-            in str(form)
+            f'data-image="" data-key="{PUBLIC_KEY}" data-name="{store_name}" '
+            'src="https://checkout.stripe.com/checkout.js"></script>' in str(form)
         )
 
     def test_provider_raises_redirect_needed_when_token_does_not_exist(self):
