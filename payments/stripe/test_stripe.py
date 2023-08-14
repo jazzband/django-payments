@@ -91,9 +91,10 @@ class TestStripeProvider(TestCase):
         self.assertTrue(
             '<script class="stripe-button" data-amount="10000" '
             'data-currency="USD" data-description="payment" data-email="john@doe.com" '
-            'data-image="" data-key="%s" data-name="%s" '
-            'src="https://checkout.stripe.com/checkout.js"></script>'
-            % (PUBLIC_KEY, store_name)
+            'data-image="" data-key="{}" data-name="{}" '
+            'src="https://checkout.stripe.com/checkout.js"></script>'.format(
+                PUBLIC_KEY, store_name
+            )
             in str(form)
         )
 
@@ -114,9 +115,10 @@ class TestStripeProvider(TestCase):
         self.assertTrue(
             '<script class="stripe-button" data-amount="10000" '
             'data-currency="USD" data-description="payment" '
-            'data-image="" data-key="%s" data-name="%s" '
-            'src="https://checkout.stripe.com/checkout.js"></script>'
-            % (PUBLIC_KEY, store_name)
+            'data-image="" data-key="{}" data-name="{}" '
+            'src="https://checkout.stripe.com/checkout.js"></script>'.format(
+                PUBLIC_KEY, store_name
+            )
             in str(form)
         )
 
