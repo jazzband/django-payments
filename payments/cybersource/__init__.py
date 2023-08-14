@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import os.path
 
@@ -489,12 +490,11 @@ class CyberSourceProvider(BasicProvider):
         )
         response = self._make_request(payment, params)
         payment.transaction_id = response.requestID
-        try:
+        with contextlib.suppress(PaymentError):
             self._set_proper_payment_status_from_reason_code(
                 payment, response.reasonCode
             )
-        except PaymentError:
-            pass
+
         if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return redirect(payment.get_success_url())
         return redirect(payment.get_failure_url())
