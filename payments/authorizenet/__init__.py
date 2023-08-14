@@ -27,7 +27,7 @@ class AuthorizeNetProvider(BasicProvider):
         login_id,
         transaction_key,
         endpoint="https://test.authorize.net/gateway/transact.dll",
-        **kwargs
+        **kwargs,
     ):
         self.login_id = login_id
         self.transaction_key = transaction_key
