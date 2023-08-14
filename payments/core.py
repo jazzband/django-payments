@@ -152,7 +152,7 @@ def _default_provider_factory(variant: str, payment: Optional["BasePayment"] = N
     variants = getattr(settings, "PAYMENT_VARIANTS", PAYMENT_VARIANTS)
     handler, config = variants.get(variant, (None, None))
     if not handler:
-        raise ValueError("Payment variant does not exist: {}".format(variant))
+        raise ValueError(f"Payment variant does not exist: {variant}")
     if variant not in PROVIDER_CACHE:
         module_path, class_name = handler.rsplit(".", 1)
         module = __import__(str(module_path), globals(), locals(), [str(class_name)])

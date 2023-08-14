@@ -182,7 +182,7 @@ class StripeProviderV3(BasicProvider):
 
     def get_line_items(self, payment) -> list:
         order_no = payment.token if self.use_token else payment.pk
-        product_data = StripeProductData(name="Order #{}".format(order_no))
+        product_data = StripeProductData(name=f"Order #{order_no}")
 
         price_data = StripePriceData(
             currency=payment.currency.lower(),
