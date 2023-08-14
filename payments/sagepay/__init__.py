@@ -24,7 +24,8 @@ class SagepayProvider(BasicProvider):
 
     :param vendor: Your vendor code
     :param encryption_key: Encryption key assigned by Sage Pay
-    :param endpoint: The API endpoint to use. For the production environment, use ``'https://live.sagepay.com/gateway/service/vspform-register.vsp'`` instead
+    :param endpoint: The API endpoint to use. For the production environment,
+        use ``'https://live.sagepay.com/gateway/service/vspform-register.vsp'`` instead
     """
 
     _version = "3.00"

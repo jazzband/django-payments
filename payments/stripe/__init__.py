@@ -35,7 +35,7 @@ class StripeProvider(BasicProvider):
         self.name = name
         super().__init__(**kwargs)
         warnings.warn(
-            "This provider uses the deprecated v2 API, please use `payments.stripe.StripeProviderV3`",
+            "This provider uses the deprecated v2 API, please use `payments.stripe.StripeProviderV3`",  # noqa: E501
             DeprecationWarning,
             stacklevel=2,
         )
