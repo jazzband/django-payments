@@ -109,6 +109,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 PAYMENT_HOST = "localhost:8000"
 PAYMENT_USES_SSL = False
 PAYMENT_MODEL = "testmain.Payment"
-PAYMENT_VARIANTS = {
+PAYMENT_VARIANTS: dict = {
     "default": ("payments.dummy.DummyProvider", {}),
 }
