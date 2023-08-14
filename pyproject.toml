@@ -1,14 +1,47 @@
 [tool.ruff]
 select = [
-    "E",
     "F",
+    "E",
     "W",
-    "B",
     "I",
+    # "N", # TODO: fixing these would break public API
     "UP",
+    "YTT",
+    # "ANN",
+    # "BLE",
+    # "FBT",
+    "B",
+    # "A", # Conflicts with some django patterns
     "C4",
+    "ISC",
+    "ICN",
+    "G",
+    "INP",
+    "PIE",
+    "PYI",
+    # "PT", # TODO: some tests are not pytest
+    "Q",
+    "RSE",
+    "RET",
+    # "SIM", # TODO
+    "TID",
+    "TCH",
+    "INT",
+    "ERA",
+    "PGH",
+    "PLE",
+    "RUF",
 ]
 target-version = "py38"
+ignore = [
+  "RUF012",  # FIXME
+]
 
 [tool.ruff.isort]
 force-single-line = true
+
+[tool.ruff.per-file-ignores]
+# Fails with auto-generated migrations. Unsolvable contradiction between ruff and mypy.
+# This likely needs to be addressed in Django itself (either use an immutable
+# type or annotate these fields as ClassVar)
+"testapp/testapp/testmain/migrations/0*.py"= ["RUF012"]
