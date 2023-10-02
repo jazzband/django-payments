@@ -245,9 +245,7 @@ class CyberSourceProvider(BasicProvider):
                 "There are insufficient funds on your card or it has reached its credit limit."  # noqa: E501
             )
         if code == 205:
-            return _(
-                "The card you are trying to use was reported as lost or stolen."  # noqa: E501
-            )
+            return _("The card you are trying to use was reported as lost or stolen.")
         if code == 208:
             return _(
                 "Your card is either inactive or it does not permit online payments. Please contact your bank to resolve this issue."  # noqa: E501
@@ -262,7 +260,7 @@ class CyberSourceProvider(BasicProvider):
             )
         if code in [232, 240]:
             return _(
-                "We are sorry but our bank cannot handle the card type you are using."  # noqa: E501
+                "We are sorry but our bank cannot handle the card type you are using."
             )
         if code in [450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461]:
             return _(
