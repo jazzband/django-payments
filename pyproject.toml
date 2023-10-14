@@ -1,3 +1,6 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+
 [tool.coverage.report]
 exclude_lines = [
     "if TYPE_CHECKING:",
@@ -51,3 +54,7 @@ required-imports = ["from __future__ import annotations"]
 # This likely needs to be addressed in Django itself (either use an immutable
 # type or annotate these fields as ClassVar)
 "testapp/testapp/testmain/migrations/0*.py"= ["RUF012"]
+
+[tool.setuptools_scm]
+write_to = "payments/version.py"
+version_scheme = "post-release"
