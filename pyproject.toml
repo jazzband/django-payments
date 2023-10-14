@@ -39,6 +39,7 @@ ignore = [
 
 [tool.ruff.isort]
 force-single-line = true
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.per-file-ignores]
 # Fails with auto-generated migrations. Unsolvable contradiction between ruff and mypy.
