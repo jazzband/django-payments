@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.forms.utils import flatatt
 from django.forms.widgets import HiddenInput
 from django.forms.widgets import Input

@@ -1,6 +1,7 @@
-from decimal import Decimal
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import NamedTuple
-from typing import Optional
 
 from django.apps import apps
 from django.conf import settings
@@ -8,6 +9,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import pgettext_lazy
 
 from payments import version  # type: ignore[attr-defined]
+
+if TYPE_CHECKING:
+    from decimal import Decimal
 
 __version__ = version.version
 
@@ -20,7 +24,7 @@ class PurchasedItem(NamedTuple):
     price: Decimal
     currency: str
     sku: str
-    tax_rate: Optional[Decimal] = None
+    tax_rate: Decimal | None = None
 
 
 class PaymentStatus:

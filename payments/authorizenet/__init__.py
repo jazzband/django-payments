@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import requests
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponseForbidden

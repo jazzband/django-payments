@@ -1,16 +1,20 @@
-from typing import Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 from unittest.mock import call
 from unittest.mock import patch
 
 import pytest
-from django.test import RequestFactory
 
 from payments import PaymentError
 from payments import PaymentStatus
 from payments import PurchasedItem
 from payments import RedirectNeeded
 from payments.mercadopago import MercadoPagoProvider
+
+if TYPE_CHECKING:
+    from django.test import RequestFactory
 
 
 class Payment(Mock):
@@ -23,7 +27,7 @@ class Payment(Mock):
     tax = 10
     total = 100
     captured_amount = 0
-    transaction_id: Optional[str] = None
+    transaction_id: str | None = None
     billing_email = "john@doe.com"
 
     def change_status(self, status, message=""):

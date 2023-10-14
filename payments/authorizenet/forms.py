@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from payments import PaymentStatus
 from payments.forms import CreditCardPaymentForm
 

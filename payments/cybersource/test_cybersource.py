@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from datetime import date
 from decimal import Decimal
-from typing import Dict
 from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import Mock
@@ -43,7 +44,7 @@ class Payment(Mock):
 
     class attrs:
         fingerprint_session_id = "fake"
-        merchant_defined_data: Dict[str, str] = {}
+        merchant_defined_data: dict[str, str] = {}
 
     def get_process_url(self):
         return "http://example.com"
