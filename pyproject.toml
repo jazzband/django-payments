@@ -6,6 +6,17 @@ exclude_lines = [
     "if TYPE_CHECKING:",
 ]
 
+[tool.pytest.ini_options]
+addopts =[
+  "--cov=payments",
+  "--cov-report=term-missing:skip-covered",
+  "--no-cov-on-fail",
+  "--color=yes",
+]
+testpaths = "payments"
+DJANGO_SETTINGS_MODULE = "test_settings"
+pythonpath = "."
+
 [tool.ruff]
 select = [
     "F",
