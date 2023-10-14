@@ -1,20 +1,20 @@
+from __future__ import annotations
+
 import re
 from typing import TYPE_CHECKING
-from typing import Dict
-from typing import Optional
-from typing import Tuple
 from urllib.parse import urlencode
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpRequest
 from django.utils.module_loading import import_string
 
 if TYPE_CHECKING:
+    from django.http import HttpRequest
+
     from .models import BasePayment
 
-PAYMENT_VARIANTS: Dict[str, Tuple[str, Dict]] = {
+PAYMENT_VARIANTS: dict[str, tuple[str, dict]] = {
     "default": ("payments.dummy.DummyProvider", {})
 }
 
@@ -156,7 +156,7 @@ class BasicProvider:
 PROVIDER_CACHE = {}
 
 
-def _default_provider_factory(variant: str, payment: Optional["BasePayment"] = None):
+def _default_provider_factory(variant: str, payment: BasePayment | None = None):
     """Return the provider instance based on ``variant``.
 
     :arg variant: The name of a variant defined in ``PAYMENT_VARIANTS``.
@@ -194,7 +194,7 @@ CARD_TYPES = [
 ]
 
 
-def get_credit_card_issuer(number: str) -> Tuple[Optional[str], Optional[str]]:
+def get_credit_card_issuer(number: str) -> tuple[str | None, str | None]:
     for regexp, card_type, name in CARD_TYPES:
         if re.match(regexp, number):
             return card_type, name

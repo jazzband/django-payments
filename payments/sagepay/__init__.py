@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import binascii
 
 from cryptography.hazmat.backends import default_backend

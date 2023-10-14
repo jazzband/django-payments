@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from urllib.error import URLError
 from urllib.parse import urlencode
 

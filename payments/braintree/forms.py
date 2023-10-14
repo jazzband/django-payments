@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import braintree
 
 from payments import PaymentStatus

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from requests.exceptions import HTTPError
 
 from payments import PaymentStatus

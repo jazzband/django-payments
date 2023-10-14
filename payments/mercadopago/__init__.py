@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import logging
 import re
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from django.http import HttpRequest
@@ -12,7 +15,9 @@ from payments import PaymentError
 from payments import PaymentStatus
 from payments import RedirectNeeded
 from payments.core import BasicProvider
-from payments.models import BasePayment
+
+if TYPE_CHECKING:
+    from payments.models import BasePayment
 
 logger = logging.getLogger(__name__)
 

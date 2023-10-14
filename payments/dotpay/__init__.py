@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal
 
 from django.core.exceptions import ImproperlyConfigured
@@ -50,7 +52,7 @@ class DotpayProvider(BasicProvider):
         lang="pl",
         lock=False,
         type=2,
-        **kwargs
+        **kwargs,
     ):
         self.seller_id = seller_id
         self.pin = pin

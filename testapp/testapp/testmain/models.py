@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from payments import PurchasedItem
 from payments.models import BasePayment
 

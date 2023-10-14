@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import json
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
-from typing import Optional
 
 import stripe
 from django.http import JsonResponse
@@ -18,10 +19,10 @@ from payments.forms import PaymentForm as BasePaymentForm
 @dataclass
 class StripeProductData:
     name: str
-    description: Optional[str] = field(init=False, repr=False, default=None)
-    images: Optional[str] = field(init=False, repr=False, default=None)
-    metadata: Optional[dict] = field(init=False, repr=False, default=None)
-    tax_code: Optional[str] = field(init=False, repr=False, default=None)
+    description: str | None = field(init=False, repr=False, default=None)
+    images: str | None = field(init=False, repr=False, default=None)
+    metadata: dict | None = field(init=False, repr=False, default=None)
+    tax_code: str | None = field(init=False, repr=False, default=None)
 
 
 @dataclass
@@ -29,17 +30,17 @@ class StripePriceData:
     currency: str
     product_data: StripeProductData
     unit_amount: int
-    recurring: Optional[dict] = field(init=False, repr=False, default=None)
-    tax_behavior: Optional[str] = field(init=False, repr=False, default=None)
+    recurring: dict | None = field(init=False, repr=False, default=None)
+    tax_behavior: str | None = field(init=False, repr=False, default=None)
 
 
 @dataclass
 class StripeLineItem:
     price_data: StripePriceData
     quantity: int
-    adjustable_quantity: Optional[dict] = field(init=False, repr=False, default=None)
-    dynamic_tax_rates: Optional[dict] = field(init=False, repr=False, default=None)
-    tax_rates: Optional[str] = field(init=False, repr=False, default=None)
+    adjustable_quantity: dict | None = field(init=False, repr=False, default=None)
+    dynamic_tax_rates: dict | None = field(init=False, repr=False, default=None)
+    tax_rates: str | None = field(init=False, repr=False, default=None)
 
 
 zero_decimal_currency: list = [
