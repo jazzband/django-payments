@@ -1,3 +1,8 @@
+[tool.coverage.report]
+exclude_lines = [
+    "if TYPE_CHECKING:",
+]
+
 [tool.ruff]
 select = [
     "F",
