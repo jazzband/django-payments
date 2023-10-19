@@ -68,7 +68,7 @@ class DummyProvider(BasicProvider):
 
     def capture(self, payment, amount=None):
         payment.change_status(PaymentStatus.CONFIRMED)
-        payment.captured_amount = payment.total
+        payment.captured_amount = (amount or payment.total)
         return amount
 
     def release(self, payment):
