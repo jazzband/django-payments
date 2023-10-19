@@ -22,6 +22,7 @@ class Payment:
     total = 100
     status = PaymentStatus.WAITING
     fraud_status = ""
+    captured_amount = 0
 
     def get_process_url(self):
         return "http://example.com"
@@ -50,6 +51,7 @@ class TestDummy3DSProvider(TestCase):
         request.GET = {"verification_result": verification_status}
         response = provider.process_data(self.payment, request)
         self.assertEqual(self.payment.status, verification_status)
+        self.assertEqual(self.payment.captured_amount, 100)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["location"], self.payment.get_success_url())
 
