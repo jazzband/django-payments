@@ -94,7 +94,7 @@ class BasePayment(models.Model):
         """
         from .signals import status_changed
 
-        self.status = status
+        self.status = status  # type: ignore[assignment]
         self.message = message
         self.save(update_fields=["status", "message"])
         status_changed.send(sender=type(self), instance=self)
@@ -107,7 +107,7 @@ class BasePayment(models.Model):
                     status, ", ".join(available_statuses)
                 )
             )
-        self.fraud_status = status
+        self.fraud_status = status  # type: ignore[assignment]
         self.fraud_message = message
         if commit:
             self.save()
