@@ -40,10 +40,16 @@ braintree = ["braintree>=3.14.0"]
 cybersource = ["suds-community>=0.6"]
 dev = [
     "coverage",
+    "django-stubs[compatible-mypy]",
     "mock",
     "pytest",
     "pytest-cov",
     "pytest-django",
+    "types-braintree",
+    "types-dj-database-url",
+    "types-requests",
+    "types-stripe",
+    "types-xmltodict",
 ]
 docs = ["sphinx_rtd_theme"]
 mercadopago = ["mercadopago>=2.0.0,<3.0.0"]
@@ -61,6 +67,13 @@ issues = "https://github.com/jazzband/django-payments/issues"
 exclude_lines = [
     "if TYPE_CHECKING:",
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "test_settings"
 
 [tool.pytest.ini_options]
 addopts =[
