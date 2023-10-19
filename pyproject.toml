@@ -42,6 +42,13 @@ dynamic = ["version"]
 [project.optional-dependencies]
 braintree = ["braintree>=3.14.0"]
 cybersource = ["suds-community>=0.6"]
+dev = [
+    "coverage",
+    "mock",
+    "pytest",
+    "pytest-cov",
+    "pytest-django",
+]
 docs = ["sphinx_rtd_theme"]
 mercadopago = ["mercadopago>=2.0.0,<3.0.0"]
 sagepay = ["cryptography>=1.1.0"]
