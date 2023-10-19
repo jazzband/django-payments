@@ -62,11 +62,13 @@ class DummyProvider(BasicProvider):
         if verification_result:
             payment.change_status(verification_result)
         if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
+            payment.captured_amount = payment.total
             return HttpResponseRedirect(payment.get_success_url())
         return HttpResponseRedirect(payment.get_failure_url())
 
     def capture(self, payment, amount=None):
         payment.change_status(PaymentStatus.CONFIRMED)
+        payment.captured_amount = payment.total
         return amount
 
     def release(self, payment):
