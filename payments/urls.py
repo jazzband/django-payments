@@ -49,7 +49,14 @@ def static_callback(request, variant):
 
 
 urlpatterns = [
+    # A per-payment callback endpoint.
+    # Providers that use a unique URL for each payment will deliver webhook
+    # notifications to this view.
     path("process/<uuid:token>/", process_data, name="process_payment"),
+    # A static per-provider callback endpoint.
+    # Providers that use single URL for all payments will deliver webhook notifications
+    # to this view. Some providers (e.g.: Stripe) need to be manually configured to
+    # deliver notifications to this route.
     re_path(
         r"^process/(?P<variant>[a-z-]+)/$",
         static_callback,
