@@ -2,6 +2,7 @@
 This module is responsible for automatic processing of provider callback
 data (asynchronous transaction updates).
 """
+
 from __future__ import annotations
 
 from django.db.transaction import atomic

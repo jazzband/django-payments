@@ -81,9 +81,9 @@ class DotpayProvider(BasicProvider):
             "currency": payment.currency,
             "description": payment.description,
             "lang": self.lang,
-            "ignore_last_payment_channel": "1"
-            if self.ignore_last_payment_channel
-            else "0",
+            "ignore_last_payment_channel": (
+                "1" if self.ignore_last_payment_channel else "0"
+            ),
             "ch_lock": "1" if self.lock else "0",
             "URL": payment.get_success_url(),
             "URLC": self.get_return_url(payment),
