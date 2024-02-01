@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import warnings
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 import stripe
 
@@ -14,6 +15,9 @@ from payments.core import BasicProvider
 from .forms import ModalPaymentForm
 from .forms import PaymentForm
 from .providers import StripeProviderV3
+
+if TYPE_CHECKING:
+    from django import forms
 
 
 class StripeProvider(BasicProvider):
@@ -27,7 +31,7 @@ class StripeProvider(BasicProvider):
     :param image: Your logo.
     """
 
-    form_class = ModalPaymentForm
+    form_class: type[forms.Form] = ModalPaymentForm
 
     def __init__(self, public_key, secret_key, image="", name="", **kwargs):
         stripe.api_key = secret_key
