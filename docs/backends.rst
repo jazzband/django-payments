@@ -223,9 +223,9 @@ Example::
               'payments.stripe.StripeProviderV3',
               {
                   'api_key': 'sk_test_123456',
-                  'use_token': true,
+                  'use_token': True,
                   'endpoint_secret': 'whsec_123456',
-                  'secure_endpoint': true
+                  'secure_endpoint': True
               }
           )
       }
@@ -235,8 +235,8 @@ Example::
               'payments.stripe.StripeProviderV3',
               {
                   'api_key': 'sk_test_123456',
-                  'use_token': true,
-                  'secure_endpoint': false
+                  'use_token': True,
+                  'secure_endpoint': False
               }
           )
       }
@@ -381,7 +381,7 @@ mandatory methods used by Django Payments:
   captured and an optional amount parameter. Implement the logic to interact with
   your payment gateway's API and perform the necessary actions to capture the
   payment amount. If capturing is not supported by your payment gateway,
-  set `capture: false.` to skip capture.
+  set `capture: False.` to skip capture.
 
 * ``refund(payment, amount=None)``: This method is responsible for refunding a
   payment. It receives a payment object representing the payment to be refunded
