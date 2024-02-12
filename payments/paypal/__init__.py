@@ -353,7 +353,7 @@ class PaypalCardProvider(PaypalProvider):
             "expire_month": month,
             "expire_year": year,
         }
-        if "cvv2" in extra_data and extra_data["cvv2"]:
+        if extra_data.get("cvv2"):
             credit_card["cvv2"] = extra_data["cvv2"]
         data["payer"] = {
             "payment_method": "credit_card",
