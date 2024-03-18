@@ -51,10 +51,7 @@ class StripeFormMixin:
                         "amount": int(self.payment.total * 100),
                         "currency": self.payment.currency,
                         "card": data["stripeToken"],
-                        "description": "{} {}".format(
-                            self.payment.billing_last_name,
-                            self.payment.billing_first_name,
-                        ),
+                        "description": f"{self.payment.billing_last_name} {self.payment.billing_first_name}",
                         "metadata": stripe_metadata,
                     }
 

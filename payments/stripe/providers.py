@@ -131,9 +131,7 @@ class StripeProviderV3(BasicProvider):
                 session_data.update(
                     {
                         "customer_data": {
-                            "customer_name": "{} {}".format(
-                                payment.billing_first_name, payment.billing_last_name
-                            )
+                            "customer_name": f"{payment.billing_first_name} {payment.billing_last_name}"
                         }
                     }
                 )
