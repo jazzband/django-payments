@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
                     "customer_ip_address",
                     models.GenericIPAddressField(blank=True, null=True),
                 ),
-                ("extra_data", models.TextField(blank=True, default="")),
+                ("extra_data", models.JSONField(blank=True, default=dict)),
                 ("message", models.TextField(blank=True, default="")),
                 ("token", models.CharField(blank=True, default="", max_length=36)),
                 (

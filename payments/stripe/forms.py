@@ -84,7 +84,7 @@ class StripeFormMixin:
 
     def save(self):
         self.payment.transaction_id = self.charge.id
-        self.payment.attrs.charge = json.dumps(self.charge)
+        self.payment.extra_data["charge"] = json.dumps(self.charge)
         self.payment.change_status(PaymentStatus.PREAUTH)
         if self.provider._capture:
             self.payment.capture()

@@ -8,6 +8,11 @@ v3.0.0
 ------
 - **BREAKING**: Dropped support for Django 2.2, 3.0, 3.1 and 4.0.
   Supported versions of Django are 3.2 (LTS), 4.1 and 4.2.
+- **BREAKING** ``BasePayment.extra_data`` is now a JSONField and django will
+  handle the serialisation. Due to this, usage of the ``BasePayment.attrs``
+  proxy has been deprecated. A migration needs to be generated to update this
+  column in place. Application code needs to be updated from
+  ``payment.extra_data.field`` to ``payment.extra_data["field"]``.
 - Stripe backends now sends order_id in the metadata parameter.
 - A new ``StripeProviderV3`` has been added using the latest Stripe API.
 - Added support for Python 3.11, Django 4.1 and Django 4.2.

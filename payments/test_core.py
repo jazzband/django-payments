@@ -43,11 +43,11 @@ class Payment(BasePayment):
 
 class TestBasePayment(TestCase):
     def test_payment_attributes(self):
-        payment = Payment(extra_data='{"attr1": "test1", "attr2": "test2"}')
-        self.assertEqual(payment.attrs.attr1, "test1")
-        self.assertEqual(payment.attrs.attr2, "test2")
-        self.assertEqual(getattr(payment.attrs, "attr5", None), None)
-        self.assertEqual(hasattr(payment.attrs, "attr7"), False)
+        payment = Payment(extra_data={"attr1": "test1", "attr2": "test2"})
+        self.assertEqual(payment.extra_data["attr1"], "test1")
+        self.assertEqual(payment.extra_data["attr2"], "test2")
+        self.assertEqual(payment.extra_data.get("attr5", None), None)
+        self.assertEqual("attr7" in payment.extra_data, False)
 
     def test_capture_with_wrong_status(self):
         payment = Payment(variant="default", status=PaymentStatus.WAITING)

@@ -30,6 +30,7 @@ class Payment(Mock):
     captured_amount = 0
     transaction_id = None
     billing_email = "john@doe.com"
+    extra_data: dict = {}
 
     def change_status(self, status, message=""):
         self.status = status

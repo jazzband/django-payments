@@ -101,7 +101,7 @@ class SofortProvider(BasicProvider):
         else:
             payment.captured_amount = payment.total
             payment.change_status(PaymentStatus.CONFIRMED)
-            payment.extra_data = json.dumps(doc)
+            payment.extra_data = doc
             sender_data = doc["transactions"]["transaction_details"]["sender"]
             holder_data = sender_data["holder"]
             first_name, last_name = holder_data.rsplit(" ", 1)
@@ -114,7 +114,7 @@ class SofortProvider(BasicProvider):
     def refund(self, payment, amount=None):
         if amount is None:
             amount = payment.captured_amount
-        doc = json.loads(payment.extra_data)
+        doc = payment.extra_data
         sender_data = doc["transactions"]["transaction_details"]["sender"]
         refund_request = render_to_string(
             "payments/sofort/refund_transaction.xml",
