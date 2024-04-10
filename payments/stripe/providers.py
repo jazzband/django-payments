@@ -130,8 +130,8 @@ class StripeProviderV3(BasicProvider):
             if payment.billing_first_name or payment.billing_last_name:
                 session_data.update(
                     {
-                        "customer_data": {
-                            "customer_name": f"{payment.billing_first_name} "
+                        "metadata": {
+                            "customer_name": f"{payment.billing_first_name} " 
                             f"{payment.billing_last_name}"
                         }
                     }
