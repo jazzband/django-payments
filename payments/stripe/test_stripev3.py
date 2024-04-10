@@ -107,6 +107,12 @@ class TestStripeProviderV3(TestCase):
         with patch("stripe.checkout.Session.create"), self.assertRaises(PaymentError):
             provider.create_session(payment)
 
+    def test_provider_create_session_success_with_billing_name(self):
+        payment = Payment()
+        payment.billing_name = "Billy Ngname"
+        provider = StripeProviderV3(api_key=API_KEY)
+        provider.create_session(payment)
+
     def test_provider_status(self):
         payment = Payment()
         provider = StripeProviderV3(api_key=API_KEY)
