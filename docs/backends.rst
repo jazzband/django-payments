@@ -368,7 +368,7 @@ Create a Provider Class
 .. hint::
 
 
-.. code-block:: python  
+.. code-block:: python
 
     # Define custom payment variant
     CUSTOM_PAYMENT_VARIANT = "custom"
@@ -398,7 +398,7 @@ mandatory methods used by Django Payments:
   the payment status or perform any necessary actions.
 
 * ``get_token_from_request(payment, request)``: This method in a payment provider
-  class is typically used to extract a payment token or identifier from a callback 
+  class is typically used to extract a payment token or identifier from a callback
   request received from the payment gateway after a payment transaction has been processed.
   This token or identifier is crucial for identifying
   the specific payment transaction associated with the callback.
