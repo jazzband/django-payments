@@ -337,16 +337,25 @@ Create a Provider Class
 
 .. code-block:: python
 
-    from payments.providers.base import BaseProvider
+    from payments.core import BasicProvider
 
-    class MyPaymentProvider(BaseProvider):
+    class MyPaymentProvider(BasicProvider):
+      def get_hidden_fields(self, payment):
+        # Implement custom logic here to generate hidden fields for the payment form
+        hidden_fields = {
+            'custom_param': self.custom_param,
+            # Add more fields as needed
+        }
+        return hidden_fields
+
       def process_data(self, payment, request):
           # Implement webhook processing logic
           pass
 
-      def get_form(self, payment, data=None):
-          # Implement payment form rendering logic
-          pass
+      def get_token_from_request(self, payment, request):
+        """Return payment token from provider request."""
+        # Implement logic to extract payment token from the request
+        pass
 
       def capture(self, payment, amount=None):
           # Implement payment capture logic
@@ -358,7 +367,26 @@ Create a Provider Class
 
 .. hint::
 
-  Check with the integrator to see if they suppoer capture/refund
+
+.. code-block:: python  
+
+    # Define custom payment variant
+    CUSTOM_PAYMENT_VARIANT = "custom"
+    CUSTOM_PAYMENT_VARIANT_CONFIG = {
+        "capture": True,
+        "custom_param": "value",  # Example custom parameter
+    }
+
+    # Register custom payment variant
+    PAYMENT_VARIANTS[CUSTOM_PAYMENT_VARIANT] = (
+        "path.to.CustomProvider",  # Specify the path to your CustomProvider class
+        CUSTOM_PAYMENT_VARIANT_CONFIG,
+    )
+
+.. hint::
+Now use CUSTOM_PAYMENT_VARIANT to instantiate the CustomProvider class using _default_provider_factory.
+
+  Check with the integrator to see if they support capture/refund
 
 Implement the mandatory methods specific to your payment provider. Here are the
 mandatory methods used by Django Payments:
@@ -369,12 +397,11 @@ mandatory methods used by Django Payments:
   logic to handle the webhook data received from the payment gateway and update
   the payment status or perform any necessary actions.
 
-* ``get_form(payment, data=None)``: This method is responsible for rendering the
-  payment form to be displayed within your Django application. It receives a
-  payment  object representing the payment being made and an optional data
-  parameter if form submission data is provided. Implement the logic to render
-  the payment form, customize it based on your payment gateway requirements, and
-  handle form submission.
+* ``get_token_from_request(payment, request)``: This method in a payment provider
+  class is typically used to extract a payment token or identifier from a callback 
+  request received from the payment gateway after a payment transaction has been processed.
+  This token or identifier is crucial for identifying
+  the specific payment transaction associated with the callback.
 
 * ``capture(payment, amount=None)``: This method is responsible for capturing the
   payment amount. It receives a payment object representing the payment to be
