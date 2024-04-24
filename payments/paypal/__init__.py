@@ -313,15 +313,19 @@ class PaypalProvider(BasicProvider):
         self.post(payment, url)
 
     def refund(self, payment, amount=None):
-        if amount is None:
-            amount = payment.captured_amount
-        amount_data = self.get_amount_data(payment, amount)
-        refund_data = {"amount": amount_data}
+        refund_data = {}
+        if amount is not None:
+            refund_data["amount"] = self.get_amount_data(payment, amount)
         links = self._get_links(payment)
         url = links["refund"]["href"]
-        self.post(payment, url, data=refund_data)
+        response = self.post(payment, url, data=refund_data)
         payment.change_status(PaymentStatus.REFUNDED)
-        return amount
+        if response["amount"]["currency"] != payment.currency:
+            raise NotImplementedError(
+                f"refund's currency other than {payment.currency} not supported yet: "
+                f"{response['amount']['currency']}"
+            )
+        return Decimal(response["amount"]["total"])
 
 
 class PaypalCardProvider(PaypalProvider):

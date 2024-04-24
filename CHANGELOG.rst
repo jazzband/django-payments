@@ -15,6 +15,7 @@ v3.0.0
 - New :ref:`webhook settings <webhooks>`
 - Fixed PayPal backends not saving captured_amount when processing data.
 - Fixed ``base_payment.refund()`` not making any refund
+- PayPal backends now perform a full refund if ``amount=None``.
 
 v2.0.0
 ------

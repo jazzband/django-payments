@@ -234,17 +234,53 @@ class TestPaypalProvider(TestCase):
         self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
 
     @patch("requests.post")
-    def test_provider_refunds_payment(self, mocked_post):
+    def test_provider_refunds_payment_fully(self, mocked_post):
         data = MagicMock()
-        data.return_value = {
-            "token_type": "test_token_type",
-            "access_token": "test_access_token",
-        }
+        data.side_effect = [
+            {
+                "token_type": "test_token_type",
+                "access_token": "test_access_token",
+            },
+            {"amount": {"total": "220.00", "currency": "USD"}},
+        ]
         post = MagicMock()
         post.json = data
         post.status_code = 200
         mocked_post.return_value = post
         self.provider.refund(self.payment)
+        mocked_post.assert_called_with(
+            "http://refund.com",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "test_token_type test_access_token",
+            },
+            data="{}",
+        )
+        self.assertEqual(self.payment.status, PaymentStatus.REFUNDED)
+
+    @patch("requests.post")
+    def test_provider_refunds_payment_partially(self, mocked_post):
+        data = MagicMock()
+        data.side_effect = [
+            {
+                "token_type": "test_token_type",
+                "access_token": "test_access_token",
+            },
+            {"amount": {"total": "1.00", "currency": "USD"}},
+        ]
+        post = MagicMock()
+        post.json = data
+        post.status_code = 200
+        mocked_post.return_value = post
+        self.provider.refund(self.payment, amount=Decimal(1))
+        mocked_post.assert_called_with(
+            "http://refund.com",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "test_token_type test_access_token",
+            },
+            data='{"amount": {"currency": "USD", "total": "1.00"}}',
+        )
         self.assertEqual(self.payment.status, PaymentStatus.REFUNDED)
 
     @patch("requests.post")
