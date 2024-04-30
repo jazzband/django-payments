@@ -13,6 +13,7 @@ v3.0.0
 - Added support for Python 3.11, Django 4.1 and Django 4.2.
 - Stripe backends now supports webhooks
 - New :ref:`webhook settings <webhooks>`
+- Fixed PayPal backends not saving captured_amount when processing data.
 
 v2.0.0
 ------

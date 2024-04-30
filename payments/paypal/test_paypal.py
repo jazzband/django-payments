@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from datetime import date
 from decimal import Decimal
 from unittest import TestCase
@@ -33,7 +34,58 @@ PROCESS_DATA = {
 }
 
 
+class PaymentQuerySet(Mock):
+    __payments = {}
+
+    def create(self, **kwargs):
+        if kwargs:
+            raise NotImplementedError(f"arguments not supported yet: {kwargs}")
+        id_ = max(self.__payments) + 1 if self.__payments else 1
+        self.__payments[id_] = {}
+        payment = Payment()
+        payment.id = id_
+        payment.save()
+        return payment
+
+    def get(self, *args, **kwargs):
+        if args or kwargs:
+            return self.filter(*args, **kwargs).get()
+        payment = Payment()
+        (payment_fields,) = self.__payments.values()
+        for payment_field_name, payment_field_value in payment_fields.items():
+            setattr(payment, payment_field_name, deepcopy(payment_field_value))
+        return payment
+
+    def filter(self, *args, pk=None, **kwargs):
+        if args or kwargs:
+            raise NotImplementedError(f"arguments not supported yet: {args}, {kwargs}")
+        if pk is not None:
+            return PaymentQuerySet(
+                {pk_: payment for pk_, payment in self.__payments.items() if pk_ == pk}
+            )
+        return self
+
+    def update(self, **kwargs):
+        for payment in self.__payments.values():
+            for field_name, field_value in kwargs.items():
+                if not any(
+                    field.name == field_name
+                    for field in Payment._meta.get_fields(
+                        include_parents=True, include_hidden=True
+                    )
+                ):
+                    raise NotImplementedError(
+                        f"updating unknown field not supported yet: {field_name}"
+                    )
+                payment[field_name] = deepcopy(field_value)
+
+    def delete(self):
+        self.__payments.clear()
+
+
 class Payment(Mock):
+    objects = PaymentQuerySet()
+
     id = 1
     description = "payment"
     currency = "USD"
@@ -57,9 +109,14 @@ class Payment(Mock):
         }
     )
 
+    @property
+    def pk(self):
+        return self.id
+
     def change_status(self, status, message=""):
         self.status = status
         self.message = message
+        self.save(update_fields=["status", "message"])
 
     def get_failure_url(self):
         return "http://cancel.com"
@@ -77,10 +134,58 @@ class Payment(Mock):
     def get_success_url(self):
         return "http://success.com"
 
+    def save(self, *args, update_fields=None, **kwargs):
+        if args or kwargs:
+            raise NotImplementedError(f"arguments not supported yet: {args}, {kwargs}")
+        if update_fields is None:
+            update_fields = {
+                field.name
+                for field in self._meta.get_fields(
+                    include_parents=True, include_hidden=True
+                )
+            }
+        Payment.objects.filter(pk=self.pk).update(
+            **{field: getattr(self, field) for field in update_fields}
+        )
+
+    def refresh_from_db(self, *args, **kwargs):
+        if args or kwargs:
+            raise NotImplementedError(f"arguments not supported yet: {args}, {kwargs}")
+        payment_from_db = Payment.objects.get(pk=self.pk)
+        for field in self._meta.get_fields(include_parents=True, include_hidden=True):
+            field_value_from_db = getattr(payment_from_db, field.name)
+            setattr(self, field.name, field_value_from_db)
+
+    class Meta(Mock):
+        def get_fields(self, include_parents=True, include_hidden=False):
+            fields = []
+            for field_name in {
+                "id",
+                "description",
+                "currency",
+                "delivery",
+                "status",
+                "tax",
+                "token",
+                "total",
+                "captured_amount",
+                "variant",
+                "transaction_id",
+                "message",
+                "extra_data",
+            }:
+                field = Mock()
+                field.name = field_name
+                fields.append(field)
+            return tuple(fields)
+
+    _meta = Meta()
+
 
 class TestPaypalProvider(TestCase):
     def setUp(self):
-        self.payment = Payment()
+        Payment.objects.delete()
+        self.payment = Payment.objects.create()
         self.provider = PaypalProvider(secret=SECRET, client_id=CLIENT_ID)
 
     def test_provider_raises_redirect_needed_on_success(self):
@@ -171,6 +276,9 @@ class TestPaypalProvider(TestCase):
 
         self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
         self.assertEqual(self.payment.captured_amount, self.payment.total)
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
+        self.assertEqual(self.payment.captured_amount, self.payment.total)
 
     @patch("requests.post")
     @patch("payments.paypal.redirect")
@@ -202,6 +310,9 @@ class TestPaypalProvider(TestCase):
 
         self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
         self.assertEqual(self.payment.captured_amount, Decimal("0"))
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
+        self.assertEqual(self.payment.captured_amount, Decimal("0"))
 
     @patch("payments.paypal.redirect")
     def test_provider_request_without_payerid_redirects_on_failure(
@@ -210,6 +321,8 @@ class TestPaypalProvider(TestCase):
         request = MagicMock()
         request.GET = {"token": "test", "PayerID": None}
         self.provider.process_data(self.payment, request)
+        self.assertEqual(self.payment.status, PaymentStatus.REJECTED)
+        self.payment.refresh_from_db()
         self.assertEqual(self.payment.status, PaymentStatus.REJECTED)
 
     @patch("requests.post")
