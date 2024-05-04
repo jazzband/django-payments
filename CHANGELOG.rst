@@ -14,6 +14,7 @@ v3.0.0
 - Stripe backends now supports webhooks
 - New :ref:`webhook settings <webhooks>`
 - Fixed PayPal backends not saving captured_amount when processing data.
+- Fixed ``base_payment.refund()`` not making any refund
 
 v2.0.0
 ------
