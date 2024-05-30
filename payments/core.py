@@ -9,6 +9,8 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
+from . import WalletStatus
+
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
@@ -143,26 +145,22 @@ class BasicProvider:
             return url + "?" + qs
         return url
 
-    def autocomplete_with_subscription(self, payment):
+    def autocomplete_with_wallet(self, payment):
         """
-        Complete the payment with subscription
+        Complete the payment with wallet
 
         If the provider uses workflow such that the payments are initiated from
         implementer's side.
         The users of django-payments will create a payment and call
-        Payment.autocomplete_with_subscription() right before the subscription end.
+        Payment.autocomplete_with_wallet().
 
         Throws RedirectNeeded if there is problem with the payment
         that needs to be solved by user.
         """
         raise NotImplementedError
 
-    def cancel_subscription(self, subscription):
-        """
-        Cancel subscription
-        Used by providers, that use provider initiated cancellation workflow
-        """
-        raise NotImplementedError
+    def erase_wallet(self, wallet):
+        wallet.status = WalletStatus.ERASED
 
     def capture(self, payment, amount=None):
         raise NotImplementedError

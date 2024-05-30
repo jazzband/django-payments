@@ -17,6 +17,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from . import FraudStatus
 from . import PaymentStatus
 from . import PurchasedItem
+from . import WalletStatus
 from .core import provider_factory
 
 logger = logging.getLogger(__name__)
@@ -46,58 +47,29 @@ class PaymentAttributeProxy:
         return None
 
 
-class BaseSubscription(models.Model):
+class BaseWallet(models.Model):
     token = models.CharField(
-        _("subscription token/id"),
-        help_text=_("Token/id used to identify subscription by provider"),
+        _("wallet token/id"),
+        help_text=_("Token/id used to identify wallet by provider"),
         max_length=255,
         default=None,
         null=True,
         blank=True,
     )
-    payment_provider = models.CharField(
-        _("payment provider"),
-        help_text=_("Provider variant, that will be used for payment renewal"),
-        max_length=255,
-        default=None,
-        null=True,
-        blank=True,
+    status = models.CharField(
+        max_length=10, choices=WalletStatus.CHOICES, default=WalletStatus.PENDING
     )
-    subscribtion_data = models.JSONField(
-        _("subscription data"),
-        help_text=_("Provider-specific data associated with subscription"),
+    extra_data = models.JSONField(
+        _("extra data"),
+        help_text=_("Provider-specific data associated with wallet"),
         default=dict,
     )
 
-    class TimeUnit(enum.Enum):
-        year = "year"
-        month = "month"
-        day = "day"
-
-    def set_recurrence(self, token: str, **kwargs):
+    def payment_completed(self, payment):
         """
-        Sets token and other values associated with subscription recurrence
-        Kwargs can contain provider-specific values
+        Concrete implementation specific logic called whenever a payment is completed
+        using this wallet.
         """
-        self.token = token
-        self.subscribtion_data = kwargs
-
-    def get_period(self) -> int:
-        raise NotImplementedError
-
-    def get_unit(self) -> TimeUnit:
-        raise NotImplementedError
-
-    def cancel(self):
-        """
-        Cancel the subscription by provider
-        Used by providers, that use provider initiated subscription workflow
-        Implementer is responsible for cancelling the subscription model
-
-        Raises PaymentError if the cancellation didn't pass through
-        """
-        provider = provider_factory(self.variant)
-        provider.cancel_subscription(self)
 
     class Meta:
         abstract = True
@@ -257,30 +229,18 @@ class BasePayment(models.Model):
         """
         raise NotImplementedError
 
-    def get_subscription(self) -> Optional[BaseSubscription]:
+    def autocomplete_with_wallet(self):
         """
-        Returns subscription object associated with this payment
-        or None if the payment is not recurring
-        """
-        return None
-
-    def is_recurring(self) -> bool:
-        return self.get_subscription() is not None
-
-    def autocomplete_with_subscription(self):
-        """
-        Complete the payment with subscription
+        Complete the payment with wallet
 
         If the provider uses workflow such that the payments are initiated from
         implementer's side.
-        Call this function right before the subscription end to
-        make a new subscription payment.
 
         Throws RedirectNeeded if there is problem with the payment
         that needs to be solved by user
         """
         provider = provider_factory(self.variant)
-        provider.autocomplete_with_subscription(self)
+        provider.autocomplete_with_wallet(self)
 
     def capture(self, amount=None):
         """Capture a pre-authorized payment.
