@@ -13,6 +13,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from . import FraudStatus
 from . import PaymentStatus
 from . import PurchasedItem
+from . import WalletStatus
 from .core import provider_factory
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,34 @@ class PaymentAttributeProxy:
         data[key] = value
         self._payment.extra_data = json.dumps(data)
         return None
+
+
+class BaseWallet(models.Model):
+    token = models.CharField(
+        _("wallet token/id"),
+        help_text=_("Token/id used to identify wallet by provider"),
+        max_length=255,
+        default=None,
+        null=True,
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=10, choices=WalletStatus.CHOICES, default=WalletStatus.PENDING
+    )
+    extra_data = models.JSONField(
+        _("extra data"),
+        help_text=_("Provider-specific data associated with wallet"),
+        default=dict,
+    )
+
+    def payment_completed(self, payment):
+        """
+        Concrete implementation specific logic called whenever a payment is completed
+        using this wallet.
+        """
+
+    class Meta:
+        abstract = True
 
 
 class BasePayment(models.Model):
@@ -187,6 +216,27 @@ class BasePayment(models.Model):
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
+
+    def get_payment_url(self) -> str:
+        """
+        Get the url the view that handles the payment
+        (payment_details() in documentation)
+        For now used only by PayU provider to redirect users back to CVV2 form
+        """
+        raise NotImplementedError
+
+    def autocomplete_with_wallet(self):
+        """
+        Complete the payment with wallet
+
+        If the provider uses workflow such that the payments are initiated from
+        implementer's side.
+
+        Throws RedirectNeeded if there is problem with the payment
+        that needs to be solved by user
+        """
+        provider = provider_factory(self.variant)
+        provider.autocomplete_with_wallet(self)
 
     def capture(self, amount=None):
         """Capture a pre-authorized payment.
