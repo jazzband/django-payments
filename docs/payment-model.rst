@@ -23,6 +23,7 @@ Example implementation
     .. code-block:: python
 
       # mypaymentapp/models.py
+      from collections import Iterable
       from decimal import Decimal
 
       from payments import PurchasedItem
