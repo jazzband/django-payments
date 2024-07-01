@@ -3,7 +3,7 @@
 # vim: set nospell:
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -13,12 +13,12 @@ repos:
       - id: check-added-large-files
       - id: debug-statements
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.3
+    rev: v0.5.0
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
         exclude: docs\/.*
   - repo: https://github.com/psf/black
-    rev: "24.3.0"
+    rev: "24.4.2"
     hooks:
       - id: black
