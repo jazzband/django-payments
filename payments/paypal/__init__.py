@@ -8,7 +8,8 @@ from decimal import Decimal
 from functools import wraps
 
 import requests
-from django.http import HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
+from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import timezone
 from requests.exceptions import HTTPError
