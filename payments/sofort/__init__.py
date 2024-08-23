@@ -122,7 +122,7 @@ class SofortProvider(BasicProvider):
                 "holder": sender_data["holder"],
                 "bic": sender_data["bic"],
                 "iban": sender_data["iban"],
-                "title": "Refund %s" % payment.description,
+                "title": f"Refund {payment.description}",
                 "transaction_id": payment.transaction_id,
                 "amount": amount,
                 "comment": "User requested a refund",

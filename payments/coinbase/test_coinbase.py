@@ -95,7 +95,7 @@ class TestCoinbaseProvider(TestCase):
     def test_provider_returns_checkout_url(self, mocked_post, mocked_time):
         code = "123abc"
         signature = "21d476eff7b2e6cccdfe6deb0c097ba638d5de7e775b303e4fdb2f8bfeff72e2"
-        url = "https://sandbox.coinbase.com/checkouts/%s" % code
+        url = f"https://sandbox.coinbase.com/checkouts/{code}"
         post = MagicMock()
         post.json = MagicMock(return_value={"button": {"code": code}})
         post.status_code = 200

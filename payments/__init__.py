@@ -89,8 +89,8 @@ def get_payment_model():
     payment_model = apps.get_model(app_label, model_name)
     if payment_model is None:
         msg = (
-            'PAYMENT_MODEL refers to model "%s" that has not been installed'
-            % settings.PAYMENT_MODEL
+            f'PAYMENT_MODEL refers to model "{settings.PAYMENT_MODEL}"'
+            " that has not been installed"
         )
         raise ImproperlyConfigured(msg)
     return payment_model
