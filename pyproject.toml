@@ -87,6 +87,9 @@ DJANGO_SETTINGS_MODULE = "test_settings"
 pythonpath = "."
 
 [tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
 select = [
     "F",
     "E",
@@ -120,16 +123,15 @@ select = [
     "PLE",
     "RUF",
 ]
-target-version = "py38"
 ignore = [
   "RUF012",  # FIXME
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 force-single-line = true
 required-imports = ["from __future__ import annotations"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Fails with auto-generated migrations. Unsolvable contradiction between ruff and mypy.
 # This likely needs to be addressed in Django itself (either use an immutable
 # type or annotate these fields as ClassVar)
