@@ -18,7 +18,4 @@ repos:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
         exclude: docs\/.*
-  - repo: https://github.com/psf/black
-    rev: "24.3.0"
-    hooks:
-      - id: black
+      - id: ruff-format
