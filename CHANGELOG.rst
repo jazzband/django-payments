@@ -4,6 +4,12 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v3.0.1
+------
+
+This version is functionally identically to v3.0.0, and only includes a fix in
+our pipeline that prevented the previous version from being published to PyPI.
+
 v3.0.0
 ------
 - **BREAKING**: Dropped support for Django 2.2, 3.0, 3.1 and 4.0.
