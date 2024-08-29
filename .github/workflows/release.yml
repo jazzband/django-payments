@@ -6,7 +6,7 @@ on:
     - '*'
 
 jobs:
-  build:
+  pypi:
     if: github.repository == 'jazzband/django-payments'
     runs-on: ubuntu-22.04
 
