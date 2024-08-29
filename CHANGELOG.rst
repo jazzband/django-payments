@@ -16,6 +16,8 @@ v3.0.0
 - Fixed PayPal backends not saving captured_amount when processing data.
 - Fixed ``base_payment.refund()`` not making any refund
 - PayPal backends now perform a full refund if ``amount=None``.
+- Added support for Django 5.0.
+- Added support for Django 5.1.
 
 v2.0.0
 ------
