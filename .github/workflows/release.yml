@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -U pip
-          python -m pip install -U setuptools twine wheel build
+          python -m pip install -U setuptools twine wheel build setuptools_scm
 
       - name: Build package
         run: |
