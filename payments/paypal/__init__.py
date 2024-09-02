@@ -8,6 +8,7 @@ from decimal import Decimal
 from functools import wraps
 
 import requests
+from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -248,6 +249,8 @@ class PaypalProvider(BasicProvider):
             executed_payment = self.execute_payment(payment, payer_id)
         except PaymentError:
             return redirect(failure_url)
+        except KeyError:
+            return HttpResponseBadRequest()
         self.set_response_links(payment, executed_payment)
         payment.attrs.payer_info = executed_payment["payer"]["payer_info"]
         if self._capture:
