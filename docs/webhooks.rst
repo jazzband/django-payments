@@ -33,7 +33,7 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
 * In the "Endpoint URL" field, enter the URL for the Stripe variant in your
   Django Payments application. This URL should be the endpoint where Stripe
   will send the webhook events. Make sure the URL is accessible from the
-  internet. Example: ``https://your-app.com/payments/stripe/``.
+  internet. Example: ``https://your-app.com/payments/process/stripe/``.
 * From the "Events to send" dropdown, choose the specific events you want to
   receive notifications for. You need (at least) these events:
   * checkout.session.async_payment_failed
@@ -55,7 +55,7 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
   the events sent by Stripe. It's it not recomended to use `secure_endpoint`
   set to false in production.
 
-Make sure to replace **https://your-app.com/payments/stripe/** with the actual
+Make sure to replace **https://your-app.com/payments/process/stripe/** with the actual
 URL for your Stripe webhook endpoint. In this case, ``stripe`` is the `variant`
 of the configured provider. E.g.:
 
