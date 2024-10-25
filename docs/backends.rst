@@ -312,7 +312,7 @@ These are the community providers compatible with ``django-payments``
   * - `RazorPay <https://razorpay.com/>`_
     - IN
     - `NyanKiyoshi/django-payments-razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay>`_
-  * - `Multiple Providers from Chile`_
+  * - Common providers from Chile
     - CL
     - `mariofix/django-payments-chile <https://github.com/mariofix/django-payments-chile>`_
 
