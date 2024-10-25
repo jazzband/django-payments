@@ -312,12 +312,9 @@ These are the community providers compatible with ``django-payments``
   * - `RazorPay <https://razorpay.com/>`_
     - IN
     - `NyanKiyoshi/django-payments-razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay>`_
-  * - `Flow Chile <https://flow.cl>`_
+  * - `Multiple Providers from Chile`_
     - CL
-    - `mariofix/django-payments-flow <https://github.com/mariofix/django-payments-flow>`_
-  * - `Khipu <https://khipu.com>`_
-    - CL
-    - `mariofix/django-payments-khipu <https://github.com/mariofix/django-payments-khipu>`_
+    - `mariofix/django-payments-chile <https://github.com/mariofix/django-payments-chile>`_
 
 
 Creating a New Provider Backend
