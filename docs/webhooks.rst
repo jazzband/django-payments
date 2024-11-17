@@ -27,9 +27,11 @@ The webhook URL structure in django-payments follows this pattern:
 ``{protocol}://{host}/payments/process/{variant}/``
 
 Where:
+
 - ``{protocol}``: Configured in ``PAYMENT_PROTOCOL`` (typically "http" or "https")
 - ``{host}``: Configured in ``PAYMENT_HOST``
 - ``{variant}``: The name you've configured in PAYMENT_VARIANTS
+
 
 For example, with this configuration:
 
@@ -76,10 +78,12 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
    For example: ``https://your-app.com/payments/process/stripe/``
 #. From the "Events to send" dropdown, choose the specific events you want to
    receive notifications for. You need (at least) these events:
+   
    - checkout.session.async_payment_failed
    - checkout.session.async_payment_succeeded
    - checkout.session.completed
    - checkout.session.expired
+
 #. Click on the "Add endpoint" button to save your webhook listener.
 #. Once the webhook is created, you will see its details in the "Webhooks"
    section. Take note of the "Signing secret" provided by Stripe as you will
