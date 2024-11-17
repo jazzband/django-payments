@@ -78,7 +78,7 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
    For example: ``https://your-app.com/payments/process/stripe/``
 #. From the "Events to send" dropdown, choose the specific events you want to
    receive notifications for. You need (at least) these events:
-   
+
    - checkout.session.async_payment_failed
    - checkout.session.async_payment_succeeded
    - checkout.session.completed
