@@ -94,9 +94,9 @@ Testing with Stripe CLI
 ----------------------
 
 The `Stripe CLI <https://stripe.com/docs/stripe-cli#install>`_ provides a simple
-way to test webhooks during local development by forwarding Stripe events to 
+way to test webhooks during local development by forwarding Stripe events to
 your local server. After installing and running ``stripe login``, you can start
-forwarding events to your local Django server with 
+forwarding events to your local Django server with
 ``stripe listen --forward-to localhost:8000/payments/process/stripe/``
 Use the webhook signing secret provided by the CLI in your development settings.
 
