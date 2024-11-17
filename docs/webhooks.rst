@@ -59,7 +59,7 @@ The `Stripe CLI <https://stripe.com/docs/stripe-cli#install>`_ provides a simple
 
    # Start webhook forwarding
    stripe listen --forward-to localhost:8000/payments/process/stripe/
-   
+
    # In another terminal, trigger test events
    stripe trigger checkout.session.completed
 
