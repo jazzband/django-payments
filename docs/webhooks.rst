@@ -3,7 +3,6 @@
 Webhooks
 =================
 
-
 Webhooks are a crucial component in connecting your Django Payments application
 with external payment gateways like Stripe, PayPal, or Braintree. They enable
 real-time notifications or events from the payment gateway to be sent to your
@@ -31,9 +30,10 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
 * In the left sidebar, click on **Developers** and then select **Webhooks**.
 * Click on the "+ Add endpoint" button to create a new webhook listener.
 * In the "Endpoint URL" field, enter the URL for the Stripe variant in your
-  Django Payments application. This URL should be the endpoint where Stripe
-  will send the webhook events. Make sure the URL is accessible from the
-  internet. Example: ``https://your-app.com/payments/process/stripe/``.
+  Django Payments application. This URL should follow the pattern:
+  ``https://your-app.com/payments/process/{variant}/``, where ``{variant}`` is
+  the name you've configured in your PAYMENT_VARIANTS setting.
+  For example: ``https://your-app.com/payments/process/stripe/``
 * From the "Events to send" dropdown, choose the specific events you want to
   receive notifications for. You need (at least) these events:
   * checkout.session.async_payment_failed
@@ -52,17 +52,30 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
 .. note::
 
   It's essential to secure your webhook endpoint and verify the authenticity of
-  the events sent by Stripe. It's it not recomended to use `secure_endpoint`
+  the events sent by Stripe. It's not recommended to use `secure_endpoint`
   set to false in production.
 
-Make sure to replace **https://your-app.com/payments/process/stripe/** with the actual
-URL for your Stripe webhook endpoint. In this case, ``stripe`` is the `variant`
-of the configured provider. E.g.:
+.. warning::
+
+  Remember to setup ``PAYMENT_HOST`` and ``PAYMENT_PROTOCOL`` in your settings file, 
+  otherwise the webhooks won't work, as defined in :ref:`settings`.
+
+URL Structure
+------------
+The webhook URL structure in django-payments follows this pattern:
+``{protocol}://{host}/payments/process/{variant}/``
+
+Where:
+* ``{protocol}``: Configured in ``PAYMENT_PROTOCOL`` (typically "http" or "https")
+* ``{host}``: Configured in ``PAYMENT_HOST``
+* ``{variant}``: The name you've configured in PAYMENT_VARIANTS
+
+For example, with this configuration:
 
 .. code-block:: python
 
   PAYMENT_VARIANTS = {
-      'stripe': (  # <-- This value
+      'stripe': (  # <-- This is your variant name
           'payments.stripe.StripeProviderV3',
           {
               'api_key': 'sk_test_123456',
@@ -72,3 +85,14 @@ of the configured provider. E.g.:
           }
       )
   }
+  
+  PAYMENT_HOST = 'your-app.com'
+  PAYMENT_PROTOCOL = 'https'
+
+Your webhook URL would be:
+``https://your-app.com/payments/process/stripe/``
+
+.. note::
+
+  Make sure the URL matches exactly, including the trailing slash. A common source
+  of 404 errors is using the wrong URL pattern or forgetting the trailing slash.
