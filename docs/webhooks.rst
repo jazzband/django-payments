@@ -57,7 +57,7 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
 
 .. warning::
 
-  Remember to setup ``PAYMENT_HOST`` and ``PAYMENT_PROTOCOL`` in your settings file, 
+  Remember to setup ``PAYMENT_HOST`` and ``PAYMENT_PROTOCOL`` in your settings file,
   otherwise the webhooks won't work, as defined in :ref:`settings`.
 
 URL Structure
@@ -85,7 +85,7 @@ For example, with this configuration:
           }
       )
   }
-  
+
   PAYMENT_HOST = 'your-app.com'
   PAYMENT_PROTOCOL = 'https'
 
