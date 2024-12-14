@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 from uuid import uuid4
 
 from django.db import models
