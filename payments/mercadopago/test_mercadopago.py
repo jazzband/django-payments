@@ -202,14 +202,17 @@ def test_approved_payment_notification(rf, mp_provider: MercadoPagoProvider):
         "status": 200,
     }
 
-    with patch(
-        "mercadopago.resources.payment.Payment.get",
-        spec=True,
-        return_value=payment_info_response,
-    ) as payment_info, patch(
-        "payments.mercadopago.redirect",
-        spec=True,
-    ) as redirect:
+    with (
+        patch(
+            "mercadopago.resources.payment.Payment.get",
+            spec=True,
+            return_value=payment_info_response,
+        ) as payment_info,
+        patch(
+            "payments.mercadopago.redirect",
+            spec=True,
+        ) as redirect,
+    ):
         rv = mp_provider.process_data(payment, request)
 
     assert payment_info.call_count == 1
@@ -232,13 +235,16 @@ def test_create_preference_failure(mp_provider: MercadoPagoProvider):
 
     payment = Payment()
 
-    with patch(
-        "mercadopago.resources.preference.Preference.create",
-        spec=True,
-        return_value=preference_info,
-    ), pytest.raises(
-        PaymentError,
-        match="Failed to create MercadoPago preference.",
+    with (
+        patch(
+            "mercadopago.resources.preference.Preference.create",
+            spec=True,
+            return_value=preference_info,
+        ),
+        pytest.raises(
+            PaymentError,
+            match="Failed to create MercadoPago preference.",
+        ),
     ):
         mp_provider.create_preference(payment)
 
@@ -266,13 +272,16 @@ def test_process_failed_collection(mp_provider: MercadoPagoProvider):
     }
 
     payment = Payment()
-    with patch(
-        "mercadopago.resources.payment.Payment.get",
-        spec=True,
-        return_value=payment_info,
-    ), pytest.raises(
-        PaymentError,
-        match="MercadoPago sent invalid payment data.",
+    with (
+        patch(
+            "mercadopago.resources.payment.Payment.get",
+            spec=True,
+            return_value=payment_info,
+        ),
+        pytest.raises(
+            PaymentError,
+            match="MercadoPago sent invalid payment data.",
+        ),
     ):
         mp_provider.process_collection(payment, "12")
 
@@ -331,12 +340,13 @@ def test_get_preference_internal_error(mp_provider: MercadoPagoProvider):
 
     payment = Payment()
     payment.transaction_id = "ABJ122"
-    with patch(
-        "mercadopago.resources.preference.Preference.get",
-        spec=True,
-        return_value=mocked_response,
-    ) as get_preference, pytest.raises(
-        PaymentError, match="Failed to retrieve MercadoPago preference."
+    with (
+        patch(
+            "mercadopago.resources.preference.Preference.get",
+            spec=True,
+            return_value=mocked_response,
+        ) as get_preference,
+        pytest.raises(PaymentError, match="Failed to retrieve MercadoPago preference."),
     ):
         mp_provider.get_preference(payment)
 
@@ -365,11 +375,14 @@ def test_get_form_for_existing_preference(
 
     payment = Payment()
     payment.transaction_id = "ABJ122"
-    with patch(
-        "mercadopago.resources.preference.Preference.get",
-        spec=True,
-        return_value=mocked_response,
-    ) as get_preference, pytest.raises(RedirectNeeded) as exc_info:
+    with (
+        patch(
+            "mercadopago.resources.preference.Preference.get",
+            spec=True,
+            return_value=mocked_response,
+        ) as get_preference,
+        pytest.raises(RedirectNeeded) as exc_info,
+    ):
         mp_provider.get_form(payment)
 
     assert get_preference.call_count == 1
@@ -387,11 +400,14 @@ def test_get_form_for_inexistent_preference(mp_provider: MercadoPagoProvider):
     }
 
     payment = Payment()
-    with patch(
-        "mercadopago.resources.preference.Preference.create",
-        spec=True,
-        return_value=mocked_response,
-    ) as get_preference, pytest.raises(RedirectNeeded) as exc_info:
+    with (
+        patch(
+            "mercadopago.resources.preference.Preference.create",
+            spec=True,
+            return_value=mocked_response,
+        ) as get_preference,
+        pytest.raises(RedirectNeeded) as exc_info,
+    ):
         mp_provider.get_form(payment)
 
     assert get_preference.call_count == 1
