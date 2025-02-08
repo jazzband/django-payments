@@ -86,7 +86,7 @@ webhooks. Follow these steps to configure webhooks in your Stripe Dashboard:
 #. Click on the "Add endpoint" button to save your webhook listener.
 #. Once the webhook is created, you will see its details in the "Webhooks"
    section. Take note of the "Signing secret" provided by Stripe as you will
-   need it later when configuring the webhook handler in your Django application
+   need it later when configuring the webhook handler in your Django application.
 #. Test the webhook by sending a test event to your endpoint. Stripe provides a
    "Send test webhook" button on the webhook details page. Use this feature to
    ensure your endpoint is correctly configured and can receive and process
@@ -99,14 +99,13 @@ Testing with Stripe CLI
 The `Stripe CLI <https://stripe.com/docs/stripe-cli#install>`_ provides a simple
 way to test webhooks during local development by forwarding Stripe events to
 your local server. After installing and running ``stripe login``, you can start
-forwarding events to your local Django server with
-``stripe listen --forward-to localhost:8000/payments/process/stripe/``
-Use the webhook signing secret provided by the CLI in your development settings.
+forwarding events to your local Django server with:
 
 .. code-block:: bash
 
    # Start webhook forwarding
-   stripe listen --forward-to localhost:8000/payments/process/stripe/
+   stripe listen --forward-to localhost:8000/payments/process/stripe/ \
+      -e checkout.session.async_payment_failed,checkout.session.async_payment_succeeded,checkout.session.completed,checkout.session.expired
 
    # In another terminal, trigger test events
    stripe trigger checkout.session.completed
