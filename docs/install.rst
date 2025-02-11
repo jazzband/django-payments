@@ -78,6 +78,12 @@ This includes two sets of URLs:
 
 None of these views render any "pages" that your users might every see.
 
+.. note::
+
+  If you include the `payments` URLs within a namespaced app (e.g., inside
+  `myproject/myapp/urls.py`), you will need to override the `get_process_url`
+  method in your `Payment` class (see later on documentation).
+
 .. _settings:
 
 Additional Django settings
