@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 import json
 import logging
-from collections.abc import Iterable
 from uuid import uuid4
 
 from django.db import models
