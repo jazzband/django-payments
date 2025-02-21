@@ -114,14 +114,14 @@ class PaypalProvider(BasicProvider):
         return extra_data.get("links", {})
 
     @authorize
-    def post(self, payment, *args, **kwargs):
+    def http_request(self, payment, *args, http_method=None, **kwargs):
         kwargs["headers"] = {
             "Content-Type": "application/json",
             "Authorization": self.access_token,
         }
         if "data" in kwargs:
             kwargs["data"] = json.dumps(kwargs["data"])
-        response = requests.post(*args, **kwargs)
+        response = http_method(*args, **kwargs)
         try:
             data = response.json()
         except ValueError:
@@ -143,6 +143,12 @@ class PaypalProvider(BasicProvider):
             raise PaymentError(message)
         self.set_response_data(payment, data)
         return data
+
+    def post(self, payment, *args, **kwargs):
+        return self.http_request(payment, *args, http_method=requests.post, **kwargs)
+
+    def get(self, payment, *args, **kwargs):
+        return self.http_request(payment, *args, http_method=requests.get, **kwargs)
 
     def get_last_response(self, payment, is_auth=False):
         extra_data = json.loads(payment.extra_data or "{}")
