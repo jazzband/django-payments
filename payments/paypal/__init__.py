@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import warnings
 from datetime import timedelta
 from decimal import ROUND_HALF_UP
 from decimal import Decimal
@@ -28,6 +29,12 @@ logger = logging.getLogger(__name__)
 CENTS = Decimal("0.01")
 
 
+class PaypalRequestType:
+    AUTH = "auth"
+    REFUND = "refund"
+    OTHER = "other"
+
+
 class UnauthorizedRequest(Exception):
     pass
 
@@ -42,10 +49,14 @@ def authorize(fun):
             response = fun(*args, **kwargs)
         except HTTPError as e:
             if e.response.status_code == 401:
-                last_auth_response = self.get_last_response(payment, is_auth=True)
+                last_auth_response = self.get_last_response(
+                    payment, request_type=PaypalRequestType.AUTH
+                )
                 if "access_token" in last_auth_response:
                     del last_auth_response["access_token"]
-                    self.set_response_data(payment, last_auth_response, is_auth=True)
+                    self.set_response_data(
+                        payment, last_auth_response, request_type=PaypalRequestType.AUTH
+                    )
                 self.access_token = self.get_access_token(payment)
                 response = fun(*args, **kwargs)
             else:
@@ -66,10 +77,17 @@ class PaypalProvider(BasicProvider):
         use ``'https://api.paypal.com'`` instead
     :param capture: Whether to capture the payment automatically.
         See :ref:`capture-payments` for more details.
+    :param extra_data_key_refund: The key that holds refund response(s) in
+        ``extra_data``.
     """
 
     def __init__(
-        self, client_id, secret, endpoint="https://api.sandbox.paypal.com", capture=True
+        self,
+        client_id,
+        secret,
+        endpoint="https://api.sandbox.paypal.com",
+        capture=True,
+        extra_data_key_refund="response",
     ):
         self.secret = secret
         self.client_id = client_id
@@ -80,16 +98,39 @@ class PaypalProvider(BasicProvider):
         self.payment_refund_url = (
             self.endpoint + "/v1/payments/capture/{captureId}/refund"
         )
+        self.extra_data_key_refund = extra_data_key_refund
         super().__init__(capture=capture)
 
-    def set_response_data(self, payment, response, is_auth=False):
+    def set_response_data(self, payment, response, is_auth=None, request_type=None):
+        if is_auth is not None:
+            if request_type is not None:
+                raise ValueError("request_type cannot be used with is_auth")
+            warnings.warn(
+                "is_auth is deprecated, use request_type",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            request_type = (
+                PaypalRequestType.AUTH if is_auth else PaypalRequestType.OTHER
+            )
         extra_data = json.loads(payment.extra_data or "{}")
-        if is_auth:
-            extra_data["auth_response"] = response
-        else:
+        if (
+            request_type is None
+            or request_type == PaypalRequestType.OTHER
+            or (
+                request_type == PaypalRequestType.REFUND
+                and self.extra_data_key_refund == "response"
+            )
+        ):
             extra_data["response"] = response
             if "links" in response:
                 extra_data["links"] = {link["rel"]: link for link in response["links"]}
+        elif request_type == PaypalRequestType.AUTH:
+            extra_data["auth_response"] = response
+        elif request_type == PaypalRequestType.REFUND:
+            extra_data.setdefault(self.extra_data_key_refund, []).append(response)
+        else:
+            raise NotImplementedError(f"request_type not supported: {request_type}")
         payment.extra_data = json.dumps(extra_data)
         payment.save()
 
@@ -114,7 +155,7 @@ class PaypalProvider(BasicProvider):
         return extra_data.get("links", {})
 
     @authorize
-    def post(self, payment, *args, **kwargs):
+    def post(self, payment, *args, request_type=PaypalRequestType.OTHER, **kwargs):
         kwargs["headers"] = {
             "Content-Type": "application/json",
             "Authorization": self.access_token,
@@ -141,17 +182,35 @@ class PaypalProvider(BasicProvider):
                 logger.warning(message, extra={"status_code": response.status_code})
             payment.change_status(PaymentStatus.ERROR, message)
             raise PaymentError(message)
-        self.set_response_data(payment, data)
+        self.set_response_data(payment, data, request_type=request_type)
         return data
 
-    def get_last_response(self, payment, is_auth=False):
+    def get_last_response(self, payment, is_auth=None, request_type=None):
+        if is_auth is not None:
+            if request_type is not None:
+                raise ValueError("request_type cannot be used with is_auth")
+            warnings.warn(
+                "is_auth is deprecated, use request_type",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            request_type = (
+                PaypalRequestType.AUTH if is_auth else PaypalRequestType.OTHER
+            )
         extra_data = json.loads(payment.extra_data or "{}")
-        if is_auth:
+        if request_type == PaypalRequestType.AUTH:
             return extra_data.get("auth_response", {})
+        if (
+            request_type == PaypalRequestType.REFUND
+            and self.extra_data_key_refund != "response"
+        ):
+            return extra_data.get(self.extra_data_key_refund, [])
         return extra_data.get("response", {})
 
     def get_access_token(self, payment):
-        last_auth_response = self.get_last_response(payment, is_auth=True)
+        last_auth_response = self.get_last_response(
+            payment, request_type=PaypalRequestType.AUTH
+        )
         created = payment.created
         now = timezone.now()
         if (
@@ -166,6 +225,7 @@ class PaypalProvider(BasicProvider):
         post = {"grant_type": "client_credentials"}
         response = requests.post(
             self.oauth2_url,
+            request_type=PaypalRequestType.AUTH,
             data=post,
             headers=headers,
             auth=(self.client_id, self.secret),
@@ -173,7 +233,9 @@ class PaypalProvider(BasicProvider):
         response.raise_for_status()
         data = response.json()
         last_auth_response.update(data)
-        self.set_response_data(payment, last_auth_response, is_auth=True)
+        self.set_response_data(
+            payment, last_auth_response, request_type=PaypalRequestType.AUTH
+        )
         return "{} {}".format(data["token_type"], data["access_token"])
 
     def get_transactions_items(self, payment):
@@ -321,7 +383,9 @@ class PaypalProvider(BasicProvider):
             refund_data["amount"] = self.get_amount_data(payment, amount)
         links = self._get_links(payment)
         url = links["refund"]["href"]
-        response = self.post(payment, url, data=refund_data)
+        response = self.post(
+            payment, url, request_type=PaypalRequestType.REFUND, data=refund_data
+        )
         payment.change_status(PaymentStatus.REFUNDED)
         if response["amount"]["currency"] != payment.currency:
             raise NotImplementedError(
