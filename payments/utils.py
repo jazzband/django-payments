@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 def get_month_choices():
-    month_choices = [(str(x), "%02d" % (x,)) for x in range(1, 13)]
+    month_choices = [(str(x), f"{x:02d}") for x in range(1, 13)]
     return [("", _("Month")), *month_choices]
 
 
