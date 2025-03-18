@@ -21,6 +21,10 @@ if not PAYMENT_HOST:
 
 PAYMENT_USES_SSL = getattr(settings, 'PAYMENT_USES_SSL', not settings.DEBUG)
 
+# To override the internal payment callback (not the OK/KO final redirect)
+PAYMENT_HOST_OVERRIDED = getattr(settings, 'PAYMENT_HOST_OVERRIDED', PAYMENT_HOST)
+PAYMENT_USES_SSL_OVERRIDED = getattr(settings, 'PAYMENT_USES_SSL_OVERRIDED', PAYMENT_USES_SSL)
+
 
 def get_base_url():
     """
@@ -40,6 +44,13 @@ def get_base_url():
         domain = PAYMENT_HOST
     return '%s://%s' % (protocol, domain)
 
+def get_overrided_url():
+    """
+    Returns the overrided host and protocol
+    """
+    protocol = 'https' if PAYMENT_USES_SSL_OVERRIDED else 'http'
+    domain = PAYMENT_HOST_OVERRIDED
+    return '%s://%s' % (protocol, domain)
 
 class BasicProvider(object):
     '''
@@ -84,9 +95,17 @@ class BasicProvider(object):
         '''
         raise NotImplementedError()
 
-    def get_return_url(self, payment, extra_data=None):
+    def get_return_url(self, payment, extra_data=None, override_domain=False):
         payment_link = payment.get_process_url()
-        url = urljoin(get_base_url(), payment_link)
+
+        # Use overrided domain instead of BASE_URL
+        if override_domain:
+            url = get_overrided_url()
+        else:
+            url = get_base_url()
+
+        url = urljoin(url, payment_link)
+
         if extra_data:
             qs = urlencode(extra_data)
             return url + '?' + qs
