@@ -66,6 +66,9 @@ class DummyProvider(BasicProvider):
             return HttpResponseRedirect(payment.get_success_url())
         return HttpResponseRedirect(payment.get_failure_url())
 
+    def autocomplete_with_wallet(self, payment):
+        return
+
     def capture(self, payment, amount=None):
         payment.change_status(PaymentStatus.CONFIRMED)
         payment.captured_amount = amount or payment.total
