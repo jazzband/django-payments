@@ -387,6 +387,50 @@ class TestPaypalProvider(TestCase):
         payment_response = json.loads(self.payment.extra_data)["auth_response"]
         self.assertEqual(payment_response["access_token"], new_token)
 
+    def test_provider_get_with_none_payment(self):
+        test_url = "http://example.com/api/test"
+        expected_get_response_data = {"status": "success"}
+        expected_token = "test_access_token"
+        expected_token_type = "Bearer"
+
+        with patch("requests.post") as mocked_post, patch(
+            "requests.get"
+        ) as mocked_get:
+            # Mock for token acquisition
+            token_response_mock = MagicMock()
+            token_response_mock.json.return_value = {
+                "access_token": expected_token,
+                "token_type": expected_token_type,
+                "expires_in": 3600,
+            }
+            token_response_mock.status_code = 200
+
+            # Mock for the actual GET request
+            get_response_mock = MagicMock()
+            get_response_mock.json.return_value = expected_get_response_data
+            get_response_mock.status_code = 200
+
+            mocked_post.return_value = token_response_mock
+            mocked_get.return_value = get_response_mock
+
+            response_data = self.provider.get(None, test_url)
+
+            mocked_post.assert_called_once_with(
+                self.provider.oauth2_url,
+                data={"grant_type": "client_credentials"},
+                headers={"Accept": "application/json", "Accept-Language": "en_US"},
+                auth=(self.provider.client_id, self.provider.secret),
+            )
+
+            mocked_get.assert_called_once_with(
+                test_url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"{expected_token_type} {expected_token}",
+                },
+            )
+            self.assertEqual(response_data, expected_get_response_data)
+
 
 class TestPaypalCardProvider(TestCase):
     def setUp(self):
