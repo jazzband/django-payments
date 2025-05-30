@@ -148,9 +148,11 @@ class PaypalProvider(BasicProvider):
         return data
 
     def post(self, payment, *args, **kwargs):
+        """Perform a POST request to the PayPal API."""
         return self.http_request(payment, *args, http_method=requests.post, **kwargs)
 
     def get(self, payment, *args, **kwargs):
+        """Perform a GET request to the PayPal API."""
         return self.http_request(payment, *args, http_method=requests.get, **kwargs)
 
     def get_last_response(self, payment, is_auth=False):
