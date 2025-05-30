@@ -169,7 +169,8 @@ class PaypalProvider(BasicProvider):
             if (
                 "access_token" in last_auth_response
                 and "expires_in" in last_auth_response
-                and (created + timedelta(seconds=last_auth_response["expires_in"])) > now
+                and (created + timedelta(seconds=last_auth_response["expires_in"]))
+                > now
             ):
                 return "{} {}".format(
                     last_auth_response["token_type"], last_auth_response["access_token"]

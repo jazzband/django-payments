@@ -393,9 +393,7 @@ class TestPaypalProvider(TestCase):
         expected_token = "test_access_token"
         expected_token_type = "Bearer"
 
-        with patch("requests.post") as mocked_post, patch(
-            "requests.get"
-        ) as mocked_get:
+        with patch("requests.post") as mocked_post, patch("requests.get") as mocked_get:
             # Mock for token acquisition
             token_response_mock = MagicMock()
             token_response_mock.json.return_value = {
