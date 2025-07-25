@@ -115,7 +115,7 @@ extend-select = [
     "RET",
     "RSE",
     "RUF",
-    # "SIM", # TODO
+    "SIM",
     "TCH",
     "TID",
     "UP",
