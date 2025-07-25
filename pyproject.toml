@@ -90,38 +90,37 @@ pythonpath = "."
 target-version = "py39"
 
 [tool.ruff.lint]
-select = [
-    "F",
-    "E",
-    "W",
-    "I",
-    # "N", # TODO: fixing these would break public API
-    "UP",
-    "YTT",
-    # "ANN",
-    # "BLE",
-    # "FBT",
-    "B",
+extend-select = [
     # "A", # Conflicts with some django patterns
+    # "ANN", # TODO
+    "B",
+    # "BLE",
     "C4",
-    "ISC",
-    "ICN",
-    "G",
-    "INP",
-    "PIE",
-    "PYI",
-    # "PT", # TODO: some tests are not pytest
-    "Q",
-    "RSE",
-    "RET",
-    # "SIM", # TODO
-    "TID",
-    "TCH",
-    "INT",
+    "E",
     "ERA",
+    # "FBT", # TODO
+    "G",
+    "I",
+    "ICN",
+    "INP",
+    "INT",
+    "ISC",
+    # "N", # TODO: fixing these would break public API
     "PGH",
+    "PIE",
     "PLE",
+    # "PT", # TODO: some tests are not pytest
+    "PYI",
+    "Q",
+    "RET",
+    "RSE",
     "RUF",
+    "SIM",
+    "TCH",
+    "TID",
+    "UP",
+    "W",
+    "YTT",
 ]
 ignore = [
   "RUF012",  # FIXME

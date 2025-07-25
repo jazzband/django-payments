@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from unittest import TestCase
+from unittest import skip
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -61,11 +62,13 @@ class TestStripeProviderV3(TestCase):
             "payment_status": "unpaid",
             "payment_intent": "pi_...",
         }
-        with patch("stripe.checkout.Session.create", return_value=return_value):
-            with self.assertRaises(RedirectNeeded):
-                provider.get_form(payment)
-                self.assertTrue("url" in payment.attrs.session)
-                self.assertTrue("id" in payment.attrs.session)
+        with (
+            patch("stripe.checkout.Session.create", return_value=return_value),
+            self.assertRaises(RedirectNeeded),
+        ):
+            provider.get_form(payment)
+            self.assertTrue("url" in payment.attrs.session)
+            self.assertTrue("id" in payment.attrs.session)
         self.assertEqual(payment.status, PaymentStatus.WAITING)
 
     def test_provider_create_session_failure(self):
@@ -107,6 +110,7 @@ class TestStripeProviderV3(TestCase):
         with patch("stripe.checkout.Session.create"), self.assertRaises(PaymentError):
             provider.create_session(payment)
 
+    @skip("https://github.com/jazzband/django-payments/issues/444")
     def test_provider_create_session_success_with_billing_name(self):
         payment = Payment()
         payment.billing_name = "Billy Ngname"
