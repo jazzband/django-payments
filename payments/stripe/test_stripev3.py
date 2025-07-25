@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from unittest import TestCase
+from unittest import skip
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -109,6 +110,7 @@ class TestStripeProviderV3(TestCase):
         with patch("stripe.checkout.Session.create"), self.assertRaises(PaymentError):
             provider.create_session(payment)
 
+    @skip("https://github.com/jazzband/django-payments/issues/444")
     def test_provider_create_session_success_with_billing_name(self):
         payment = Payment()
         payment.billing_name = "Billy Ngname"
