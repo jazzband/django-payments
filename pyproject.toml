@@ -90,8 +90,7 @@ pythonpath = "."
 target-version = "py39"
 
 [tool.ruff.lint]
-select = [
-    "F",
+extend-select = [
     "E",
     "W",
     "I",
