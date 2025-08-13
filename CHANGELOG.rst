@@ -10,6 +10,7 @@ v4.0.0
 - ``StripeProvider``, which was deprecated in v3.0.0, has been dropped. Use
   ``StripeProviderV3`` instead.
 - Drop support for Django 5.0.
+- Drop support for Python 3.9.
 
 v3.1.0
 ------
