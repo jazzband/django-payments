@@ -463,7 +463,7 @@ class CyberSourceProvider(BasicProvider):
         return totals
 
     def _serialize_response(self, response):
-        if isinstance(response, (Element, Object)):
+        if isinstance(response, Element | Object):
             response = dict(response)
             for k, v in response.items():
                 response[k] = self._serialize_response(v)
