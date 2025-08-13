@@ -8,7 +8,7 @@ system of yours.
 
 Each configured backend is called a "variant". For example, a system may use
 two different Stripe accounts. Such a system would configure two variants, both
-using the same backend (``payments.stripe.StripeProvider``), but different
+using the same backend (``payments.stripe.StripeProviderV3``), but different
 credentials.
 
 Variants are configured ``PAYMENT_VARIANTS`` in ``settings.py``. This setting

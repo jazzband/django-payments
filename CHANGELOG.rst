@@ -4,6 +4,12 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v4.0.0
+------
+
+- ``StripeProvider``, which was deprecated in v3.0.0, has been dropped. Use
+  ``StripeProviderV3`` instead.
+
 v3.1.0
 ------
 

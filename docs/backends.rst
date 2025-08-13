@@ -241,26 +241,6 @@ Example::
           )
       }
 
-.. autoclass:: payments.stripe.StripeProvider
-.. deprecated:: 2.0
-
-Example::
-
-      # use sandbox
-      PAYMENT_VARIANTS = {
-          'stripe': (
-              'payments.stripe.StripeProvider',
-              {
-                  'secret_key': 'sk_test_123456',
-                  'public_key': 'pk_test_123456',
-              }
-          )
-      }
-
-
-.. autoclass:: payments.stripe.StripeCardProvider
-.. deprecated:: 2.0
-
 
 MercadoPago
 -----------
