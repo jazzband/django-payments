@@ -8,6 +8,7 @@ v3.1.0
 ------
 
 - Add support for Django 5.2.
+- Add support for Python 3.13.
 
 v3.0.1
 ------
