@@ -35,7 +35,7 @@ PROCESS_DATA = {
 
 
 class PaymentQuerySet(Mock):
-    __payments = {}
+    __payments: dict = {}
 
     def create(self, **kwargs):
         if kwargs:
