@@ -87,9 +87,6 @@ testpaths = "payments"
 DJANGO_SETTINGS_MODULE = "test_settings"
 pythonpath = "."
 
-[tool.ruff]
-target-version = "py39"
-
 [tool.ruff.lint]
 extend-select = [
     # "A", # Conflicts with some django patterns
