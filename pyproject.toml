@@ -132,12 +132,6 @@ ignore = [
 force-single-line = true
 required-imports = ["from __future__ import annotations"]
 
-[tool.ruff.lint.per-file-ignores]
-# Fails with auto-generated migrations. Unsolvable contradiction between ruff and mypy.
-# This likely needs to be addressed in Django itself (either use an immutable
-# type or annotate these fields as ClassVar)
-"testapp/testapp/testmain/migrations/0*.py"= ["RUF012"]
-
 [tool.setuptools_scm]
 write_to = "payments/version.py"
 version_scheme = "post-release"
