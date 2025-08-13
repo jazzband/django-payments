@@ -5,7 +5,7 @@ Requirements
 ------------
 
 - Python 3.9 to 3.13
-- Django 4.2 to 5.2
+- Django 4.2, 5.1 and 5.2
 
 Install the package
 -------------------
