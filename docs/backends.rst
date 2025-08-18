@@ -338,7 +338,7 @@ Create a Provider Class
 
 .. hint::
 
-  Check with the integrator to see if they suppoer capture/refund
+  Check with the integrator to see if they support capture/refund
 
 Implement the mandatory methods specific to your payment provider. Here are the
 mandatory methods used by Django Payments:
