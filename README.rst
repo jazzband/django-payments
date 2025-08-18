@@ -31,14 +31,10 @@ django-payments
 
 Universal payment handling for Django
 
-Documentation: https://django-payments.readthedocs.org/
+Django integration for receiving payments with different payment providers.
+Includes backends with support for a few payment providers, and is also usable
+with `community-maintained backends for additional providers
+<https://django-payments.readthedocs.io/en/latest/backends.html#community-backends>`_.
 
-
-Additional payment providers
-----------------------------
-
-* `BNL POSitivity (BNP Paribas) <https://github.com/esistgut/django-payments-bnlepos>`_
-* `Redsys (formerly known as Sermepa) <https://github.com/ajostergaard/django-payments-redsys>`_
-* `Razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay/>`_
-* `PayU <https://github.com/PetrDlouhy/django-payments-payu/>`_
-* `BlockBee <https://github.com/blockbee-io/django-payments-blockbee/>`_
+See the full documentation at https://django-payments.readthedocs.org/ for
+details.
