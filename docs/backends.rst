@@ -295,6 +295,9 @@ These are the community providers compatible with ``django-payments``
   * - Common providers from Chile
     - CL
     - `mariofix/django-payments-chile <https://github.com/mariofix/django-payments-chile>`_
+  * - `BlockBee <https://www.blockbee.io/>`_
+    - Worldwide
+    - `blockbee-io/django-payments-blockbee <https://github.com/blockbee-io/django-payments-blockbee>`_
 
 
 Creating a New Provider Backend

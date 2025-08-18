@@ -41,3 +41,4 @@ Additional payment providers
 * `Redsys (formerly known as Sermepa) <https://github.com/ajostergaard/django-payments-redsys>`_
 * `Razorpay <https://github.com/NyanKiyoshi/django-payments-razorpay/>`_
 * `PayU <https://github.com/PetrDlouhy/django-payments-payu/>`_
+* `BlockBee <https://github.com/blockbee-io/django-payments-blockbee/>`_
