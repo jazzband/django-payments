@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
+import pytest
 from django.core import signing
 
 from payments import PaymentStatus
@@ -71,173 +71,191 @@ class Payment(Mock):
         ]
 
 
-class TestCybersourceProvider(TestCase):
-    @patch("payments.cybersource.suds.client.Client", new=MagicMock())
-    def setUp(self):
-        self.payment = Payment()
-        self.provider = CyberSourceProvider(
-            merchant_id=MERCHANT_ID, password=PASSWORD, org_id=ORG_ID
+@pytest.fixture
+@patch("payments.cybersource.suds.client.Client", new=MagicMock())
+def provider():
+    payment = Payment()
+    return payment, CyberSourceProvider(
+        merchant_id=MERCHANT_ID, password=PASSWORD, org_id=ORG_ID
+    )
+
+
+@patch.object(CyberSourceProvider, "_make_request")
+def test_provider_raises_redirect_needed_on_success(mocked_request, provider):
+    payment, prov = provider
+    transaction_id = 1234
+    response = MagicMock()
+    response.requestID = transaction_id
+    response.reasonCode = 100
+    mocked_request.return_value = response
+    with pytest.raises(RedirectNeeded):
+        prov.get_form(payment=payment, data=PROCESS_DATA)
+    assert payment.status == PaymentStatus.CONFIRMED
+    assert payment.captured_amount == payment.total
+    assert payment.transaction_id == transaction_id
+
+
+@patch.object(CyberSourceProvider, "_make_request")
+def test_provider_returns_form_on_3d_secure(mocked_request, provider):
+    payment, prov = provider
+    response = MagicMock()
+    response.reasonCode = AUTHENTICATE_REQUIRED
+    mocked_request.return_value = response
+    form = prov.get_form(payment=payment, data=PROCESS_DATA)
+    assert payment.status == PaymentStatus.WAITING
+    assert "PaReq" in form.fields
+
+
+@patch.object(CyberSourceProvider, "_make_request")
+def test_provider_shows_validation_error_message_response(mocked_request, provider):
+    payment, prov = provider
+    error_message = "The card you are trying to use was reported as lost or stolen."
+    error_code = 205
+    response = MagicMock()
+    response.reasonCode = error_code
+    mocked_request.return_value = response
+    form = prov.get_form(payment=payment, data=PROCESS_DATA)
+    assert form.errors["__all__"][0] == error_message
+
+
+def test_provider_shows_validation_error_message_duplicate(provider):
+    payment, prov = provider
+    payment.transaction_id = 1
+    error_message = "This payment has already been processed."
+    form = prov.get_form(payment=payment, data=PROCESS_DATA)
+    assert form.errors["__all__"][0] == error_message
+
+
+@patch.object(CyberSourceProvider, "_make_request")
+def test_provider_captures_payment(mocked_request, provider):
+    payment, prov = provider
+    transaction_id = 1234
+    response = MagicMock()
+    response.requestID = transaction_id
+    response.reasonCode = TRANSACTION_SETTLED
+    mocked_request.return_value = response
+    prov.capture(payment)
+    assert payment.status == PaymentStatus.CONFIRMED
+
+
+@patch.object(CyberSourceProvider, "_make_request")
+def test_provider_refunds_payment(mocked_request, provider):
+    payment, prov = provider
+    payment.captured_amount = payment.total
+    response = MagicMock()
+    response.reasonCode = ACCEPTED
+    mocked_request.return_value = response
+    amount = prov.refund(payment)
+    assert payment.total == amount
+
+
+@patch.object(CyberSourceProvider, "_make_request")
+def test_provider_releases_payment(mocked_request, provider):
+    payment, prov = provider
+    transaction_id = 123
+    response = MagicMock()
+    response.requestID = transaction_id
+    response.reasonCode = ACCEPTED
+    mocked_request.return_value = response
+    prov.release(payment)
+    assert payment.transaction_id == transaction_id
+
+
+@patch("payments.cybersource.redirect")
+@patch.object(CyberSourceProvider, "_make_request")
+def test_provider_redirects_on_success_captured_payment(
+    mocked_request, mocked_redirect, provider
+):
+    payment, prov = provider
+    transaction_id = 1234
+    xid = "abc"
+    payment.attrs.xid = xid
+
+    response = MagicMock()
+    response.requestID = transaction_id
+    response.reasonCode = ACCEPTED
+    mocked_request.return_value = response
+
+    request = MagicMock()
+    request.POST = {"MD": xid}
+    request.GET = {
+        "token": signing.dumps(
+            {
+                "expiration": {"year": 2023, "month": 9},
+                "name": "John Doe",
+                "number": "371449635398431",
+                "cvv2": "123",
+            }
         )
+    }
+    prov.process_data(payment, request)
+    assert payment.status == PaymentStatus.CONFIRMED
+    assert payment.captured_amount == payment.total
+    assert payment.transaction_id == transaction_id
 
-    @patch.object(CyberSourceProvider, "_make_request")
-    def test_provider_raises_redirect_needed_on_success(self, mocked_request):
-        transaction_id = 1234
-        response = MagicMock()
-        response.requestID = transaction_id
-        response.reasonCode = 100
-        mocked_request.return_value = response
-        with self.assertRaises(RedirectNeeded):
-            self.provider.get_form(payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
-        self.assertEqual(self.payment.captured_amount, self.payment.total)
-        self.assertEqual(self.payment.transaction_id, transaction_id)
 
-    @patch.object(CyberSourceProvider, "_make_request")
-    def test_provider_returns_form_on_3d_secure(self, mocked_request):
-        response = MagicMock()
-        response.reasonCode = AUTHENTICATE_REQUIRED
-        mocked_request.return_value = response
-        form = self.provider.get_form(payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, PaymentStatus.WAITING)
-        self.assertIn("PaReq", form.fields)
+@patch("payments.cybersource.redirect")
+@patch.object(CyberSourceProvider, "_make_request")
+@patch("payments.cybersource.suds.client.Client", new=MagicMock())
+def test_provider_redirects_on_success_preauth_payment(mocked_request, mocked_redirect):
+    payment = Payment()
+    provider = CyberSourceProvider(
+        merchant_id=MERCHANT_ID, password=PASSWORD, org_id=ORG_ID, capture=False
+    )
+    transaction_id = 1234
+    xid = "abc"
+    payment.attrs.xid = xid
 
-    @patch.object(CyberSourceProvider, "_make_request")
-    def test_provider_shows_validation_error_message_response(self, mocked_request):
-        error_message = "The card you are trying to use was reported as lost or stolen."
-        error_code = 205
-        response = MagicMock()
-        response.reasonCode = error_code
-        mocked_request.return_value = response
-        form = self.provider.get_form(payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(form.errors["__all__"][0], error_message)
+    response = MagicMock()
+    response.requestID = transaction_id
+    response.reasonCode = ACCEPTED
+    mocked_request.return_value = response
 
-    def test_provider_shows_validation_error_message_duplicate(self):
-        self.payment.transaction_id = 1
-        error_message = "This payment has already been processed."
-        form = self.provider.get_form(payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(form.errors["__all__"][0], error_message)
-
-    @patch.object(CyberSourceProvider, "_make_request")
-    def test_provider_captures_payment(self, mocked_request):
-        transaction_id = 1234
-        response = MagicMock()
-        response.requestID = transaction_id
-        response.reasonCode = TRANSACTION_SETTLED
-        mocked_request.return_value = response
-        self.provider.capture(self.payment)
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
-
-    @patch.object(CyberSourceProvider, "_make_request")
-    def test_provider_refunds_payment(self, mocked_request):
-        self.payment.captured_amount = self.payment.total
-        response = MagicMock()
-        response.reasonCode = ACCEPTED
-        mocked_request.return_value = response
-        amount = self.provider.refund(self.payment)
-        self.assertEqual(self.payment.total, amount)
-
-    @patch.object(CyberSourceProvider, "_make_request")
-    def test_provider_releases_payment(self, mocked_request):
-        transaction_id = 123
-        response = MagicMock()
-        response.requestID = transaction_id
-        response.reasonCode = ACCEPTED
-        mocked_request.return_value = response
-        self.provider.release(self.payment)
-        self.assertEqual(self.payment.transaction_id, transaction_id)
-
-    @patch("payments.cybersource.redirect")
-    @patch.object(CyberSourceProvider, "_make_request")
-    def test_provider_redirects_on_success_captured_payment(
-        self, mocked_request, mocked_redirect
-    ):
-        transaction_id = 1234
-        xid = "abc"
-        self.payment.attrs.xid = xid
-
-        response = MagicMock()
-        response.requestID = transaction_id
-        response.reasonCode = ACCEPTED
-        mocked_request.return_value = response
-
-        request = MagicMock()
-        request.POST = {"MD": xid}
-        request.GET = {
-            "token": signing.dumps(
-                {
-                    "expiration": {"year": 2023, "month": 9},
-                    "name": "John Doe",
-                    "number": "371449635398431",
-                    "cvv2": "123",
-                }
-            )
-        }
-        self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
-        self.assertEqual(self.payment.captured_amount, self.payment.total)
-        self.assertEqual(self.payment.transaction_id, transaction_id)
-
-    @patch("payments.cybersource.redirect")
-    @patch.object(CyberSourceProvider, "_make_request")
-    @patch("payments.cybersource.suds.client.Client", new=MagicMock())
-    def test_provider_redirects_on_success_preauth_payment(
-        self, mocked_request, mocked_redirect
-    ):
-        provider = CyberSourceProvider(
-            merchant_id=MERCHANT_ID, password=PASSWORD, org_id=ORG_ID, capture=False
+    request = MagicMock()
+    request.POST = {"MD": xid}
+    request.GET = {
+        "token": signing.dumps(
+            {
+                "expiration": {"year": 2023, "month": 9},
+                "name": "John Doe",
+                "number": "371449635398431",
+                "cvv2": "123",
+            }
         )
-        transaction_id = 1234
-        xid = "abc"
-        self.payment.attrs.xid = xid
+    }
+    provider.process_data(payment, request)
+    assert payment.status == PaymentStatus.PREAUTH
+    assert payment.captured_amount == 0
+    assert payment.transaction_id == transaction_id
 
-        response = MagicMock()
-        response.requestID = transaction_id
-        response.reasonCode = ACCEPTED
-        mocked_request.return_value = response
 
-        request = MagicMock()
-        request.POST = {"MD": xid}
-        request.GET = {
-            "token": signing.dumps(
-                {
-                    "expiration": {"year": 2023, "month": 9},
-                    "name": "John Doe",
-                    "number": "371449635398431",
-                    "cvv2": "123",
-                }
-            )
-        }
-        provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
-        self.assertEqual(self.payment.captured_amount, 0)
-        self.assertEqual(self.payment.transaction_id, transaction_id)
+@patch("payments.cybersource.redirect")
+@patch.object(CyberSourceProvider, "_make_request")
+@patch("payments.cybersource.suds.client.Client", new=MagicMock())
+def test_provider_redirects_on_failure(mocked_request, mocked_redirect, provider):
+    payment, prov = provider
+    transaction_id = 1234
+    xid = "abc"
+    payment.attrs.xid = xid
 
-    @patch("payments.cybersource.redirect")
-    @patch.object(CyberSourceProvider, "_make_request")
-    @patch("payments.cybersource.suds.client.Client", new=MagicMock())
-    def test_provider_redirects_on_failure(self, mocked_request, mocked_redirect):
-        transaction_id = 1234
-        xid = "abc"
-        self.payment.attrs.xid = xid
+    response = MagicMock()
+    response.requestID = transaction_id
+    response.reasonCode = "test code"
+    mocked_request.return_value = response
 
-        response = MagicMock()
-        response.requestID = transaction_id
-        response.reasonCode = "test code"
-        mocked_request.return_value = response
-
-        request = MagicMock()
-        request.POST = {"MD": xid}
-        request.GET = {
-            "token": signing.dumps(
-                {
-                    "expiration": {"year": 2023, "month": 9},
-                    "name": "John Doe",
-                    "number": "371449635398431",
-                    "cvv2": "123",
-                }
-            )
-        }
-        self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
-        self.assertEqual(self.payment.captured_amount, 0)
-        self.assertEqual(self.payment.transaction_id, transaction_id)
+    request = MagicMock()
+    request.POST = {"MD": xid}
+    request.GET = {
+        "token": signing.dumps(
+            {
+                "expiration": {"year": 2023, "month": 9},
+                "name": "John Doe",
+                "number": "371449635398431",
+                "cvv2": "123",
+            }
+        )
+    }
+    prov.process_data(payment, request)
+    assert payment.status == PaymentStatus.ERROR
+    assert payment.captured_amount == 0
+    assert payment.transaction_id == transaction_id
