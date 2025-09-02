@@ -106,7 +106,7 @@ extend-select = [
     "PGH",
     "PIE",
     "PLE",
-    # "PT", # TODO: some tests are not pytest
+    "PT",
     "PYI",
     "Q",
     "RET",

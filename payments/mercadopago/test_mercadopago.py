@@ -355,7 +355,7 @@ def test_get_preference_internal_error(mp_provider: MercadoPagoProvider):
 
 
 @pytest.mark.parametrize(
-    "is_sandbox,url_attr",
+    ("is_sandbox", "url_attr"),
     [
         (False, "init_point"),
         (True, "sandbox_init_point"),
