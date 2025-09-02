@@ -4,11 +4,11 @@ import json
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
-from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
+import pytest
 from django.utils import timezone
 from requests import HTTPError
 
@@ -182,121 +182,260 @@ class Payment(Mock):
     _meta = Meta()
 
 
-class TestPaypalProvider(TestCase):
-    def setUp(self):
-        Payment.objects.delete()
-        self.payment = Payment.objects.create()
-        self.provider = PaypalProvider(secret=SECRET, client_id=CLIENT_ID)
+# PaypalProvider tests
 
-    def test_provider_raises_redirect_needed_on_success(self):
-        with patch("requests.post") as mocked_post:
-            transaction_id = "1234"
-            data = MagicMock()
-            data.return_value = {
-                "id": transaction_id,
-                "token_type": "test_token_type",
-                "access_token": "test_access_token",
-                "links": [{"rel": "approval_url", "href": "http://approval_url.com"}],
-            }
-            post = MagicMock()
-            post.json = data
-            post.status_code = 200
-            mocked_post.return_value = post
-            with self.assertRaises(RedirectNeeded):
-                self.provider.get_form(payment=self.payment)
-        self.assertEqual(self.payment.status, PaymentStatus.WAITING)
-        self.assertEqual(self.payment.captured_amount, Decimal("0"))
-        self.assertEqual(self.payment.transaction_id, transaction_id)
 
-    @patch("requests.post")
-    def test_provider_captures_payment(self, mocked_post):
+@pytest.fixture
+def paypal_payment():
+    Payment.objects.delete()
+    return Payment.objects.create()
+
+
+@pytest.fixture
+def paypal_provider():
+    return PaypalProvider(secret=SECRET, client_id=CLIENT_ID)
+
+
+def test_provider_raises_redirect_needed_on_success(paypal_payment, paypal_provider):
+    with patch("requests.post") as mocked_post:
+        transaction_id = "1234"
         data = MagicMock()
         data.return_value = {
-            "state": "completed",
+            "id": transaction_id,
             "token_type": "test_token_type",
             "access_token": "test_access_token",
+            "links": [{"rel": "approval_url", "href": "http://approval_url.com"}],
         }
         post = MagicMock()
         post.json = data
         post.status_code = 200
         mocked_post.return_value = post
-        self.provider.capture(self.payment)
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
+        with pytest.raises(RedirectNeeded):
+            paypal_provider.get_form(payment=paypal_payment)
 
-    @patch("requests.post")
-    def test_provider_handles_captured_payment(self, mocked_post):
-        data = MagicMock()
-        data.return_value = {"name": "AUTHORIZATION_ALREADY_COMPLETED"}
-        response = MagicMock()
-        response.json = data
-        mocked_post.side_effect = HTTPError(response=response)
-        self.provider.capture(self.payment)
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
+    assert paypal_payment.status == PaymentStatus.WAITING
+    assert paypal_payment.captured_amount == Decimal("0")
+    assert paypal_payment.transaction_id == transaction_id
 
-    @patch("requests.post")
-    def test_provider_refunds_payment_fully(self, mocked_post):
-        data = MagicMock()
-        data.side_effect = [
+
+@patch("requests.post")
+def test_provider_captures_payment(mocked_post, paypal_payment, paypal_provider):
+    data = MagicMock()
+    data.return_value = {
+        "state": "completed",
+        "token_type": "test_token_type",
+        "access_token": "test_access_token",
+    }
+    post = MagicMock()
+    post.json = data
+    post.status_code = 200
+    mocked_post.return_value = post
+    paypal_provider.capture(paypal_payment)
+    assert paypal_payment.status == PaymentStatus.CONFIRMED
+
+
+@patch("requests.post")
+def test_provider_handles_captured_payment(
+    mocked_post, paypal_payment, paypal_provider
+):
+    data = MagicMock()
+    data.return_value = {"name": "AUTHORIZATION_ALREADY_COMPLETED"}
+    response = MagicMock()
+    response.json = data
+    mocked_post.side_effect = HTTPError(response=response)
+    paypal_provider.capture(paypal_payment)
+    assert paypal_payment.status == PaymentStatus.CONFIRMED
+
+
+@patch("requests.post")
+def test_provider_refunds_payment_fully(mocked_post, paypal_payment, paypal_provider):
+    data = MagicMock()
+    data.side_effect = [
+        {"token_type": "test_token_type", "access_token": "test_access_token"},
+        {"amount": {"total": "220.00", "currency": "USD"}},
+    ]
+    post = MagicMock()
+    post.json = data
+    post.status_code = 200
+    mocked_post.return_value = post
+    paypal_provider.refund(paypal_payment)
+    mocked_post.assert_called_with(
+        "http://refund.com",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "test_token_type test_access_token",
+        },
+        data="{}",
+    )
+    assert paypal_payment.status == PaymentStatus.REFUNDED
+
+
+@patch("requests.post")
+def test_provider_refunds_payment_partially(
+    mocked_post, paypal_payment, paypal_provider
+):
+    data = MagicMock()
+    data.side_effect = [
+        {"token_type": "test_token_type", "access_token": "test_access_token"},
+        {"amount": {"total": "1.00", "currency": "USD"}},
+    ]
+    post = MagicMock()
+    post.json = data
+    post.status_code = 200
+    mocked_post.return_value = post
+    paypal_provider.refund(paypal_payment, amount=Decimal(1))
+    mocked_post.assert_called_with(
+        "http://refund.com",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "test_token_type test_access_token",
+        },
+        data='{"amount": {"currency": "USD", "total": "1.00"}}',
+    )
+    assert paypal_payment.status == PaymentStatus.REFUNDED
+
+
+@patch("requests.post")
+@patch("payments.paypal.redirect")
+def test_provider_redirects_on_success_captured_payment(
+    mocked_redirect, mocked_post, paypal_payment, paypal_provider
+):
+    data = MagicMock()
+    data.return_value = {
+        "token_type": "test_token_type",
+        "access_token": "test_access_token",
+        "payer": {"payer_info": "test123"},
+        "transactions": [
             {
-                "token_type": "test_token_type",
-                "access_token": "test_access_token",
-            },
-            {"amount": {"total": "220.00", "currency": "USD"}},
-        ]
-        post = MagicMock()
-        post.json = data
-        post.status_code = 200
-        mocked_post.return_value = post
-        self.provider.refund(self.payment)
-        mocked_post.assert_called_with(
-            "http://refund.com",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": "test_token_type test_access_token",
-            },
-            data="{}",
-        )
-        self.assertEqual(self.payment.status, PaymentStatus.REFUNDED)
+                "related_resources": [
+                    {"sale": {"links": ""}, "authorization": {"links": ""}}
+                ]
+            }
+        ],
+    }
+    post = MagicMock()
+    post.json = data
+    post.status_code = 200
+    mocked_post.return_value = post
 
-    @patch("requests.post")
-    def test_provider_refunds_payment_partially(self, mocked_post):
-        data = MagicMock()
-        data.side_effect = [
+    request = MagicMock()
+    request.GET = {"token": "test", "PayerID": "1234"}
+    paypal_provider.process_data(paypal_payment, request)
+
+    assert paypal_payment.status == PaymentStatus.CONFIRMED
+    assert paypal_payment.captured_amount == paypal_payment.total
+    paypal_payment.refresh_from_db()
+    assert paypal_payment.status == PaymentStatus.CONFIRMED
+    assert paypal_payment.captured_amount == paypal_payment.total
+
+
+@patch("requests.post")
+@patch("payments.paypal.redirect")
+def test_provider_redirects_on_success_preauth_payment(
+    mocked_redirect, mocked_post, paypal_payment
+):
+    data = MagicMock()
+    data.return_value = {
+        "token_type": "test_token_type",
+        "access_token": "test_access_token",
+        "payer": {"payer_info": "test123"},
+        "transactions": [
             {
-                "token_type": "test_token_type",
-                "access_token": "test_access_token",
-            },
-            {"amount": {"total": "1.00", "currency": "USD"}},
-        ]
-        post = MagicMock()
-        post.json = data
-        post.status_code = 200
-        mocked_post.return_value = post
-        self.provider.refund(self.payment, amount=Decimal(1))
-        mocked_post.assert_called_with(
-            "http://refund.com",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": "test_token_type test_access_token",
-            },
-            data='{"amount": {"currency": "USD", "total": "1.00"}}',
-        )
-        self.assertEqual(self.payment.status, PaymentStatus.REFUNDED)
+                "related_resources": [
+                    {"sale": {"links": ""}, "authorization": {"links": ""}}
+                ]
+            }
+        ],
+    }
+    post = MagicMock()
+    post.json = data
+    post.status_code = 200
+    mocked_post.return_value = post
 
-    @patch("requests.post")
-    @patch("payments.paypal.redirect")
-    def test_provider_redirects_on_success_captured_payment(
-        self, mocked_redirect, mocked_post
-    ):
+    request = MagicMock()
+    request.GET = {"token": "test", "PayerID": "1234"}
+    provider = PaypalProvider(secret=SECRET, client_id=CLIENT_ID, capture=False)
+    provider.process_data(paypal_payment, request)
+
+    assert paypal_payment.status == PaymentStatus.PREAUTH
+    assert paypal_payment.captured_amount == Decimal("0")
+    paypal_payment.refresh_from_db()
+    assert paypal_payment.status == PaymentStatus.PREAUTH
+    assert paypal_payment.captured_amount == Decimal("0")
+
+
+@patch("payments.paypal.redirect")
+def test_provider_request_without_payerid_redirects_on_failure(
+    mocked_redirect, paypal_payment, paypal_provider
+):
+    request = MagicMock()
+    request.GET = {"token": "test", "PayerID": None}
+    paypal_provider.process_data(paypal_payment, request)
+    assert paypal_payment.status == PaymentStatus.REJECTED
+    paypal_payment.refresh_from_db()
+    assert paypal_payment.status == PaymentStatus.REJECTED
+
+
+@patch("requests.post")
+def test_provider_renews_access_token(mocked_post, paypal_payment, paypal_provider):
+    new_token = "new_test_token"
+    response401 = MagicMock()
+    response401.status_code = 401
+    data = MagicMock()
+    data.return_value = {"access_token": new_token, "token_type": "type"}
+    response = MagicMock()
+    response.json = data
+    response.status_code = 200
+    mocked_post.side_effect = [HTTPError(response=response401), response, response]
+
+    paypal_payment.created = timezone.now()
+    paypal_payment.extra_data = json.dumps(
+        {
+            "auth_response": {
+                "access_token": "expired_token",
+                "token_type": "token type",
+                "expires_in": 99999,
+            }
+        }
+    )
+    paypal_provider.create_payment(paypal_payment)
+    payment_response = json.loads(paypal_payment.extra_data)["auth_response"]
+    assert payment_response["access_token"] == new_token
+
+
+# PaypalCardProvider tests
+
+
+@pytest.fixture
+def paypal_card_payment():
+    return Payment(extra_data="")
+
+
+@pytest.fixture
+def paypal_card_provider():
+    return PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID)
+
+
+def test_provider_raises_redirect_needed_on_success_captured_payment_card(
+    paypal_card_payment, paypal_card_provider
+):
+    with patch("requests.post") as mocked_post:
+        transaction_id = "1234"
         data = MagicMock()
         data.return_value = {
+            "id": transaction_id,
             "token_type": "test_token_type",
             "access_token": "test_access_token",
-            "payer": {"payer_info": "test123"},
             "transactions": [
                 {
                     "related_resources": [
-                        {"sale": {"links": ""}, "authorization": {"links": ""}}
+                        {
+                            "sale": {
+                                "links": [
+                                    {"rel": "refund", "href": "http://refund.com"}
+                                ]
+                            }
+                        }
                     ]
                 }
             ],
@@ -305,31 +444,41 @@ class TestPaypalProvider(TestCase):
         post.json = data
         post.status_code = 200
         mocked_post.return_value = post
+        with pytest.raises(RedirectNeeded) as exc:
+            paypal_card_provider.get_form(
+                payment=paypal_card_payment, data=PROCESS_DATA
+            )
+        assert str(exc.value) == paypal_card_payment.get_success_url()
 
-        request = MagicMock()
-        request.GET = {"token": "test", "PayerID": "1234"}
-        self.provider.process_data(self.payment, request)
+    links = paypal_card_provider._get_links(paypal_card_payment)
+    assert paypal_card_payment.status == PaymentStatus.CONFIRMED
+    assert paypal_card_payment.captured_amount == paypal_card_payment.total
+    assert paypal_card_payment.transaction_id == transaction_id
+    assert "refund" in links
 
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
-        self.assertEqual(self.payment.captured_amount, self.payment.total)
-        self.payment.refresh_from_db()
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
-        self.assertEqual(self.payment.captured_amount, self.payment.total)
 
-    @patch("requests.post")
-    @patch("payments.paypal.redirect")
-    def test_provider_redirects_on_success_preauth_payment(
-        self, mocked_redirect, mocked_post
-    ):
+def test_provider_raises_redirect_needed_on_success_preauth_payment_card(
+    paypal_card_payment,
+):
+    provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID, capture=False)
+    with patch("requests.post") as mocked_post:
+        transaction_id = "1234"
         data = MagicMock()
         data.return_value = {
+            "id": transaction_id,
             "token_type": "test_token_type",
             "access_token": "test_access_token",
-            "payer": {"payer_info": "test123"},
             "transactions": [
                 {
                     "related_resources": [
-                        {"sale": {"links": ""}, "authorization": {"links": ""}}
+                        {
+                            "authorization": {
+                                "links": [
+                                    {"rel": "refund", "href": "http://refund.com"},
+                                    {"rel": "capture", "href": "http://capture.com"},
+                                ]
+                            }
+                        }
                     ]
                 }
             ],
@@ -338,164 +487,50 @@ class TestPaypalProvider(TestCase):
         post.json = data
         post.status_code = 200
         mocked_post.return_value = post
+        with pytest.raises(RedirectNeeded) as exc:
+            provider.get_form(payment=paypal_card_payment, data=PROCESS_DATA)
+        assert str(exc.value) == paypal_card_payment.get_success_url()
 
-        request = MagicMock()
-        request.GET = {"token": "test", "PayerID": "1234"}
-        provider = PaypalProvider(secret=SECRET, client_id=CLIENT_ID, capture=False)
-        provider.process_data(self.payment, request)
+    links = provider._get_links(paypal_card_payment)
+    assert paypal_card_payment.status == PaymentStatus.PREAUTH
+    assert paypal_card_payment.captured_amount == Decimal("0")
+    assert paypal_card_payment.transaction_id == transaction_id
+    assert "capture" in links
+    assert "refund" in links
 
-        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
-        self.assertEqual(self.payment.captured_amount, Decimal("0"))
-        self.payment.refresh_from_db()
-        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
-        self.assertEqual(self.payment.captured_amount, Decimal("0"))
 
-    @patch("payments.paypal.redirect")
-    def test_provider_request_without_payerid_redirects_on_failure(
-        self, mocked_redirect
-    ):
-        request = MagicMock()
-        request.GET = {"token": "test", "PayerID": None}
-        self.provider.process_data(self.payment, request)
-        self.assertEqual(self.payment.status, PaymentStatus.REJECTED)
-        self.payment.refresh_from_db()
-        self.assertEqual(self.payment.status, PaymentStatus.REJECTED)
-
-    @patch("requests.post")
-    def test_provider_renews_access_token(self, mocked_post):
-        new_token = "new_test_token"
-        response401 = MagicMock()
-        response401.status_code = 401
+def test_form_shows_validation_error_message(paypal_card_payment, paypal_card_provider):
+    with patch("requests.post") as mocked_post:
+        error_message = "error message"
         data = MagicMock()
-        data.return_value = {"access_token": new_token, "token_type": "type"}
-        response = MagicMock()
-        response.json = data
-        response.status_code = 200
-        mocked_post.side_effect = [HTTPError(response=response401), response, response]
-
-        self.payment.created = timezone.now()
-        self.payment.extra_data = json.dumps(
-            {
-                "auth_response": {
-                    "access_token": "expired_token",
-                    "token_type": "token type",
-                    "expires_in": 99999,
-                }
-            }
+        data.return_value = {"details": [{"issue": error_message}]}
+        post = MagicMock()
+        post.json = data
+        post.status_code = 400
+        mocked_post.side_effect = HTTPError(response=post)
+        form = paypal_card_provider.get_form(
+            payment=paypal_card_payment, data=PROCESS_DATA
         )
-        self.provider.create_payment(self.payment)
-        payment_response = json.loads(self.payment.extra_data)["auth_response"]
-        self.assertEqual(payment_response["access_token"], new_token)
+    assert paypal_card_payment.status == PaymentStatus.ERROR
+    assert form.errors["__all__"][0] == error_message
 
 
-class TestPaypalCardProvider(TestCase):
-    def setUp(self):
-        self.payment = Payment(extra_data="")
-        self.provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID)
-
-    def test_provider_raises_redirect_needed_on_success_captured_payment(self):
-        with patch("requests.post") as mocked_post:
-            transaction_id = "1234"
-            data = MagicMock()
-            data.return_value = {
-                "id": transaction_id,
-                "token_type": "test_token_type",
-                "access_token": "test_access_token",
-                "transactions": [
-                    {
-                        "related_resources": [
-                            {
-                                "sale": {
-                                    "links": [
-                                        {"rel": "refund", "href": "http://refund.com"}
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                ],
-            }
-            post = MagicMock()
-            post.json = data
-            post.status_code = 200
-            mocked_post.return_value = post
-            with self.assertRaises(RedirectNeeded) as exc:
-                self.provider.get_form(payment=self.payment, data=PROCESS_DATA)
-                self.assertEqual(exc.args[0], self.payment.get_success_url())
-        links = self.provider._get_links(self.payment)
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
-        self.assertEqual(self.payment.captured_amount, self.payment.total)
-        self.assertEqual(self.payment.transaction_id, transaction_id)
-        self.assertTrue("refund" in links)
-
-    def test_provider_raises_redirect_needed_on_success_preauth_payment(self):
-        provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID, capture=False)
-        with patch("requests.post") as mocked_post:
-            transaction_id = "1234"
-            data = MagicMock()
-            data.return_value = {
-                "id": transaction_id,
-                "token_type": "test_token_type",
-                "access_token": "test_access_token",
-                "transactions": [
-                    {
-                        "related_resources": [
-                            {
-                                "authorization": {
-                                    "links": [
-                                        {"rel": "refund", "href": "http://refund.com"},
-                                        {
-                                            "rel": "capture",
-                                            "href": "http://capture.com",
-                                        },
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                ],
-            }
-            post = MagicMock()
-            post.json = data
-            post.status_code = 200
-            mocked_post.return_value = post
-            with self.assertRaises(RedirectNeeded) as exc:
-                provider.get_form(payment=self.payment, data=PROCESS_DATA)
-                self.assertEqual(exc.args[0], self.payment.get_success_url())
-        links = provider._get_links(self.payment)
-        self.assertEqual(self.payment.status, PaymentStatus.PREAUTH)
-        self.assertEqual(self.payment.captured_amount, Decimal("0"))
-        self.assertEqual(self.payment.transaction_id, transaction_id)
-        self.assertTrue("capture" in links)
-        self.assertTrue("refund" in links)
-
-    def test_form_shows_validation_error_message(self):
-        with patch("requests.post") as mocked_post:
-            error_message = "error message"
-            data = MagicMock()
-            data.return_value = {"details": [{"issue": error_message}]}
-            post = MagicMock()
-            post.json = data
-            post.status_code = 400
-            mocked_post.side_effect = HTTPError(response=post)
-            form = self.provider.get_form(payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
-        self.assertEqual(form.errors["__all__"][0], error_message)
-
-    def test_form_shows_internal_error_message(self):
-        with patch("requests.post") as mocked_post:
-            error_message = "error message"
-            data = MagicMock()
-            data.return_value = {
-                "token_type": "test_token_type",
-                "access_token": "test_access_token",
-                "message": error_message,
-            }
-            post = MagicMock()
-            post.status_code = 400
-            post.json = data
-            mocked_post.return_value = post
-            with self.assertRaises(PaymentError):
-                self.provider.get_form(payment=self.payment, data=PROCESS_DATA)
-        self.assertEqual(self.payment.status, PaymentStatus.ERROR)
-        self.assertEqual(self.payment.message, error_message)
+def test_form_shows_internal_error_message(paypal_card_payment, paypal_card_provider):
+    with patch("requests.post") as mocked_post:
+        error_message = "error message"
+        data = MagicMock()
+        data.return_value = {
+            "token_type": "test_token_type",
+            "access_token": "test_access_token",
+            "message": error_message,
+        }
+        post = MagicMock()
+        post.status_code = 400
+        post.json = data
+        mocked_post.return_value = post
+        with pytest.raises(PaymentError):
+            paypal_card_provider.get_form(
+                payment=paypal_card_payment, data=PROCESS_DATA
+            )
+    assert paypal_card_payment.status == PaymentStatus.ERROR
+    assert paypal_card_payment.message == error_message
