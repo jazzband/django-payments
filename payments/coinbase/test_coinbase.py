@@ -3,10 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 from decimal import Decimal
-from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 
@@ -55,55 +55,52 @@ class Payment:
         return "http://success.com"
 
 
-class TestCoinbaseProvider(TestCase):
-    def setUp(self):
-        self.payment = Payment()
-        self.provider = CoinbaseProvider(key=KEY, secret=SECRET)
+@pytest.fixture
+def provider():
+    payment = Payment()
+    return payment, CoinbaseProvider(key=KEY, secret=SECRET)
 
-    def test_process_data(self):
-        """
-        CoinbaseProvider.process_data() returns a correct HTTP response
-        """
-        request = MagicMock()
-        request.body = json.dumps(COINBASE_REQUEST)
-        response = self.provider.process_data(self.payment, request)
-        self.assertEqual(type(response), HttpResponse)
-        self.assertEqual(self.payment.status, PaymentStatus.CONFIRMED)
 
-    def test_incorrect_custom_token_process_data(self):
-        """
-        CoinbaseProvider.process_data() checks request custom token
-        """
-        data = dict(COINBASE_REQUEST)
-        data.update({"order": {"custom": "fake"}})
-        request = MagicMock()
-        request.body = json.dumps(data)
-        response = self.provider.process_data(self.payment, request)
-        self.assertEqual(type(response), HttpResponseForbidden)
+def test_process_data(provider):
+    payment, prov = provider
+    request = MagicMock()
+    request.body = json.dumps(COINBASE_REQUEST)
+    response = prov.process_data(payment, request)
+    assert isinstance(response, HttpResponse)
+    assert payment.status == PaymentStatus.CONFIRMED
 
-    def test_incorrect_data_process_data(self):
-        """
-        CoinbaseProvider.process_data() checks request body
-        """
-        request = MagicMock()
-        request.POST = {"id": "1234"}
-        response = self.provider.process_data(self.payment, request)
-        self.assertEqual(type(response), HttpResponseForbidden)
 
-    @patch("time.time")
-    @patch("requests.post")
-    def test_provider_returns_checkout_url(self, mocked_post, mocked_time):
-        code = "123abc"
-        signature = "21d476eff7b2e6cccdfe6deb0c097ba638d5de7e775b303e4fdb2f8bfeff72e2"
-        url = f"https://sandbox.coinbase.com/checkouts/{code}"
-        post = MagicMock()
-        post.json = MagicMock(return_value={"button": {"code": code}})
-        post.status_code = 200
-        mocked_post.return_value = post
-        mocked_time.return_value = 1
+def test_incorrect_custom_token_process_data(provider):
+    payment, prov = provider
+    data = dict(COINBASE_REQUEST)
+    data.update({"order": {"custom": "fake"}})
+    request = MagicMock()
+    request.body = json.dumps(data)
+    response = prov.process_data(payment, request)
+    assert isinstance(response, HttpResponseForbidden)
 
-        form = self.provider.get_form(self.payment)
-        self.assertEqual(form.action, url)
-        self.assertEqual(
-            mocked_post.call_args[1]["headers"]["ACCESS_SIGNATURE"], signature
-        )
+
+def test_incorrect_data_process_data(provider):
+    payment, prov = provider
+    request = MagicMock()
+    request.POST = {"id": "1234"}
+    response = prov.process_data(payment, request)
+    assert isinstance(response, HttpResponseForbidden)
+
+
+@patch("time.time")
+@patch("requests.post")
+def test_provider_returns_checkout_url(mocked_post, mocked_time, provider):
+    payment, prov = provider
+    code = "123abc"
+    signature = "21d476eff7b2e6cccdfe6deb0c097ba638d5de7e775b303e4fdb2f8bfeff72e2"
+    url = f"https://sandbox.coinbase.com/checkouts/{code}"
+    post = MagicMock()
+    post.json = MagicMock(return_value={"button": {"code": code}})
+    post.status_code = 200
+    mocked_post.return_value = post
+    mocked_time.return_value = 1
+
+    form = prov.get_form(payment)
+    assert form.action == url
+    assert mocked_post.call_args[1]["headers"]["ACCESS_SIGNATURE"] == signature
