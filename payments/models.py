@@ -95,6 +95,25 @@ class BasePayment(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return self.variant
+
+    def save(self, **kwargs):
+        if not self.token:
+            tries = {}  # Stores a set of tried values
+            while True:
+                token = str(uuid4())
+                if (
+                    token in tries and len(tries) >= 100
+                ):  # After 100 tries we are impliying an infinite loop
+                    raise SystemExit("A possible infinite loop was detected")
+                if not self.__class__._default_manager.filter(token=token).exists():
+                    self.token = token
+                    break
+                tries.add(token)
+
+        return super().save(**kwargs)
+
     def change_status(self, status: PaymentStatus | str, message=""):
         """
         Updates the Payment status and sends the status_changed signal.
@@ -118,25 +137,6 @@ class BasePayment(models.Model):
         self.fraud_message = message
         if commit:
             self.save()
-
-    def save(self, **kwargs):
-        if not self.token:
-            tries = {}  # Stores a set of tried values
-            while True:
-                token = str(uuid4())
-                if (
-                    token in tries and len(tries) >= 100
-                ):  # After 100 tries we are impliying an infinite loop
-                    raise SystemExit("A possible infinite loop was detected")
-                if not self.__class__._default_manager.filter(token=token).exists():
-                    self.token = token
-                    break
-                tries.add(token)
-
-        return super().save(**kwargs)
-
-    def __str__(self):
-        return self.variant
 
     def get_form(self, data=None):
         """Return a form to be rendered to complete this payment.

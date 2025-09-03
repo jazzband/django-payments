@@ -93,6 +93,7 @@ extend-select = [
     "B",
     # "BLE",
     "C4",
+    "DJ",
     "E",
     "ERA",
     # "FBT", # TODO
