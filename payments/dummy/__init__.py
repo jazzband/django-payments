@@ -11,6 +11,7 @@ from payments import RedirectNeeded
 from payments.core import BasicProvider
 
 from .forms import DummyForm
+from .serializers import DummySerializer
 
 
 class DummyProvider(BasicProvider):
@@ -22,6 +23,8 @@ class DummyProvider(BasicProvider):
 
     You should only use this in development or in test servers.
     """
+
+    serializer_class = DummySerializer
 
     def get_form(self, payment, data=None):
         if payment.status == PaymentStatus.WAITING:
@@ -56,6 +59,36 @@ class DummyProvider(BasicProvider):
                 raise RedirectNeeded(payment.get_success_url())
             raise RedirectNeeded(payment.get_failure_url())
         return form
+
+    def get_serializer(self, payment, data=None):
+        if payment.status == PaymentStatus.WAITING:
+            payment.change_status(PaymentStatus.INPUT)
+
+        serializer = DummySerializer(
+            data=data, hidden_inputs=False, provider=self, payment=payment
+        )
+        serializer.is_valid(raise_exception=True)
+
+        new_status = serializer.validated_data["status"]
+        payment.change_status(new_status)
+        new_fraud_status = serializer.cleaned_data["fraud_status"]
+        payment.change_fraud_status(new_fraud_status)
+
+        gateway_response = serializer.validated_data.get("gateway_response")
+        verification_result = serializer.validated_data.get("verification_result")
+        if gateway_response or verification_result:
+            if gateway_response == "3ds-disabled":
+                pass
+            elif gateway_response == "failure":
+                # Gateway raises error (HTTP 500 for example)
+                raise URLError("Opps")
+            elif gateway_response == "payment-error":
+                raise PaymentError("Unsupported operation")
+
+        if new_status in [PaymentStatus.PREAUTH, PaymentStatus.CONFIRMED]:
+            return serializer
+
+        raise PaymentError("Payment unsuccessful")
 
     def process_data(self, payment, request):
         verification_result = request.GET.get("verification_result")
