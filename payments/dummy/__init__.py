@@ -64,14 +64,12 @@ class DummyProvider(BasicProvider):
         if payment.status == PaymentStatus.WAITING:
             payment.change_status(PaymentStatus.INPUT)
 
-        serializer = DummySerializer(
-            data=data, hidden_inputs=False, provider=self, payment=payment
-        )
+        serializer = DummySerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
         new_status = serializer.validated_data["status"]
         payment.change_status(new_status)
-        new_fraud_status = serializer.cleaned_data["fraud_status"]
+        new_fraud_status = serializer.validated_data["fraud_status"]
         payment.change_fraud_status(new_fraud_status)
 
         gateway_response = serializer.validated_data.get("gateway_response")
