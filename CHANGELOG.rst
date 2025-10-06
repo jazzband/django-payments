@@ -7,6 +7,20 @@ releases, in reverse chronological order.
 v4.0.0
 ------
 
+- **Breaking** Webhook error responses in ``static_callback`` endpoint now
+  return JSON instead of raising ``Http404``. Error responses include
+  ``variant`` and ``error_code`` fields for easier debugging. This helps
+  developers identify which payment provider is having issues when viewing
+  webhook logs in provider dashboards (Stripe, PayPal, etc.).
+
+  **Migration guide:**
+    - If you're using webhook systems (Stripe, PayPal, etc.), no changes needed
+      - they expect JSON.
+    - If you have custom code checking for ``Http404`` exceptions from webhook
+      endpoints, update to handle JSON responses with appropriate HTTP status
+      codes (400, 404, etc.).
+    - Payment tokens are no longer exposed in 404 error responses for security.
+
 - Fixed ``StripeProviderV3`` not setting ``captured_amount`` on payment
   confirmation in ``process_data()`` and ``status()``, which broke refunds.
 - ``StripeProvider``, which was deprecated in v3.0.0, has been dropped. Use

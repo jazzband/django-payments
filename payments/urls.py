@@ -7,11 +7,13 @@ from __future__ import annotations
 
 from django.db.transaction import atomic
 from django.http import Http404
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import path
 from django.urls import re_path
 from django.views.decorators.csrf import csrf_exempt
 
+from . import PaymentError
 from . import get_payment_model
 from .core import provider_factory
 
@@ -23,6 +25,8 @@ def process_data(request, token, provider=None):
     Calls process_data of an appropriate provider.
 
     Raises Http404 if variant does not exist.
+    Note: When called via static_callback, Http404 exceptions are caught
+    and converted to JSON error responses for webhook systems.
     """
     Payment = get_payment_model()
     payment = get_object_or_404(Payment, token=token)
@@ -37,15 +41,47 @@ def process_data(request, token, provider=None):
 @csrf_exempt
 @atomic
 def static_callback(request, variant):
+    """
+    Handle webhooks sent to a static provider endpoint.
+
+    Returns JSON responses for known error cases to provide machine-readable
+    feedback to webhook systems (e.g., Stripe, PayPal).
+
+    Unexpected exceptions will propagate and result in 500 errors, which
+    will be logged by standard Django error handling and reported to Sentry.
+    """
     try:
         provider = provider_factory(variant)
-    except ValueError as e:
-        raise Http404("No such provider") from e
+    except ValueError:
+        return JsonResponse(
+            {"error": "Invalid payment provider", "variant": variant}, status=400
+        )
 
-    token = provider.get_token_from_request(request=request, payment=None)
+    try:
+        token = provider.get_token_from_request(request=request, payment=None)
+    except PaymentError as e:
+        return JsonResponse(
+            {"error": str(e), "variant": variant, "error_code": e.code},
+            status=e.code or 400,
+        )
+
     if not token:
-        raise Http404("Invalid response")
-    return process_data(request, token, provider)
+        return JsonResponse(
+            {
+                "error": "Could not extract payment token from webhook",
+                "variant": variant,
+            },
+            status=400,
+        )
+
+    try:
+        return process_data(request, token, provider)
+    except Http404:
+        # Don't expose full token in error response for security
+        return JsonResponse(
+            {"error": "Payment not found", "variant": variant},
+            status=404,
+        )
 
 
 urlpatterns = [
