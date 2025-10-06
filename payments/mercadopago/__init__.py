@@ -134,8 +134,8 @@ class MercadoPagoProvider(BasicProvider):
             data,
         )
 
-        topic = data.get("topic", None)
-        resource = data.get("resource", None)
+        topic = data.get("topic")
+        resource = data.get("resource")
 
         if topic == "payment":
             match = re.search(r"(\d+)", resource)
@@ -147,7 +147,7 @@ class MercadoPagoProvider(BasicProvider):
         return HttpResponse("Thanks")
 
     def process_callback(self, payment: BasePayment, request: HttpRequest):
-        collection_id = request.GET.get("collection_id", None)
+        collection_id = request.GET.get("collection_id")
         if not collection_id or not collection_id.isdigit():
             payment.change_status(PaymentStatus.ERROR)
             return redirect(payment.get_failure_url())
