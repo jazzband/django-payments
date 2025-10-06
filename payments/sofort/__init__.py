@@ -89,7 +89,7 @@ class SofortProvider(BasicProvider):
             "payments/sofort/transaction_request.xml",
             {"transactions": [transaction_id]},
         )
-        doc, response = self.post_request(transaction_request)
+        doc, _response = self.post_request(transaction_request)
         try:
             # If there is a transaction and status returned,
             # the payment was successful
@@ -128,7 +128,7 @@ class SofortProvider(BasicProvider):
                 "comment": "User requested a refund",
             },
         )
-        doc, response = self.post_request(refund_request)
+        doc, _response = self.post_request(refund_request)
         # save the response msg in "message" field
         # to start a online transaction one needs to upload the "pain"
         # data to his bank account

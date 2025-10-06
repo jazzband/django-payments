@@ -385,7 +385,7 @@ class CyberSourceProvider(BasicProvider):
         }
 
     def _prepare_card_type(self, card_number):
-        card_type, card_name = get_credit_card_issuer(card_number)
+        card_type, _card_name = get_credit_card_issuer(card_number)
         if card_type == "visa":
             return "001"
         if card_type == "mastercard":
