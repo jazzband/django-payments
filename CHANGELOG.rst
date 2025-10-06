@@ -11,6 +11,7 @@ v4.0.0
   ``StripeProviderV3`` instead.
 - Drop support for Django 5.0.
 - Drop support for Python 3.9.
+- The stripe provider now requires ``stripe>=7.8.0``, released Dec 2023.
 
 v3.1.0
 ------

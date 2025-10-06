@@ -138,7 +138,7 @@ class StripeProviderV3(BasicProvider):
                 )
             try:
                 return stripe.checkout.Session.create(**session_data)
-            except stripe.error.StripeError as e:
+            except stripe.StripeError as e:
                 # Payment has been declined by Stripe, check Stripe Dashboard
                 raise PaymentError(e) from e
         else:
@@ -159,7 +159,7 @@ class StripeProviderV3(BasicProvider):
                     amount=self.convert_amount(payment.currency, to_refund),
                     reason="requested_by_customer",
                 )
-            except stripe.error.StripeError as e:
+            except stripe.StripeError as e:
                 raise PaymentError(e) from e
             else:
                 payment.attrs.refund = json.dumps(refund)
@@ -218,7 +218,7 @@ class StripeProviderV3(BasicProvider):
             except ValueError as e:
                 # Invalid payload
                 raise e
-            except stripe.error.SignatureVerificationError as e:
+            except stripe.SignatureVerificationError as e:
                 # Invalid signature
                 raise e
         else:
