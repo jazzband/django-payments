@@ -42,7 +42,7 @@ class MercadoPagoProvider(BasicProvider):
         pip install "django-payments[mercadopago]"
 
     :param access_token: The access token provided by MP.
-    :param sandbox: Whether to use sandbox more.
+    :param sandbox: Whether to use sandbox mode.
     """
 
     def __init__(self, access_token: str, sandbox: bool):
@@ -55,7 +55,7 @@ class MercadoPagoProvider(BasicProvider):
         return self.create_preference(payment)
 
     def get_preference(self, payment: BasePayment):
-        """Helper to fetch the preference for a payment."""
+        """Fetch the preference for a payment."""
         if not payment.transaction_id:
             raise ValueError("This payment does not have a preference.")
 
@@ -121,7 +121,7 @@ class MercadoPagoProvider(BasicProvider):
         return result["response"]
 
     def get_action(self, payment: BasePayment):
-        # This is the form-action. But we don't use a form.
+        # MercadoPago does not use form actions
         raise NotImplementedError
 
     def process_notification(self, payment: BasePayment, request: HttpRequest):
@@ -157,12 +157,9 @@ class MercadoPagoProvider(BasicProvider):
         return redirect(payment.get_success_url())
 
     def process_collection(self, payment: BasePayment, collection_id):
-        """Process a collection event.
+        """Process a collection event from MercadoPago.
 
-        MercadoPago sends us an event when they collect money. This fetches
-        details for that and updates the payment accordintly.
-
-        :param colection_id: The collection_id we got from MercadoPago.
+        :param collection_id: The collection ID we got from MercadoPago.
         """
         response = self.client.payment().get(collection_id)
         if response["status"] != 200:
@@ -179,10 +176,8 @@ class MercadoPagoProvider(BasicProvider):
     def process_data(self, payment: BasePayment, request: HttpRequest):
         """Handle a request received after a payment.
 
-        If it's a GET request, then it's the user being redirected after
-        completing a payment (it may have failed or have been successfull).
-
-        If it's a POST, it's a webhook notification.
+        GET = user being redirected after completing a payment.
+        POST = webhook notification.
         """
         if request.method == "GET":
             return self.process_callback(payment, request)
@@ -191,7 +186,6 @@ class MercadoPagoProvider(BasicProvider):
         return None
 
     def get_form(self, payment: BasePayment, data=None):
-        # There's no form for MP, we need to redirect to their checkout page.
         preference = self.get_or_create_preference(payment)
         logger.debug("Got preference: %s", preference)
 
@@ -210,12 +204,7 @@ class MercadoPagoProvider(BasicProvider):
         raise NotImplementedError
 
     def poll_for_updates(self, payment: BasePayment):
-        """Helper method to fetch any updates on MercadoPago.
-
-        There's occasional times of flakiness with their notification service,
-        and this helper method helps recover from that and pick up any missed
-        payments.
-        """
+        """Fetch updates from MercadoPago if notifications were missed."""
         data = self.client.payment().search(
             {
                 "external_reference": payment.attrs.external_reference,
