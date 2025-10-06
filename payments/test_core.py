@@ -58,7 +58,7 @@ def test_capture_with_wrong_status():
     payment = Payment(variant="default", status=PaymentStatus.WAITING)
     with pytest.raises(
         ValueError,
-        match="Only pre-authorized payments can be captured.",
+        match="Only pre-authorized payments can be captured\\.",
     ):
         payment.capture()
 
@@ -97,7 +97,7 @@ def test_release_with_wrong_status():
     payment = Payment(variant="default", status=PaymentStatus.WAITING)
     with pytest.raises(
         ValueError,
-        match="Only pre-authorized payments can be released.",
+        match="Only pre-authorized payments can be released\\.",
     ):
         payment.release()
 
@@ -113,7 +113,7 @@ def test_release_preauth_successfully(mocked_release_method):
 
 def test_refund_with_wrong_status():
     payment = Payment(variant="default", status=PaymentStatus.WAITING)
-    with pytest.raises(ValueError, match="Only charged payments can be refunded."):
+    with pytest.raises(ValueError, match="Only charged payments can be refunded\\."):
         payment.refund()
 
 

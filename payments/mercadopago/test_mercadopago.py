@@ -243,7 +243,7 @@ def test_create_preference_failure(mp_provider: MercadoPagoProvider):
         ),
         pytest.raises(
             PaymentError,
-            match="Failed to create MercadoPago preference.",
+            match="Failed to create MercadoPago preference\\.",
         ),
     ):
         mp_provider.create_preference(payment)
@@ -280,7 +280,7 @@ def test_process_failed_collection(mp_provider: MercadoPagoProvider):
         ),
         pytest.raises(
             PaymentError,
-            match="MercadoPago sent invalid payment data.",
+            match="MercadoPago sent invalid payment data\\.",
         ),
     ):
         mp_provider.process_collection(payment, "12")
@@ -346,7 +346,10 @@ def test_get_preference_internal_error(mp_provider: MercadoPagoProvider):
             spec=True,
             return_value=mocked_response,
         ) as get_preference,
-        pytest.raises(PaymentError, match="Failed to retrieve MercadoPago preference."),
+        pytest.raises(
+            PaymentError,
+            match="Failed to retrieve MercadoPago preference\\.",
+        ),
     ):
         mp_provider.get_preference(payment)
 
