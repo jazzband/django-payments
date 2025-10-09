@@ -11,6 +11,9 @@ from django.shortcuts import get_object_or_404
 from django.urls import path
 from django.urls import re_path
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from . import get_payment_model
 from .core import provider_factory
@@ -48,6 +51,23 @@ def static_callback(request, variant):
     return process_data(request, token, provider)
 
 
+@csrf_exempt
+@api_view(["GET"])
+def get_serializer_metadata(request, variant):
+    try:
+        provider = provider_factory(variant)
+    except ValueError:
+        return Response("No such provider", status=status.HTTP_404_NOT_FOUND)
+    try:
+        metadata = provider.serializer_class().get_metadata()
+    except AttributeError:
+        return Response(
+            "Provider doesn't serialization", status=status.HTTP_400_BAD_REQUEST
+        )
+
+    return Response(metadata)
+
+
 urlpatterns = [
     # A per-payment callback endpoint.
     # Providers that use a unique URL for each payment will deliver webhook
@@ -61,5 +81,13 @@ urlpatterns = [
         r"^process/(?P<variant>[a-z-]+)/$",
         static_callback,
         name="static_process_payment",
+    ),
+    # A static per-provider callback endpoint.
+    # Providers who support get_serializer will return
+    # serializer metadata using this endpoint.
+    re_path(
+        r"^process/(?P<variant>[a-z-]+)/serializer-metadata/$",
+        get_serializer_metadata,
+        name="serializer-metadata",
     ),
 ]
