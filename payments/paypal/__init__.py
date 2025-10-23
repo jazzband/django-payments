@@ -232,6 +232,7 @@ class PaypalProvider(BasicProvider):
             links = self._get_links(payment)
             redirect_to = links["approval_url"]
         payment.change_status(PaymentStatus.WAITING)
+        payment.save()
         raise RedirectNeeded(redirect_to["href"])
 
     def process_data(self, payment, request):
