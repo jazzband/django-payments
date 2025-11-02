@@ -5,6 +5,7 @@ from urllib.error import URLError
 from urllib.parse import urlencode
 
 import pytest
+from rest_framework import serializers
 
 from payments import FraudStatus
 from payments import PaymentError
@@ -12,6 +13,7 @@ from payments import PaymentStatus
 from payments import RedirectNeeded
 
 from . import DummyProvider
+from . import DummySerializer
 
 VARIANT = "dummy-3ds"
 
@@ -170,4 +172,81 @@ def test_provider_raises_payment_error(payment):
 def test_provider_switches_payment_status_on_get_form(payment):
     provider = DummyProvider()
     provider.get_form(payment, data={})
+    assert payment.status == PaymentStatus.INPUT
+
+
+# Test cases for get_serializer
+def test_provider_serializer_supports_non_3ds_transactions(payment):
+    provider = DummyProvider()
+    data = {
+        "status": PaymentStatus.PREAUTH,
+        "fraud_status": FraudStatus.UNKNOWN,
+        "gateway_response": "3ds-disabled",
+    }
+    serializer = provider.get_serializer(payment, data)
+    assert isinstance(serializer, DummySerializer)
+
+
+def test_provider_serializer_raises_verification_result_needed(payment):
+    provider = DummyProvider()
+    data = {
+        "status": PaymentStatus.WAITING,
+        "fraud_status": FraudStatus.UNKNOWN,
+        "gateway_response": "validation-failure",
+    }
+    with pytest.raises(serializers.ValidationError) as exc:
+        provider.get_serializer(payment, data)
+
+    assert "non_field_errors" in exc.value.args[0]
+
+
+def test_provider_serializer_supports_gateway_failure(payment):
+    provider = DummyProvider()
+    data = {
+        "status": PaymentStatus.WAITING,
+        "fraud_status": FraudStatus.UNKNOWN,
+        "gateway_response": "failure",
+    }
+    with pytest.raises(URLError):
+        provider.get_serializer(payment, data)
+
+
+def test_provider_returns_serializer_on_success(payment):
+    provider = DummyProvider()
+    data = {
+        "status": PaymentStatus.PREAUTH,
+        "fraud_status": FraudStatus.UNKNOWN,
+        "gateway_response": "3ds-disabled",
+    }
+    serializer = provider.get_serializer(payment, data)
+    assert isinstance(serializer, DummySerializer)
+
+
+def test_provider_serializer_raises_payment_error_on_failure(payment):
+    provider = DummyProvider()
+    data = {
+        "status": PaymentStatus.ERROR,
+        "fraud_status": FraudStatus.UNKNOWN,
+        "gateway_response": "3ds-disabled",
+    }
+    with pytest.raises(PaymentError):
+        provider.get_serializer(payment, data)
+
+
+def test_provider_raises_payment_error_on_serializer(payment):
+    provider = DummyProvider()
+    data = {
+        "status": PaymentStatus.PREAUTH,
+        "fraud_status": FraudStatus.UNKNOWN,
+        "gateway_response": "payment-error",
+    }
+    with pytest.raises(PaymentError):
+        provider.get_serializer(payment, data)
+
+
+def test_provider_switches_payment_status_on_get_serializer(payment):
+    provider = DummyProvider()
+    with pytest.raises(serializers.ValidationError):
+        provider.get_serializer(payment, data={})
+
     assert payment.status == PaymentStatus.INPUT
