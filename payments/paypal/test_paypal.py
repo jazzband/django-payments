@@ -514,6 +514,48 @@ def test_form_shows_validation_error_message(paypal_card_payment, paypal_card_pr
     assert paypal_card_payment.status == PaymentStatus.ERROR
     assert form.errors["__all__"][0] == error_message
 
+    def test_provider_get_with_none_payment(self):
+        test_url = "http://example.com/api/test"
+        expected_get_response_data = {"status": "success"}
+        expected_token = "test_access_token"
+        expected_token_type = "Bearer"
+
+        with patch("requests.post") as mocked_post, patch("requests.get") as mocked_get:
+            # Mock for token acquisition
+            token_response_mock = MagicMock()
+            token_response_mock.json.return_value = {
+                "access_token": expected_token,
+                "token_type": expected_token_type,
+                "expires_in": 3600,
+            }
+            token_response_mock.status_code = 200
+
+            # Mock for the actual GET request
+            get_response_mock = MagicMock()
+            get_response_mock.json.return_value = expected_get_response_data
+            get_response_mock.status_code = 200
+
+            mocked_post.return_value = token_response_mock
+            mocked_get.return_value = get_response_mock
+
+            response_data = self.provider.get(None, test_url)
+
+            mocked_post.assert_called_once_with(
+                self.provider.oauth2_url,
+                data={"grant_type": "client_credentials"},
+                headers={"Accept": "application/json", "Accept-Language": "en_US"},
+                auth=(self.provider.client_id, self.provider.secret),
+            )
+
+            mocked_get.assert_called_once_with(
+                test_url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"{expected_token_type} {expected_token}",
+                },
+            )
+            self.assertEqual(response_data, expected_get_response_data)
+
 
 def test_form_shows_internal_error_message(paypal_card_payment, paypal_card_provider):
     with patch("requests.post") as mocked_post:
