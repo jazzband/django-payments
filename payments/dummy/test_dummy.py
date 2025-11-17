@@ -178,10 +178,12 @@ def test_cancel_waiting_payment(payment):
     payment.status = PaymentStatus.WAITING
     provider.cancel(payment)
 
+
 def test_cancel_input_payment(payment):
     provider = DummyProvider()
     payment.status = PaymentStatus.INPUT
     provider.cancel(payment)
+
 
 def test_process_data_sets_cancelled_via_verification_result(payment):
     provider = DummyProvider()
@@ -193,6 +195,7 @@ def test_process_data_sets_cancelled_via_verification_result(payment):
     assert response.status_code == 302
     assert response["location"] == payment.get_failure_url()
 
+
 def test_cancelled_payment_redirects_to_failure(payment):
     provider = DummyProvider()
     payment.status = PaymentStatus.CANCELLED
@@ -200,6 +203,7 @@ def test_cancelled_payment_redirects_to_failure(payment):
     request.GET = {}
     response = provider.process_data(payment, request)
     assert response["location"] == payment.get_failure_url()
+
 
 def test_get_form_with_cancelled_status(payment):
     provider = DummyProvider()
