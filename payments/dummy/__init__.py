@@ -76,3 +76,6 @@ class DummyProvider(BasicProvider):
 
     def refund(self, payment, amount=None):
         return amount or 0
+    
+    def cancel(self, payment):
+        return None

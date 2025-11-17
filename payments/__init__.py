@@ -35,6 +35,7 @@ class PaymentStatus:
     REFUNDED = "refunded"
     ERROR = "error"
     INPUT = "input"
+    CANCELLED = "cancelled"
 
     CHOICES = [
         (WAITING, pgettext_lazy("payment status", "Waiting for confirmation")),
@@ -44,6 +45,7 @@ class PaymentStatus:
         (REFUNDED, pgettext_lazy("payment status", "Refunded")),
         (ERROR, pgettext_lazy("payment status", "Error")),
         (INPUT, pgettext_lazy("payment status", "Input")),
+        (CANCELLED, pgettext_lazy("payment status", "Cancelled")),
     ]
 
 
