@@ -151,7 +151,7 @@ class BasicProvider:
 
     def refund(self, payment, amount=None):
         raise NotImplementedError
-    
+
     def cancel(self, payment):
         raise NotImplementedError
 

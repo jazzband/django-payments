@@ -283,6 +283,7 @@ def test_cancel_with_wrong_status_confirmed():
     ):
         payment.cancel()
 
+
 def test_cancel_with_wrong_status_preauth():
     payment = Payment(variant="default", status=PaymentStatus.PREAUTH)
     with pytest.raises(
@@ -290,6 +291,7 @@ def test_cancel_with_wrong_status_preauth():
         match="Only waiting or input payments can be cancelled\\.",
     ):
         payment.cancel()
+
 
 def test_cancel_with_wrong_status_refunded():
     payment = Payment(variant="default", status=PaymentStatus.REFUNDED)
@@ -299,6 +301,7 @@ def test_cancel_with_wrong_status_refunded():
     ):
         payment.cancel()
 
+
 @patch("payments.dummy.DummyProvider.cancel")
 def test_cancel_waiting_payment_successfully(mocked_cancel_method):
     with patch.object(BasePayment, "save"):
@@ -306,6 +309,7 @@ def test_cancel_waiting_payment_successfully(mocked_cancel_method):
         payment.cancel()
         assert payment.status == PaymentStatus.CANCELLED
     assert mocked_cancel_method.call_count == 1
+
 
 @patch("payments.dummy.DummyProvider.cancel")
 def test_cancel_input_payment_successfully(mocked_cancel_method):
