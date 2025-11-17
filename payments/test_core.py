@@ -268,3 +268,44 @@ def test_amex():
         "amex",
         "American Express",
     )
+
+
+def test_cancel_with_wrong_status_confirmed():
+    payment = Payment(variant="default", status=PaymentStatus.CONFIRMED)
+    with pytest.raises(
+        ValueError,
+        match="Only waiting or input payments can be cancelled\\.",
+    ):
+        payment.cancel()
+
+def test_cancel_with_wrong_status_preauth():
+    payment = Payment(variant="default", status=PaymentStatus.PREAUTH)
+    with pytest.raises(
+        ValueError,
+        match="Only waiting or input payments can be cancelled\\.",
+    ):
+        payment.cancel()
+
+def test_cancel_with_wrong_status_refunded():
+    payment = Payment(variant="default", status=PaymentStatus.REFUNDED)
+    with pytest.raises(
+        ValueError,
+        match="Only waiting or input payments can be cancelled\\.",
+    ):
+        payment.cancel()
+
+@patch("payments.dummy.DummyProvider.cancel")
+def test_cancel_waiting_payment_successfully(mocked_cancel_method):
+    with patch.object(BasePayment, "save"):
+        payment = Payment(variant="default", status=PaymentStatus.WAITING)
+        payment.cancel()
+        assert payment.status == PaymentStatus.CANCELLED
+    assert mocked_cancel_method.call_count == 1
+
+@patch("payments.dummy.DummyProvider.cancel")
+def test_cancel_input_payment_successfully(mocked_cancel_method):
+    with patch.object(BasePayment, "save"):
+        payment = Payment(variant="default", status=PaymentStatus.INPUT)
+        payment.cancel()
+        assert payment.status == PaymentStatus.CANCELLED
+    assert mocked_cancel_method.call_count == 1
