@@ -239,6 +239,21 @@ class BasePayment(models.Model):
             self.change_status(PaymentStatus.REFUNDED)
         self.save()
 
+    def cancel(self):
+        """Cancel a payment.
+
+        Only payments that have not been processed can be cancelled.
+        For pre-authorized payments, use release() instead.
+        For confirmed payments, use refund() instead.
+
+        Note that not all providers support this method.
+        """
+        if self.status not in [PaymentStatus.WAITING, PaymentStatus.INPUT]:
+            raise ValueError("Only waiting or input payments can be cancelled.")
+        provider = provider_factory(self.variant, self)
+        provider.cancel(self)
+        self.change_status(PaymentStatus.CANCELLED)
+
     @property
     def attrs(self):
         """A JSON-serialised wrapper around `extra_data`.

@@ -171,3 +171,48 @@ def test_provider_switches_payment_status_on_get_form(payment):
     provider = DummyProvider()
     provider.get_form(payment, data={})
     assert payment.status == PaymentStatus.INPUT
+
+
+def test_cancel_waiting_payment(payment):
+    provider = DummyProvider()
+    payment.status = PaymentStatus.WAITING
+    provider.cancel(payment)
+
+
+def test_cancel_input_payment(payment):
+    provider = DummyProvider()
+    payment.status = PaymentStatus.INPUT
+    provider.cancel(payment)
+
+
+def test_process_data_sets_cancelled_via_verification_result(payment):
+    provider = DummyProvider()
+    payment.status = PaymentStatus.WAITING
+    request = MagicMock()
+    request.GET = {"verification_result": PaymentStatus.CANCELLED}
+    response = provider.process_data(payment, request)
+    assert payment.status == PaymentStatus.CANCELLED
+    assert response.status_code == 302
+    assert response["location"] == payment.get_failure_url()
+
+
+def test_cancelled_payment_redirects_to_failure(payment):
+    provider = DummyProvider()
+    payment.status = PaymentStatus.CANCELLED
+    request = MagicMock()
+    request.GET = {}
+    response = provider.process_data(payment, request)
+    assert response["location"] == payment.get_failure_url()
+
+
+def test_get_form_with_cancelled_status(payment):
+    provider = DummyProvider()
+    data = {
+        "status": PaymentStatus.CANCELLED,
+        "fraud_status": FraudStatus.UNKNOWN,
+        "gateway_response": "3ds-disabled",
+        "verification_result": "",
+    }
+    with pytest.raises(RedirectNeeded) as exc:
+        provider.get_form(payment, data)
+    assert exc.value.args[0] == payment.get_failure_url()
