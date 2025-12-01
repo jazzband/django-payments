@@ -50,6 +50,11 @@ Example implementation
                   currency='USD',
               )
 
+          # OPTIONAL: If you are using django-payments within a namespaced app,
+          # you need to override get_process_url to include your namespace.
+          def get_process_url(self) -> str:
+              return reverse("REPLACE_YOUR_NAMESPACE:process_payment", kwargs={"token": self.token})
+
 Create a payment view
 ---------------------
 
