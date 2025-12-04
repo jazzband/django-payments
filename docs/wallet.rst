@@ -498,4 +498,3 @@ See Also
 * :doc:`webhooks` - Webhook handling
 * :doc:`preauth` - Pre-authorization
 * `django-payments-payu <https://github.com/PetrDlouhy/django-payments-payu>`_ - Example wallet implementation
-

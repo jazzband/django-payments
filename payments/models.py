@@ -104,7 +104,10 @@ class BaseWallet(models.Model):
         Args:
             payment: The BasePayment instance that was completed
         """
-        if payment.status == PaymentStatus.CONFIRMED and self.status == WalletStatus.PENDING:
+        if (
+            payment.status == PaymentStatus.CONFIRMED
+            and self.status == WalletStatus.PENDING
+        ):
             self.status = WalletStatus.ACTIVE
             self.save(update_fields=["status"])
 
@@ -303,7 +306,7 @@ class BasePayment(models.Model):
         Returns:
             str or None: Payment method token/ID for recurring charges
         """
-        return None
+        return
 
     def set_renew_token(
         self,

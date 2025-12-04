@@ -1,7 +1,9 @@
 # Generated migration for wallet support
+from __future__ import annotations
 
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations
+from django.db import models
 
 
 class Migration(migrations.Migration):
@@ -78,4 +80,3 @@ class Migration(migrations.Migration):
             ),
         ),
     ]
-
