@@ -79,8 +79,7 @@ class BaseWallet(models.Model):
             "card token for PayU, recurringDetailReference for Adyen)"
         ),
         max_length=255,
-        default=None,
-        null=True,
+        default="",
         blank=True,
     )
     status = models.CharField(

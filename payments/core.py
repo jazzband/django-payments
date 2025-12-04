@@ -177,7 +177,8 @@ class BasicProvider:
 
         Args:
             payment: BasePayment instance that was charged
-            wallet: Optional wallet instance (will try to get from payment if not provided)
+            wallet: Optional wallet instance (will try to get from payment if not
+                provided)
         """
         if wallet is None and hasattr(payment, "wallet"):
             wallet = payment.wallet

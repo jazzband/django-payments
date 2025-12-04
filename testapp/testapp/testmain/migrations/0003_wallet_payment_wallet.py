@@ -28,10 +28,12 @@ class Migration(migrations.Migration):
                     "token",
                     models.CharField(
                         blank=True,
-                        default=None,
-                        help_text="Payment method token/ID from provider (e.g., PaymentMethod ID for Stripe, card token for PayU, recurringDetailReference for Adyen)",
+                        default="",
+                        help_text=(
+                            "Payment method token/ID from provider "
+                            "(e.g., PaymentMethod ID for Stripe, card token for PayU)"
+                        ),
                         max_length=255,
-                        null=True,
                         verbose_name="wallet token/id",
                     ),
                 ),
@@ -51,14 +53,20 @@ class Migration(migrations.Migration):
                     "extra_data",
                     models.JSONField(
                         default=dict,
-                        help_text="Provider-specific data (e.g., card details, expiry dates, customer IDs)",
+                        help_text=(
+                            "Provider-specific data "
+                            "(e.g., card details, expiry dates, customer IDs)"
+                        ),
                         verbose_name="extra data",
                     ),
                 ),
                 (
                     "payment_provider",
                     models.CharField(
-                        help_text="Payment variant name (e.g., 'stripe-recurring', 'payu-recurring')",
+                        help_text=(
+                            "Payment variant name "
+                            "(e.g., 'stripe-recurring', 'payu-recurring')"
+                        ),
                         max_length=50,
                     ),
                 ),
