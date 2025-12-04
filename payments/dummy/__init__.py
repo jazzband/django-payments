@@ -66,6 +66,28 @@ class DummyProvider(BasicProvider):
             return HttpResponseRedirect(payment.get_success_url())
         return HttpResponseRedirect(payment.get_failure_url())
 
+    def autocomplete_with_wallet(self, payment):
+        """
+        Dummy implementation of wallet-based recurring payment.
+
+        This demonstrates the expected flow for wallet-based providers:
+        1. Get token from payment.get_renew_token()
+        2. Simulate charging with the stored payment method
+        3. Update payment status
+        4. Call _finalize_wallet_payment on success
+        """
+        renew_token = payment.get_renew_token()
+        if not renew_token:
+            raise PaymentError("No payment method token found for recurring payment")
+
+        # Simulate successful charge
+        payment.transaction_id = f"dummy-wallet-charge-{payment.token}"
+        payment.captured_amount = payment.total
+        payment.change_status(PaymentStatus.CONFIRMED)
+
+        # Finalize wallet payment (triggers wallet.payment_completed)
+        self._finalize_wallet_payment(payment)
+
     def capture(self, payment, amount=None):
         payment.change_status(PaymentStatus.CONFIRMED)
         payment.captured_amount = amount or payment.total

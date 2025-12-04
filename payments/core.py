@@ -9,6 +9,8 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
+from . import WalletStatus
+
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
@@ -142,6 +144,60 @@ class BasicProvider:
             qs = urlencode(extra_data)
             return url + "?" + qs
         return url
+
+    def autocomplete_with_wallet(self, payment):
+        """
+        Complete the payment with wallet (server-initiated recurring payment).
+
+        This method is called when the implementer wants to charge a payment using
+        a stored payment method (wallet). The provider should:
+        1. Retrieve the payment method token from payment.get_renew_token()
+        2. Create a charge with the payment provider's API
+        3. Update payment status accordingly
+        4. Call self._finalize_wallet_payment(payment) on success
+
+        If user interaction is required (e.g., 3D Secure), raise RedirectNeeded
+        with the URL where the user should be redirected.
+
+        Args:
+            payment: BasePayment instance to charge
+
+        Raises:
+            RedirectNeeded: If user interaction required (3DS, CVV, etc.)
+            PaymentError: If payment fails
+        """
+        raise NotImplementedError
+
+    def _finalize_wallet_payment(self, payment, wallet=None):
+        """
+        Internal helper to finalize wallet payment.
+
+        Should be called by providers after successful wallet payment.
+        Triggers payment_completed hook on the wallet if available.
+
+        Args:
+            payment: BasePayment instance that was charged
+            wallet: Optional wallet instance (will try to get from payment if not
+                provided)
+        """
+        if wallet is None and hasattr(payment, "wallet"):
+            wallet = payment.wallet
+
+        if wallet is not None:
+            wallet.payment_completed(payment)
+
+    def erase_wallet(self, wallet):
+        """
+        Erase/deactivate a wallet.
+
+        Default implementation marks wallet as ERASED. Providers should override
+        to also delete/detach the payment method from their system.
+
+        Args:
+            wallet: BaseWallet instance to erase
+        """
+        wallet.status = WalletStatus.ERASED
+        wallet.save(update_fields=["status"])
 
     def capture(self, payment, amount=None):
         raise NotImplementedError
