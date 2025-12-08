@@ -61,35 +61,87 @@ Your webhook URL would be::
 Stripe Webhooks
 ===============
 
+Stripe uses **global webhook endpoints** (configured once in dashboard for all payments).
+
+Important: Stripe Test vs Live Mode
+------------------------------------
+
+Stripe doesn't have a "sandbox" like PayU. Instead:
+
+- **Test mode:** Uses ``sk_test_*`` API keys - no real charges
+- **Live mode:** Uses ``sk_live_*`` API keys - real charges
+
+**Each mode has its own webhooks configured separately in the Stripe Dashboard.**
+
 Setting up Webhooks in Stripe
 -----------------------------
 
-To receive real-time payment notifications from Stripe, follow these steps:
+**For Test Mode (Development):**
 
-#. Log in to your `Stripe Dashboard <https://dashboard.stripe.com/>`_.
-#. In the left sidebar, navigate to **Developers** → **Webhooks**.
-#. Click **+ Add endpoint** to create a new webhook listener.
-#. Enter the webhook URL in the "Endpoint URL" field. The URL should follow the
-   format::
+#. Log in to `Stripe Dashboard <https://dashboard.stripe.com/>`_ and switch to **Test mode** (toggle in top right).
+#. Navigate to **Developers** → **Webhooks**.
+#. Click **Add destination** then choose **Webhook**.
+#. Enter webhook URL using your **variant name**::
 
-      https://your-app.com/payments/process/{variant}/
+      https://your-devel-server.com/payments/process/stripe-recurring/
 
-   where ``{variant}`` is the name configured in ``PAYMENT_VARIANTS``.
-   Example: ``https://your-app.com/payments/process/stripe/``
+   **Important:** Use the variant name from ``PAYMENT_VARIANTS``, not ``<uuid:token>``
 
-#. Select the events you want to receive notifications for. At a minimum,
-   include these:
+#. Select events (expand sections to find):
 
-   - ``checkout.session.async_payment_failed``
-   - ``checkout.session.async_payment_succeeded``
-   - ``checkout.session.completed``
-   - ``checkout.session.expired``
+   **Checkout section:**
+      - ``checkout.session.completed``
+      - ``checkout.session.expired``
+      - ``checkout.session.async_payment_succeeded``
+      - ``checkout.session.async_payment_failed``
 
-#. Click **Add endpoint** to save the webhook configuration.
-#. Copy the **Signing secret** provided by Stripe. You will need this to verify
-   webhook authenticity in your Django application.
-#. Test the webhook by sending a test event using Stripe's **Send test
-   webhook** feature.
+   **Payment Intent section** (for recurring payments):
+      - ``payment_intent.succeeded``
+      - ``payment_intent.payment_failed``
+      - ``payment_intent.requires_action``
+
+#. Choose **"Your account"** for event source (not "Connected accounts").
+#. Click **Add destination** to save.
+#. Copy the **Signing secret** (starts with ``whsec_``) to your settings.
+
+**For Live Mode (Production):**
+
+Repeat the same steps but:
+- Switch to **Live mode** in Stripe Dashboard
+- Use your production domain in webhook URL
+- You'll get a different signing secret
+
+**Configuration:**
+
+.. code-block:: python
+
+   # Test mode (development)
+   PAYMENT_VARIANTS = {
+       'stripe-recurring': (
+           'payments.stripe.StripeProviderV3',
+           {
+               'api_key': 'sk_test_...',  # Test key
+               'endpoint_secret': 'whsec_...',  # Test webhook secret
+           }
+       )
+   }
+
+   # Live mode (production)
+   PAYMENT_VARIANTS = {
+       'stripe-recurring': (
+           'payments.stripe.StripeProviderV3',
+           {
+               'api_key': 'sk_live_...',  # Live key
+               'endpoint_secret': 'whsec_...',  # Live webhook secret
+           }
+       )
+   }
+
+**How Stripe webhooks work:**
+
+Stripe sends all events to the same URL. The payment is identified by
+``client_reference_id`` in the webhook payload, which django-payments
+automatically extracts using ``get_token_from_request()``.
 
 Testing Webhooks Locally
 ------------------------
