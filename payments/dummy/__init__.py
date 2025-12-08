@@ -76,8 +76,8 @@ class DummyProvider(BasicProvider):
         3. Update payment status
         4. Call _finalize_wallet_payment on success
 
-        Note: get_renew_token() should check wallet status and only return
-        token if wallet is ACTIVE. This prevents charging erased wallets.
+        Note: Real providers should validate wallet status before charging.
+        DummyProvider is lenient for testing purposes.
         """
         renew_token = payment.get_renew_token()
         if not renew_token:
@@ -87,6 +87,7 @@ class DummyProvider(BasicProvider):
         payment.transaction_id = f"dummy-wallet-charge-{payment.token}"
         payment.captured_amount = payment.total
         payment.change_status(PaymentStatus.CONFIRMED)
+        payment.save(update_fields=["transaction_id", "captured_amount"])
 
         # Finalize wallet payment (triggers wallet.payment_completed)
         self._finalize_wallet_payment(payment)
