@@ -17,6 +17,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from . import FraudStatus
 from . import PaymentStatus
 from . import PurchasedItem
+from . import WalletStatus
 from .core import provider_factory
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,83 @@ class PaymentAttributeProxy:
         data[key] = value
         self._payment.extra_data = json.dumps(data)
         return None
+
+
+class BaseWallet(models.Model):
+    """
+    Abstract model for storing payment method tokens for recurring payments.
+
+    This model provides a base structure for wallet-based payment providers
+    (PayU, Stripe, Adyen, etc.) that support server-initiated recurring payments.
+
+    Typical usage:
+        1. Create wallet when user enrolls in recurring payments
+        2. After first successful payment, provider stores token and activates wallet
+        3. For recurring charges, retrieve token and charge through provider
+        4. When user cancels, erase wallet through provider.erase_wallet()
+
+    Example implementation:
+        class Wallet(BaseWallet):
+            user = models.ForeignKey(User, on_delete=models.CASCADE)
+            payment_provider = models.CharField(max_length=50)
+
+            def payment_completed(self, payment):
+                # Custom logic after successful payment
+                if payment.status == PaymentStatus.CONFIRMED:
+                    self.activate()
+                    self.user.send_notification("Payment successful")
+    """
+
+    token = models.CharField(
+        _("wallet token/id"),
+        help_text=_(
+            "Payment method token/ID from provider (e.g., PaymentMethod ID for Stripe, "
+            "card token for PayU, recurringDetailReference for Adyen)"
+        ),
+        max_length=255,
+        default="",
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=10, choices=WalletStatus.CHOICES, default=WalletStatus.PENDING
+    )
+    extra_data = models.JSONField(
+        _("extra data"),
+        help_text=_(
+            "Provider-specific data (e.g., card details, expiry dates, customer IDs)"
+        ),
+        default=dict,
+    )
+
+    class Meta:
+        abstract = True
+
+    def payment_completed(self, payment):
+        """
+        Called after a payment using this wallet is completed successfully.
+
+        Default implementation activates the wallet on first successful payment.
+        Override in subclass for custom behavior (notifications, logging, etc.).
+
+        Args:
+            payment: The BasePayment instance that was completed
+        """
+        if (
+            payment.status == PaymentStatus.CONFIRMED
+            and self.status == WalletStatus.PENDING
+        ):
+            self.status = WalletStatus.ACTIVE
+            self.save(update_fields=["status"])
+
+    def activate(self):
+        """Mark wallet as active and ready for recurring charges."""
+        self.status = WalletStatus.ACTIVE
+        self.save(update_fields=["status"])
+
+    def erase(self):
+        """Mark wallet as erased (no longer usable)."""
+        self.status = WalletStatus.ERASED
+        self.save(update_fields=["status"])
 
 
 class BasePayment(models.Model):
@@ -191,6 +269,114 @@ class BasePayment(models.Model):
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
+
+    def get_payment_url(self) -> str:
+        """
+        Get the url the view that handles the payment
+        (payment_details() in documentation)
+        For now used only by PayU provider to redirect users back to CVV2 form
+        """
+        raise NotImplementedError
+
+    def autocomplete_with_wallet(self):
+        """
+        Complete the payment with wallet (server-initiated charge).
+
+        This method charges a stored payment method without user interaction.
+        The amount is taken from payment.total - it can vary with each charge.
+
+        Use cases:
+        - Subscription renewals (fixed or variable amounts)
+        - Usage-based billing (charges based on consumption)
+        - Flexible billing (proration, credits, discounts)
+        - Multi-charge workflows (deposits, installments)
+
+        Security: This method performs NO authorization checks. The caller must:
+        - Verify user ownership of payment/wallet before calling
+        - Implement rate limiting to prevent abuse
+        - Validate payment amount and currency
+
+        Raises:
+            RedirectNeeded: If user interaction required (3D Secure, CVV, etc.)
+            PaymentError: If payment fails or no token found
+        """
+        provider = provider_factory(self.variant)
+        provider.autocomplete_with_wallet(self)
+
+    def get_renew_token(self):
+        """
+        Get stored payment method token for recurring payments.
+
+        Default implementation returns None. Subclasses should override this method
+        to return the token from their storage mechanism (e.g., from a related
+        wallet model, RecurringUserPlan model, or extra_data field).
+
+        Security: Only return token if wallet status is ACTIVE. Never return
+        tokens from PENDING or ERASED wallets.
+
+        For simple use cases with wallet support, this can be implemented as:
+            if self.wallet and self.wallet.status == WalletStatus.ACTIVE:
+                return self.wallet.token
+            return None
+
+        Returns:
+            str or None: Payment method token/ID for recurring charges
+        """
+        return
+
+    def get_renew_data(self):
+        """
+        Get all data needed for recurring payment charge.
+
+        Default implementation returns token only (backward compatible with
+        get_renew_token). Override to return provider-specific data
+        (customer_id, etc.).
+
+        Example override for providers requiring additional data:
+            def get_renew_data(self):
+                token = self.wallet.token
+                if not token:
+                    return None
+                return {
+                    "token": token,
+                    "customer_id": self.wallet.extra_data.get("stripe_customer_id"),
+                }
+
+        Returns:
+            dict or None: Payment data with at minimum {"token": "xxx"},
+                or None if no data
+        """
+        token = self.get_renew_token()
+        return {"token": token} if token else None
+
+    def set_renew_token(
+        self,
+        token,
+        card_expire_year=None,
+        card_expire_month=None,
+        card_masked_number=None,
+        automatic_renewal=True,
+        **kwargs,
+    ):
+        """
+        Store payment method token for future recurring payments.
+
+        Default implementation does nothing. Subclasses should override this method
+        to store the token in their storage mechanism (e.g., in a related wallet
+        model, RecurringUserPlan model, or extra_data field).
+
+        For simple use cases with wallet support, this can be implemented as:
+            self.wallet_token = token
+            self.save()
+
+        Args:
+            token: Payment method token/ID from the provider
+            card_expire_year: Card expiration year (optional)
+            card_expire_month: Card expiration month (optional)
+            card_masked_number: Masked card number for display (optional)
+            automatic_renewal: Whether automatic renewal is enabled (optional)
+            **kwargs: Provider-specific data (e.g., customer_id for Stripe)
+        """
 
     def capture(self, amount=None):
         """Capture a pre-authorized payment.
