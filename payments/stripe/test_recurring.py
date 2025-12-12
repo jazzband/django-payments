@@ -22,6 +22,26 @@ from .providers import StripeProviderV3
 API_KEY = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
 
 
+class MockStripeIntent(dict):
+    """
+    JSON-serializable mock for Stripe PaymentIntent objects.
+    
+    Stripe objects are dict-like and JSON-serializable. This mock replicates
+    that behavior so tests can store intents in payment.attrs without
+    triggering "Object of type Mock is not JSON serializable" errors.
+    """
+    
+    def __getattr__(self, key):
+        try:
+            value = self[key]
+            # Recursively wrap nested dicts for attribute access
+            if isinstance(value, dict):
+                return MockStripeIntent(value)
+            return value
+        except KeyError as e:
+            raise AttributeError(key) from e
+
+
 class StripeRecurringPaymentTests(TestCase):
     """Test server-initiated recurring payments using stored payment methods."""
 
@@ -48,10 +68,10 @@ class StripeRecurringPaymentTests(TestCase):
         )
 
         # Mock successful PaymentIntent
-        mock_pi_create.return_value = Mock(
-            id="pi_test_123",
-            status="succeeded",
-        )
+        mock_pi_create.return_value = MockStripeIntent({
+            "id": "pi_test_123",
+            "status": "succeeded",
+        })
 
         # Execute recurring charge
         self.provider.autocomplete_with_wallet(payment)
@@ -103,14 +123,14 @@ class StripeRecurringPaymentTests(TestCase):
         )
 
         # Mock PaymentIntent requiring 3DS
-        mock_pi_create.return_value = Mock(
-            id="pi_test_123",
-            status="requires_action",
-            next_action=Mock(
-                type="redirect_to_url",
-                redirect_to_url=Mock(url="https://stripe.com/3ds/authenticate"),
-            ),
-        )
+        mock_pi_create.return_value = MockStripeIntent({
+            "id": "pi_test_123",
+            "status": "requires_action",
+            "next_action": {
+                "type": "redirect_to_url",
+                "redirect_to_url": {"url": "https://stripe.com/3ds/authenticate"},
+            },
+        })
 
         # Should raise RedirectNeeded
         with pytest.raises(RedirectNeeded) as exc_info:
@@ -129,11 +149,11 @@ class StripeRecurringPaymentTests(TestCase):
         )
 
         # Mock declined payment
-        mock_pi_create.return_value = Mock(
-            id="pi_test_123",
-            status="requires_payment_method",
-            last_payment_error=Mock(message="Your card was declined"),
-        )
+        mock_pi_create.return_value = MockStripeIntent({
+            "id": "pi_test_123",
+            "status": "requires_payment_method",
+            "last_payment_error": {"message": "Your card was declined"},
+        })
 
         # Execute - should not raise
         self.provider.autocomplete_with_wallet(payment)
