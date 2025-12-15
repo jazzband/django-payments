@@ -72,6 +72,7 @@ stripe_enabled_events: list = [
     "checkout.session.async_payment_failed",
     "checkout.session.async_payment_succeeded",
     "checkout.session.completed",
+    "setup_intent.succeeded",  # For zero-dollar auth (card changes)
 ]
 
 
@@ -86,6 +87,9 @@ class StripeProviderV3(BasicProvider):
         (server-initiated).
     :param store_payment_method: Store PaymentMethod for future use
         (auto-enabled if recurring_payments=True).
+    :param use_setup_mode: Use setup mode (for zero-dollar auth / card changes).
+        Creates SetupIntent instead of PaymentIntent. Mutually exclusive with
+        regular payments.
     """
 
     form_class = BasePaymentForm
@@ -98,6 +102,7 @@ class StripeProviderV3(BasicProvider):
         secure_endpoint=True,
         recurring_payments=False,
         store_payment_method=False,
+        use_setup_mode=False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -106,7 +111,10 @@ class StripeProviderV3(BasicProvider):
         self.endpoint_secret = endpoint_secret
         self.secure_endpoint = secure_endpoint
         self.recurring_payments = recurring_payments
-        self.store_payment_method = store_payment_method or recurring_payments
+        self.use_setup_mode = use_setup_mode
+        self.store_payment_method = (
+            store_payment_method or recurring_payments or use_setup_mode
+        )
 
     def get_form(self, payment, data=None):
         if not payment.transaction_id:
@@ -129,28 +137,49 @@ class StripeProviderV3(BasicProvider):
         """Makes the call to Stripe to create the Checkout Session"""
         if not payment.transaction_id:
             stripe.api_key = self.api_key
+            
             session_data = {
-                "line_items": self.get_line_items(payment),
-                "mode": "payment",
                 "success_url": urljoin(get_base_url(), payment.get_success_url()),
                 "cancel_url": urljoin(get_base_url(), payment.get_failure_url()),
                 "client_reference_id": payment.token if self.use_token else payment.pk,
             }
-
-            # Enable payment method storage for recurring payments
-            if self.store_payment_method:
-                session_data["payment_intent_data"] = {
-                    "setup_future_usage": "off_session",
-                }
-
-                # Reuse existing customer if available (from previous payment)
+            
+            if self.use_setup_mode:
+                # Setup mode for zero-dollar auth (card changes)
+                # Collects payment method without charging
+                session_data["mode"] = "setup"
+                
+                # Reuse existing customer if available
                 renew_data = payment.get_renew_data()
                 if renew_data and renew_data.get("customer_id"):
                     session_data["customer"] = renew_data["customer_id"]
                 else:
-                    # Force customer creation for new subscriptions
-                    # This ensures PaymentMethod is attached to a customer
+                    # Force customer creation
                     session_data["customer_creation"] = "always"
+                
+                # Configure setup intent for future use
+                session_data["setup_intent_data"] = {
+                    "metadata": {"payment_id": str(payment.pk)},
+                }
+            else:
+                # Payment mode for normal payments
+                session_data["mode"] = "payment"
+                session_data["line_items"] = self.get_line_items(payment)
+                
+                # Enable payment method storage for recurring payments
+                if self.store_payment_method:
+                    session_data["payment_intent_data"] = {
+                        "setup_future_usage": "off_session",
+                    }
+
+                    # Reuse existing customer if available (from previous payment)
+                    renew_data = payment.get_renew_data()
+                    if renew_data and renew_data.get("customer_id"):
+                        session_data["customer"] = renew_data["customer_id"]
+                    else:
+                        # Force customer creation for new subscriptions
+                        # This ensures PaymentMethod is attached to a customer
+                        session_data["customer_creation"] = "always"
 
             # Patch session with billing email if exists (only if no customer set)
             if payment.billing_email and "customer" not in session_data:
@@ -426,25 +455,50 @@ class StripeProviderV3(BasicProvider):
         # Call parent to mark wallet as ERASED
         super().erase_wallet(wallet)
 
+    def _is_session_complete(self, session_info):
+        """Check if Checkout Session is complete (payment or setup mode)."""
+        # Setup mode (zero-dollar): check setup_intent status
+        if session_info.get("mode") == "setup":
+            setup_intent_id = session_info.get("setup_intent")
+            if setup_intent_id:
+                stripe.api_key = self.api_key
+                setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
+                return setup_intent.status == "succeeded"
+            return False
+        
+        # Payment mode: check payment_status
+        return session_info.get("payment_status") == "paid"
+
     def _store_payment_method_from_session(self, payment, session_info):
         """
         Extract and store PaymentMethod and Customer from Checkout Session.
 
         Called after payment is confirmed to store payment method for future
-        recurring charges. Extracts customer_id from PaymentIntent (created by
-        Stripe Checkout) and passes it to implementer via set_renew_token().
+        recurring charges. Handles both PaymentIntent (payment mode) and
+        SetupIntent (setup mode for zero-dollar auth).
         """
         stripe.api_key = self.api_key
 
         try:
-            # Get PaymentIntent from session
-            payment_intent_id = session_info.get("payment_intent")
-            if not payment_intent_id:
-                return
+            # Check if this is setup mode (zero-dollar) or payment mode
+            if session_info.get("mode") == "setup":
+                # Setup mode: Get SetupIntent
+                setup_intent_id = session_info.get("setup_intent")
+                if not setup_intent_id:
+                    return
+                
+                setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
+                payment_method_id = setup_intent.payment_method
+                customer_id = setup_intent.customer
+            else:
+                # Payment mode: Get PaymentIntent
+                payment_intent_id = session_info.get("payment_intent")
+                if not payment_intent_id:
+                    return
 
-            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-            payment_method_id = payment_intent.payment_method
-            customer_id = payment_intent.customer
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                payment_method_id = payment_intent.payment_method
+                customer_id = payment_intent.customer
 
             if not payment_method_id:
                 return
@@ -493,7 +547,7 @@ class StripeProviderV3(BasicProvider):
                 # Expired Order
                 payment.change_status(PaymentStatus.REJECTED)
 
-            elif session_info["payment_status"] == "paid":
+            elif self._is_session_complete(session_info):
                 # Store PaymentMethod BEFORE changing status
                 # This is important because status change triggers signal that
                 # sets token_verified=True. Use atomic transaction to prevent
