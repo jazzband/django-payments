@@ -180,7 +180,7 @@ def test_get_line_items_includes_description():
     payment.description = "Premium subscription for user@example.com"
     payment.token = "test-token-123"
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     line_items = provider.get_line_items(payment)
 
     assert len(line_items) == 1
@@ -195,7 +195,7 @@ def test_get_line_items_without_description():
     payment.description = ""  # Empty description
     payment.token = "test-token-456"
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     line_items = provider.get_line_items(payment)
 
     assert len(line_items) == 1
@@ -217,20 +217,20 @@ def test_create_session_includes_billing_metadata():
     payment.billing_country_code = "US"
     payment.billing_country_area = "NY"
     payment.billing_phone = "+1234567890"
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_123",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     # Verify metadata was passed
     call_kwargs = mock_create.call_args[1]
     metadata = call_kwargs["metadata"]
-    
+
     assert metadata["customer_name"] == "John Doe"
     assert metadata["billing_address_1"] == "123 Main St"
     assert metadata["billing_address_2"] == "Apt 4B"
@@ -253,19 +253,19 @@ def test_create_session_billing_metadata_partial():
     payment.billing_country_code = ""
     payment.billing_country_area = ""
     payment.billing_phone = ""
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_456",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
     metadata = call_kwargs["metadata"]
-    
+
     # Only provided fields should be present
     assert metadata["customer_name"] == "Jane"
     assert metadata["billing_city"] == "Boston"
@@ -286,18 +286,18 @@ def test_create_session_no_billing_metadata():
     payment.billing_country_code = ""
     payment.billing_country_area = ""
     payment.billing_phone = ""
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_789",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
-    
+
     # metadata should not be present if no billing data
     assert "metadata" not in call_kwargs
 
@@ -314,21 +314,21 @@ def test_create_session_billing_address_uses_stripe_default():
     payment.billing_city = "Chicago"
     payment.billing_postcode = "60601"
     payment.billing_country_code = "US"
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_address",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
-    
+
     # billing_address_collection should NOT be set - use Stripe's default "auto"
     assert "billing_address_collection" not in call_kwargs
-    
+
     # But metadata should contain the address for audit trail
     assert "metadata" in call_kwargs
     assert call_kwargs["metadata"]["billing_address_1"] == "456 Oak Ave"
@@ -348,21 +348,21 @@ def test_create_session_billing_metadata_only_with_name():
     payment.billing_country_code = ""
     payment.billing_country_area = ""
     payment.billing_phone = ""
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_no_address",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
-    
+
     # billing_address_collection should not be set (use Stripe default)
     assert "billing_address_collection" not in call_kwargs
-    
+
     # Metadata should contain name but not empty address fields
     assert "metadata" in call_kwargs
     assert call_kwargs["metadata"]["customer_name"] == "Alice Smith"
