@@ -137,18 +137,18 @@ class StripeProviderV3(BasicProvider):
         """Makes the call to Stripe to create the Checkout Session"""
         if not payment.transaction_id:
             stripe.api_key = self.api_key
-            
+
             session_data = {
                 "success_url": urljoin(get_base_url(), payment.get_success_url()),
                 "cancel_url": urljoin(get_base_url(), payment.get_failure_url()),
                 "client_reference_id": payment.token if self.use_token else payment.pk,
             }
-            
+
             if self.use_setup_mode:
                 # Setup mode for zero-dollar auth (card changes)
                 # Collects payment method without charging
                 session_data["mode"] = "setup"
-                
+
                 # Reuse existing customer if available
                 renew_data = payment.get_renew_data()
                 if renew_data and renew_data.get("customer_id"):
@@ -156,7 +156,7 @@ class StripeProviderV3(BasicProvider):
                 else:
                     # Force customer creation
                     session_data["customer_creation"] = "always"
-                
+
                 # Configure setup intent for future use
                 session_data["setup_intent_data"] = {
                     "metadata": {"payment_id": str(payment.pk)},
@@ -165,7 +165,7 @@ class StripeProviderV3(BasicProvider):
                 # Payment mode for normal payments
                 session_data["mode"] = "payment"
                 session_data["line_items"] = self.get_line_items(payment)
-                
+
                 # Enable payment method storage for recurring payments
                 if self.store_payment_method:
                     session_data["payment_intent_data"] = {
@@ -465,7 +465,7 @@ class StripeProviderV3(BasicProvider):
                 setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
                 return setup_intent.status == "succeeded"
             return False
-        
+
         # Payment mode: check payment_status
         return session_info.get("payment_status") == "paid"
 
@@ -486,7 +486,7 @@ class StripeProviderV3(BasicProvider):
                 setup_intent_id = session_info.get("setup_intent")
                 if not setup_intent_id:
                     return
-                
+
                 setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
                 payment_method_id = setup_intent.payment_method
                 customer_id = setup_intent.customer
