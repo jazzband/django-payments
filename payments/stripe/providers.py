@@ -82,8 +82,10 @@ class StripeProviderV3(BasicProvider):
     :param use_token: Use instance.token instead of instance.pk in client_reference_id
     :param endpoint_secret: Endpoint Signing Secret.
     :param secure_endpoint: Validate the recieved data, useful for development.
-    :param recurring_payments: Enable wallet-based recurring payments (server-initiated).
-    :param store_payment_method: Store PaymentMethod for future use (auto-enabled if recurring_payments=True).
+    :param recurring_payments: Enable wallet-based recurring payments
+        (server-initiated).
+    :param store_payment_method: Store PaymentMethod for future use
+        (auto-enabled if recurring_payments=True).
     """
 
     form_class = BasePaymentForm
@@ -154,16 +156,32 @@ class StripeProviderV3(BasicProvider):
             if payment.billing_email and "customer" not in session_data:
                 session_data.update({"customer_email": payment.billing_email})
 
-            # Patch session with billing name
+            # Store billing name and address in metadata for audit trail
+            # Note: We rely on Stripe's default billing_address_collection="auto"
+            # which only collects address when needed for tax/compliance.
+            # The metadata below is stored for audit trail regardless.
+            metadata = {}
             if payment.billing_first_name or payment.billing_last_name:
-                session_data.update(
-                    {
-                        "metadata": {
-                            "customer_name": f"{payment.billing_first_name} "
-                            f"{payment.billing_last_name}"
-                        }
-                    }
+                metadata["customer_name"] = (
+                    f"{payment.billing_first_name} {payment.billing_last_name}".strip()
                 )
+            if payment.billing_address_1:
+                metadata["billing_address_1"] = payment.billing_address_1
+            if payment.billing_address_2:
+                metadata["billing_address_2"] = payment.billing_address_2
+            if payment.billing_city:
+                metadata["billing_city"] = payment.billing_city
+            if payment.billing_postcode:
+                metadata["billing_postcode"] = payment.billing_postcode
+            if payment.billing_country_code:
+                metadata["billing_country_code"] = payment.billing_country_code
+            if payment.billing_country_area:
+                metadata["billing_country_area"] = payment.billing_country_area
+            if payment.billing_phone:
+                metadata["billing_phone"] = str(payment.billing_phone)
+
+            if metadata:
+                session_data["metadata"] = metadata
             try:
                 return stripe.checkout.Session.create(**session_data)
             except stripe.error.StripeError as e:
@@ -187,7 +205,7 @@ class StripeProviderV3(BasicProvider):
                     amount=self.convert_amount(payment.currency, to_refund),
                     reason="requested_by_customer",
                 )
-            except stripe.StripeError as e:
+            except stripe.error.StripeError as e:
                 raise PaymentError(e) from e
             else:
                 payment.attrs.refund = json.dumps(refund)
@@ -211,6 +229,10 @@ class StripeProviderV3(BasicProvider):
     def get_line_items(self, payment) -> list:
         order_no = payment.token if self.use_token else payment.pk
         product_data = StripeProductData(name=f"Order #{order_no}")
+
+        # Add description if available
+        if payment.description:
+            product_data.description = payment.description
 
         price_data = StripePriceData(
             currency=payment.currency.lower(),
@@ -246,7 +268,7 @@ class StripeProviderV3(BasicProvider):
             except ValueError as e:
                 # Invalid payload
                 raise e
-            except stripe.SignatureVerificationError as e:
+            except stripe.error.SignatureVerificationError as e:
                 # Invalid signature
                 raise e
         else:
@@ -265,17 +287,19 @@ class StripeProviderV3(BasicProvider):
             except Exception as e:
                 raise PaymentError(
                     code=400,
-                    message="client_reference_id is not present in checkout.session event.",
+                    message=(
+                        "client_reference_id is not present in checkout.session event."
+                    ),
                 ) from e
 
         # payment_intent events don't have client_reference_id
-        # These are follow-up webhooks - we already processed the payment in checkout.session
-        # Return None to signal this should be skipped by static_callback
+        # These are follow-up webhooks - we already processed the payment
+        # in checkout.session. Return None to signal skip by static_callback
         return None
 
     def autocomplete_with_wallet(self, payment):
         """
-        Complete payment using stored PaymentMethod (server-initiated recurring payment).
+        Complete payment using stored PaymentMethod (server-initiated).
 
         This method charges a stored payment method without user interaction.
         Uses get_renew_data() to retrieve both payment_method_id and customer_id.
@@ -312,6 +336,10 @@ class StripeProviderV3(BasicProvider):
                     "payment_id": payment.pk if not self.use_token else None,
                 },
             }
+
+            # Add description if available (visible in Stripe Dashboard)
+            if payment.description:
+                intent_params["description"] = payment.description
 
             intent = stripe.PaymentIntent.create(**intent_params)
 
@@ -400,11 +428,11 @@ class StripeProviderV3(BasicProvider):
 
     def _store_payment_method_from_session(self, payment, session_info):
         """
-        Extract and store PaymentMethod and Customer from successful Checkout Session.
+        Extract and store PaymentMethod and Customer from Checkout Session.
 
-        Called after payment is confirmed to store payment method for future recurring charges.
-        Extracts customer_id from PaymentIntent (created by Stripe Checkout) and passes
-        it to implementer via set_renew_token().
+        Called after payment is confirmed to store payment method for future
+        recurring charges. Extracts customer_id from PaymentIntent (created by
+        Stripe Checkout) and passes it to implementer via set_renew_token().
         """
         stripe.api_key = self.api_key
 
@@ -467,8 +495,9 @@ class StripeProviderV3(BasicProvider):
 
             elif session_info["payment_status"] == "paid":
                 # Store PaymentMethod BEFORE changing status
-                # This is important because status change triggers signal that sets token_verified=True
-                # Use atomic transaction to prevent race conditions with concurrent webhooks
+                # This is important because status change triggers signal that
+                # sets token_verified=True. Use atomic transaction to prevent
+                # race conditions with concurrent webhooks
                 with transaction.atomic():
                     if self.store_payment_method and hasattr(
                         payment, "set_renew_token"
