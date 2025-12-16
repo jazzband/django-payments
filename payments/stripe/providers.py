@@ -148,6 +148,7 @@ class StripeProviderV3(BasicProvider):
                 # Setup mode for zero-dollar auth (card changes)
                 # Collects payment method without charging
                 session_data["mode"] = "setup"
+                session_data["currency"] = payment.currency.lower()
 
                 # Reuse existing customer if available
                 renew_data = payment.get_renew_data()
