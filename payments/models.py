@@ -17,6 +17,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from . import FraudStatus
 from . import PaymentStatus
 from . import PurchasedItem
+from . import SubscriptionStatus
 from . import WalletStatus
 from .core import provider_factory
 
@@ -121,6 +122,97 @@ class BaseWallet(models.Model):
     def erase(self):
         """Mark wallet as erased (no longer usable)."""
         self.status = WalletStatus.ERASED
+        self.save(update_fields=["status"])
+
+
+class BaseSubscription(models.Model):
+    """
+    Abstract model for managing provider-controlled recurring subscriptions.
+
+    This model represents subscriptions where the payment provider manages
+    the billing schedule and automatically charges on a fixed interval
+    (monthly, yearly, etc.) with a fixed amount.
+
+    This differs from wallet-based payments where:
+    - Wallet: Application controls when to charge and how much (variable amounts)
+    - Subscription: Provider controls schedule and amount (fixed intervals)
+
+    Typical usage:
+        1. Create subscription when user signs up for recurring service
+        2. Provider creates subscription and returns subscription_id
+        3. Provider automatically charges on schedule
+        4. Application receives webhooks for each charge
+        5. When user cancels, call payment.cancel_subscription()
+
+    Example implementation:
+        class Subscription(BaseSubscription):
+            user = models.ForeignKey(User, on_delete=models.CASCADE)
+            plan = models.CharField(max_length=50)  # e.g., "basic", "premium"
+
+            def subscription_payment_completed(self, payment):
+                # Custom logic after each recurring payment
+                if payment.status == PaymentStatus.CONFIRMED:
+                    self.user.extend_subscription_period()
+    """
+
+    subscription_id = models.CharField(
+        _("subscription ID"),
+        help_text=_(
+            "Provider's subscription identifier (e.g., Stripe subscription ID, "
+            "PayPal billing agreement ID)"
+        ),
+        max_length=255,
+        default="",
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=SubscriptionStatus.CHOICES,
+        default=SubscriptionStatus.PENDING,
+    )
+    extra_data = models.JSONField(
+        _("extra data"),
+        help_text=_(
+            "Provider-specific subscription data (e.g., plan details, "
+            "next billing date, cancellation reason)"
+        ),
+        default=dict,
+    )
+
+    class Meta:
+        abstract = True
+
+    def subscription_payment_completed(self, payment):
+        """
+        Called after each recurring payment is completed.
+
+        Default implementation activates subscription on first payment.
+        Override in subclass for custom behavior (extend service period,
+        send notifications, etc.).
+
+        Args:
+            payment: The BasePayment instance for this recurring charge
+        """
+        if (
+            payment.status == PaymentStatus.CONFIRMED
+            and self.status == SubscriptionStatus.PENDING
+        ):
+            self.status = SubscriptionStatus.ACTIVE
+            self.save(update_fields=["status"])
+
+    def activate(self):
+        """Mark subscription as active."""
+        self.status = SubscriptionStatus.ACTIVE
+        self.save(update_fields=["status"])
+
+    def cancel(self):
+        """Mark subscription as cancelled."""
+        self.status = SubscriptionStatus.CANCELLED
+        self.save(update_fields=["status"])
+
+    def expire(self):
+        """Mark subscription as expired."""
+        self.status = SubscriptionStatus.EXPIRED
         self.save(update_fields=["status"])
 
 
@@ -377,6 +469,70 @@ class BasePayment(models.Model):
             automatic_renewal: Whether automatic renewal is enabled (optional)
             **kwargs: Provider-specific data (e.g., customer_id for Stripe)
         """
+
+    def get_subscription(self):
+        """
+        Get subscription object associated with this payment.
+
+        Default implementation returns None. Subclasses should override this method
+        to return the subscription from their storage mechanism (e.g., from a related
+        subscription model or RecurringUserPlan model).
+
+        For simple use cases with subscription support, this can be implemented as:
+            if hasattr(self, 'subscription'):
+                return self.subscription
+            return None
+
+        Returns:
+            BaseSubscription or None: Subscription instance if this is a recurring
+                payment, None otherwise
+        """
+        return
+
+    def cancel_subscription(self):
+        """
+        Cancel the subscription associated with this payment.
+
+        This method cancels a provider-managed subscription. The provider will
+        stop automatically charging the customer on the scheduled intervals.
+
+        Security: This method performs NO authorization checks. The caller must:
+        - Verify user ownership of payment/subscription before calling
+        - Implement proper access controls
+
+        Raises:
+            ValueError: If no subscription is associated with this payment
+            PaymentError: If cancellation fails at provider level
+        """
+        subscription = self.get_subscription()
+        if not subscription:
+            raise ValueError("No subscription associated with this payment")
+
+        provider = provider_factory(self.variant)
+        provider.cancel_subscription(self)
+
+    def autocomplete_with_subscription(self):
+        """
+        Complete the payment as part of a subscription flow.
+
+        This method is called during subscription setup to complete the initial
+        payment and activate the subscription. After this, the provider will
+        automatically charge on schedule.
+
+        Use cases:
+        - Initial subscription payment (first charge)
+        - Subscription reactivation after failed payment
+
+        Security: This method performs NO authorization checks. The caller must:
+        - Verify user ownership of payment/subscription before calling
+        - Validate subscription parameters
+
+        Raises:
+            RedirectNeeded: If user interaction required (3D Secure, CVV, etc.)
+            PaymentError: If payment fails or subscription setup fails
+        """
+        provider = provider_factory(self.variant)
+        provider.autocomplete_with_subscription(self)
 
     def capture(self, amount=None):
         """Capture a pre-authorized payment.

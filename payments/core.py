@@ -201,6 +201,65 @@ class BasicProvider:
         wallet.status = WalletStatus.ERASED
         wallet.save(update_fields=["status"])
 
+    def autocomplete_with_subscription(self, payment):
+        """
+        Complete the payment as part of a subscription flow.
+
+        This method handles the initial payment and subscription setup with the
+        provider. After this, the provider will automatically charge on schedule.
+
+        Provider implementation should:
+        1. Create subscription with provider's API
+        2. Process initial payment if required
+        3. Store subscription_id on subscription object
+        4. Update payment status accordingly
+        5. Call self._finalize_subscription_payment(payment) on success
+
+        Args:
+            payment: BasePayment instance for subscription setup
+
+        Raises:
+            RedirectNeeded: If user interaction required (3DS, CVV, etc.)
+            PaymentError: If payment or subscription setup fails
+        """
+        raise NotImplementedError
+
+    def cancel_subscription(self, payment):
+        """
+        Cancel a provider-managed subscription.
+
+        Provider implementation should:
+        1. Get subscription from payment.get_subscription()
+        2. Cancel subscription with provider's API
+        3. Update subscription status to CANCELLED
+        4. Optionally update payment status
+
+        Args:
+            payment: BasePayment instance with associated subscription
+
+        Raises:
+            PaymentError: If cancellation fails at provider level
+        """
+        raise NotImplementedError
+
+    def _finalize_subscription_payment(self, payment, subscription=None):
+        """
+        Internal helper to finalize subscription payment.
+
+        Should be called by providers after successful subscription payment.
+        Triggers subscription_payment_completed hook on the subscription.
+
+        Args:
+            payment: BasePayment instance that was charged
+            subscription: Optional subscription instance (will try to get from
+                payment if not provided)
+        """
+        if subscription is None:
+            subscription = payment.get_subscription()
+
+        if subscription is not None:
+            subscription.subscription_payment_completed(payment)
+
     def capture(self, payment, amount=None):
         raise NotImplementedError
 

@@ -73,6 +73,20 @@ class WalletStatus:
     ]
 
 
+class SubscriptionStatus:
+    PENDING = "pending"
+    ACTIVE = "active"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+
+    CHOICES = [
+        (PENDING, pgettext_lazy("subscription status", "Pending")),
+        (ACTIVE, pgettext_lazy("subscription status", "Active")),
+        (CANCELLED, pgettext_lazy("subscription status", "Cancelled")),
+        (EXPIRED, pgettext_lazy("subscription status", "Expired")),
+    ]
+
+
 class RedirectNeeded(Exception):
     pass
 
