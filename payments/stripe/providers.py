@@ -5,7 +5,7 @@ import logging
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
-from typing import Any
+from typing import Any, Optional
 from urllib.parse import urljoin
 
 import stripe
@@ -212,6 +212,13 @@ class StripeProviderV3(BasicProvider):
 
             if metadata:
                 session_data["metadata"] = metadata
+            
+            # Always store payment_token in session metadata for webhook routing
+            # This allows webhooks to find the payment regardless of mode (payment/setup)
+            if "metadata" not in session_data:
+                session_data["metadata"] = {}
+            session_data["metadata"]["payment_token"] = str(payment.token)
+            
             try:
                 return stripe.checkout.Session.create(**session_data)
             except stripe.error.StripeError as e:
@@ -304,27 +311,59 @@ class StripeProviderV3(BasicProvider):
         else:
             return json.loads(request.body)
 
-    def get_token_from_request(self, payment, request) -> str:
+    def get_token_from_request(self, payment, request) -> Optional[str]:
         """Return payment token from provider request."""
         stripe.api_key = self.api_key
         event = self.return_event_payload(request)
         event_type = event.get("type")
 
-        # checkout.session events have client_reference_id
+        # checkout.session events have client_reference_id or metadata
         if event_type and event_type.startswith("checkout.session"):
             try:
-                return event["data"]["object"]["client_reference_id"]
-            except Exception as e:
-                raise PaymentError(
-                    code=400,
-                    message=(
-                        "client_reference_id is not present in checkout.session event."
-                    ),
-                ) from e
+                session = event["data"]["object"]
+                # Try client_reference_id first
+                client_ref = session.get("client_reference_id")
+                if client_ref:
+                    return client_ref
+                # Fallback to metadata (always present after our changes)
+                metadata = session.get("metadata", {})
+                return metadata.get("payment_token")
+            except (KeyError, TypeError):
+                return None
+        
+        # setup_intent events (for zero-dollar auth/card changes)
+        # Need to find the Checkout Session that created this SetupIntent
+        if event_type and event_type.startswith("setup_intent"):
+            try:
+                setup_intent = event["data"]["object"]
+                customer_id = setup_intent.get("customer")
+                created_time = setup_intent.get("created", 0)
+                
+                if not customer_id:
+                    return None
+                
+                # Search for recent Checkout Sessions for this customer
+                # Narrow time window (5 minutes) for efficiency
+                sessions = stripe.checkout.Session.list(
+                    limit=10,
+                    customer=customer_id,
+                    created={"gte": created_time - 300, "lte": created_time + 60},
+                )
+                
+                # Find the setup mode session and extract payment_token from metadata
+                for session in sessions.data:
+                    if session.get("mode") == "setup":
+                        metadata = session.get("metadata", {})
+                        payment_token = metadata.get("payment_token")
+                        if payment_token:
+                            return payment_token
+                
+                return None
+            except (KeyError, TypeError, stripe.error.StripeError):
+                return None
 
-        # payment_intent events don't have client_reference_id
-        # These are follow-up webhooks - we already processed the payment
-        # in checkout.session. Return None to signal skip by static_callback
+        # payment_intent and other events don't need token extraction
+        # These are follow-up webhooks - already processed in checkout.session
         return None
 
     def autocomplete_with_wallet(self, payment):
