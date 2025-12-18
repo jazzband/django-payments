@@ -383,4 +383,3 @@ def test_payment_autocomplete_with_subscription_full_flow():
         # Verify provider was called
         mock_factory.assert_called_once_with(payment.variant)
         mock_provider.autocomplete_with_subscription.assert_called_once_with(payment)
-

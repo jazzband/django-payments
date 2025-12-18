@@ -80,8 +80,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         default="",
                         help_text=(
-                            "Subscription plan identifier "
-                            "(e.g., 'basic', 'premium')"
+                            "Subscription plan identifier (e.g., 'basic', 'premium')"
                         ),
                         max_length=50,
                     ),
