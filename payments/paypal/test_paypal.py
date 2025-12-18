@@ -580,3 +580,45 @@ def test_form_shows_internal_error_message(paypal_card_payment, paypal_card_prov
             )
     assert paypal_card_payment.status == PaymentStatus.ERROR
     assert paypal_card_payment.message == error_message
+
+
+def test_provider_get_with_none_payment_handles_401(paypal_provider):
+    """Test that get() method with payment=None handles 401 errors correctly."""
+    test_url = "http://example.com/api/test"
+    expected_get_response_data = {"status": "success"}
+    expected_token = "test_access_token"
+    expected_token_type = "Bearer"
+
+    with patch("requests.post") as mocked_post, patch(
+        "requests.get"
+    ) as mocked_get:
+        # Mock for token acquisition (called twice due to 401 retry)
+        token_response_mock = MagicMock()
+        token_response_mock.json.return_value = {
+            "access_token": expected_token,
+            "token_type": expected_token_type,
+            "expires_in": 3600,
+        }
+        token_response_mock.status_code = 200
+
+        # Mock for the GET request - first 401, then success
+        get_response_401 = MagicMock()
+        get_response_401.status_code = 401
+        
+        get_response_200 = MagicMock()
+        get_response_200.json.return_value = expected_get_response_data
+        get_response_200.status_code = 200
+
+        mocked_post.return_value = token_response_mock
+        mocked_get.side_effect = [
+            HTTPError(response=get_response_401),
+            get_response_200
+        ]
+
+        response_data = paypal_provider.get(None, test_url)
+
+        # Should have called post twice (initial token + retry after 401)
+        assert mocked_post.call_count == 2
+        # Should have called get twice (initial 401 + retry)
+        assert mocked_get.call_count == 2
+        assert response_data == expected_get_response_data

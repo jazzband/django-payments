@@ -42,10 +42,13 @@ def authorize(fun):
             response = fun(*args, **kwargs)
         except HTTPError as e:
             if e.response.status_code == 401:
-                last_auth_response = self.get_last_response(payment, is_auth=True)
-                if "access_token" in last_auth_response:
-                    del last_auth_response["access_token"]
-                    self.set_response_data(payment, last_auth_response, is_auth=True)
+                if payment is not None:
+                    last_auth_response = self.get_last_response(payment, is_auth=True)
+                    if "access_token" in last_auth_response:
+                        del last_auth_response["access_token"]
+                        self.set_response_data(
+                            payment, last_auth_response, is_auth=True
+                        )
                 self.access_token = self.get_access_token(payment)
                 response = fun(*args, **kwargs)
             else:
@@ -192,10 +195,11 @@ class PaypalProvider(BasicProvider):
             last_auth_response = self.get_last_response(payment, is_auth=True)
             created = payment.created
             now = timezone.now()
+            expires_in = last_auth_response.get("expires_in")
             if (
                 "access_token" in last_auth_response
-                and "expires_in" in last_auth_response
-                and (created + timedelta(seconds=last_auth_response["expires_in"])) > now
+                and expires_in is not None
+                and (created + timedelta(seconds=expires_in)) > now
             ):
                 return "{} {}".format(
                     last_auth_response["token_type"], last_auth_response["access_token"]
