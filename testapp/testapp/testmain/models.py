@@ -44,8 +44,7 @@ class Subscription(BaseSubscription):
     payment_provider = models.CharField(
         max_length=50,
         help_text=(
-            "Payment variant name "
-            "(e.g., 'stripe-subscription', 'paypal-subscription')"
+            "Payment variant name (e.g., 'stripe-subscription', 'paypal-subscription')"
         ),
     )
     plan = models.CharField(

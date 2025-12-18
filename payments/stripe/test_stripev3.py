@@ -181,7 +181,7 @@ def test_get_line_items_includes_description():
     payment.description = "Premium subscription for user@example.com"
     payment.token = "test-token-123"
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     line_items = provider.get_line_items(payment)
 
     assert len(line_items) == 1
@@ -196,7 +196,7 @@ def test_get_line_items_without_description():
     payment.description = ""  # Empty description
     payment.token = "test-token-456"
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     line_items = provider.get_line_items(payment)
 
     assert len(line_items) == 1
@@ -218,20 +218,20 @@ def test_create_session_includes_billing_metadata():
     payment.billing_country_code = "US"
     payment.billing_country_area = "NY"
     payment.billing_phone = "+1234567890"
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_123",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     # Verify metadata was passed
     call_kwargs = mock_create.call_args[1]
     metadata = call_kwargs["metadata"]
-    
+
     assert metadata["customer_name"] == "John Doe"
     assert metadata["billing_address_1"] == "123 Main St"
     assert metadata["billing_address_2"] == "Apt 4B"
@@ -254,19 +254,19 @@ def test_create_session_billing_metadata_partial():
     payment.billing_country_code = ""
     payment.billing_country_area = ""
     payment.billing_phone = ""
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_456",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
     metadata = call_kwargs["metadata"]
-    
+
     # Only provided fields should be present
     assert metadata["customer_name"] == "Jane"
     assert metadata["billing_city"] == "Boston"
@@ -287,18 +287,18 @@ def test_create_session_no_billing_metadata():
     payment.billing_country_code = ""
     payment.billing_country_area = ""
     payment.billing_phone = ""
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_789",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
-    
+
     # payment_token is always added to metadata (for webhook token extraction)
     assert "metadata" in call_kwargs
     assert call_kwargs["metadata"]["payment_token"] == str(payment.token)
@@ -318,21 +318,21 @@ def test_create_session_billing_address_uses_stripe_default():
     payment.billing_city = "Chicago"
     payment.billing_postcode = "60601"
     payment.billing_country_code = "US"
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_address",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
-    
+
     # billing_address_collection should NOT be set - use Stripe's default "auto"
     assert "billing_address_collection" not in call_kwargs
-    
+
     # But metadata should contain the address for audit trail
     assert "metadata" in call_kwargs
     assert call_kwargs["metadata"]["billing_address_1"] == "456 Oak Ave"
@@ -353,21 +353,21 @@ def test_create_session_billing_metadata_only_with_name():
     payment.billing_country_code = ""
     payment.billing_country_area = ""
     payment.billing_phone = ""
-    
+
     provider = StripeProviderV3(api_key=API_KEY)
-    
+
     with patch("stripe.checkout.Session.create") as mock_create:
         mock_create.return_value = {
             "id": "cs_test_no_address",
             "url": "https://checkout.stripe.com/test",
         }
         provider.create_session(payment)
-    
+
     call_kwargs = mock_create.call_args[1]
-    
+
     # billing_address_collection should not be set (use Stripe default)
     assert "billing_address_collection" not in call_kwargs
-    
+
     # Metadata should contain name but not empty address fields
     assert "metadata" in call_kwargs
     assert call_kwargs["metadata"]["customer_name"] == "Alice Smith"
@@ -477,7 +477,7 @@ class MockRequest:
 def test_get_token_from_request_checkout_session_completed():
     """Test extracting payment token from checkout.session.completed event."""
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")
-    
+
     event_data = {
         "type": "checkout.session.completed",
         "data": {
@@ -492,7 +492,7 @@ def test_get_token_from_request_checkout_session_completed():
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with patch("stripe.Webhook.construct_event", return_value=event_data):
         token = provider.get_token_from_request(payment=None, request=request)
         assert token == "payment-token-123"
@@ -501,7 +501,7 @@ def test_get_token_from_request_checkout_session_completed():
 def test_get_token_from_request_setup_intent_succeeded_with_metadata():
     """Test extracting payment token from setup_intent.succeeded with metadata."""
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")
-    
+
     event_data = {
         "type": "setup_intent.succeeded",
         "data": {
@@ -520,7 +520,7 @@ def test_get_token_from_request_setup_intent_succeeded_with_metadata():
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with patch("stripe.Webhook.construct_event", return_value=event_data):
         token = provider.get_token_from_request(payment=None, request=request)
         assert token == "payment-token-456"
@@ -529,7 +529,7 @@ def test_get_token_from_request_setup_intent_succeeded_with_metadata():
 def test_get_token_from_request_setup_intent_succeeded_fallback_to_session():
     """Test extracting payment token from setup_intent.succeeded via session lookup."""
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")
-    
+
     event_data = {
         "type": "setup_intent.succeeded",
         "data": {
@@ -541,7 +541,7 @@ def test_get_token_from_request_setup_intent_succeeded_fallback_to_session():
             }
         },
     }
-    
+
     # Mock session lookup
     mock_session = {
         "id": "cs_test_123",
@@ -551,12 +551,12 @@ def test_get_token_from_request_setup_intent_succeeded_fallback_to_session():
         "client_reference_id": "payment-token-789",
         "metadata": {},
     }
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with (
         patch("stripe.Webhook.construct_event", return_value=event_data),
         patch(
@@ -571,7 +571,7 @@ def test_get_token_from_request_setup_intent_succeeded_fallback_to_session():
 def test_get_token_from_request_setup_intent_succeeded_fallback_to_session_metadata():
     """Test extracting payment token from session metadata when client_reference_id missing."""
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")
-    
+
     event_data = {
         "type": "setup_intent.succeeded",
         "data": {
@@ -583,7 +583,7 @@ def test_get_token_from_request_setup_intent_succeeded_fallback_to_session_metad
             }
         },
     }
-    
+
     mock_session = {
         "id": "cs_test_123",
         "mode": "setup",
@@ -592,12 +592,12 @@ def test_get_token_from_request_setup_intent_succeeded_fallback_to_session_metad
         "client_reference_id": None,
         "metadata": {"payment_token": "payment-token-from-metadata"},
     }
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with (
         patch("stripe.Webhook.construct_event", return_value=event_data),
         patch(
@@ -612,7 +612,7 @@ def test_get_token_from_request_setup_intent_succeeded_fallback_to_session_metad
 def test_get_token_from_request_checkout_session_expired():
     """Test that checkout.session.expired events can extract token from metadata."""
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")
-    
+
     event_data = {
         "type": "checkout.session.expired",
         "data": {
@@ -628,7 +628,7 @@ def test_get_token_from_request_checkout_session_expired():
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with patch("stripe.Webhook.construct_event", return_value=event_data):
         token = provider.get_token_from_request(payment=None, request=request)
         assert token == "payment-token-expired"
@@ -640,13 +640,13 @@ def test_process_data_setup_intent_succeeded():
     payment = Payment()
     payment.token = "payment-token-123"
     payment.set_renew_token = Mock()
-    
+
     provider = StripeProviderV3(
         api_key=API_KEY,
         endpoint_secret="whsec_test",
         store_payment_method=True,
     )
-    
+
     event_data = {
         "type": "setup_intent.succeeded",
         "data": {
@@ -658,25 +658,25 @@ def test_process_data_setup_intent_succeeded():
             }
         },
     }
-    
+
     mock_payment_method = Mock()
     mock_payment_method.type = "card"
     mock_payment_method.card = Mock()
     mock_payment_method.card.exp_year = 2025
     mock_payment_method.card.exp_month = 12
     mock_payment_method.card.last4 = "4242"
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with (
         patch("stripe.Webhook.construct_event", return_value=event_data),
         patch("stripe.PaymentMethod.retrieve", return_value=mock_payment_method),
     ):
         response = provider.process_data(payment, request)
-        
+
         assert response.status_code == 200
         assert payment.status == PaymentStatus.CONFIRMED
         payment.set_renew_token.assert_called_once_with(
@@ -694,13 +694,13 @@ def test_process_data_checkout_session_completed():
     payment = Payment()
     payment.token = "payment-token-123"
     payment.set_renew_token = Mock()
-    
+
     provider = StripeProviderV3(
         api_key=API_KEY,
         endpoint_secret="whsec_test",
         store_payment_method=True,
     )
-    
+
     event_data = {
         "type": "checkout.session.completed",
         "data": {
@@ -713,30 +713,30 @@ def test_process_data_checkout_session_completed():
             }
         },
     }
-    
+
     mock_payment_intent = Mock()
     mock_payment_intent.payment_method = "pm_test_123"
     mock_payment_intent.customer = "cus_test_123"
-    
+
     mock_payment_method = Mock()
     mock_payment_method.type = "card"
     mock_payment_method.card = Mock()
     mock_payment_method.card.exp_year = 2025
     mock_payment_method.card.exp_month = 12
     mock_payment_method.card.last4 = "4242"
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with (
         patch("stripe.Webhook.construct_event", return_value=event_data),
         patch("stripe.PaymentIntent.retrieve", return_value=mock_payment_intent),
         patch("stripe.PaymentMethod.retrieve", return_value=mock_payment_method),
     ):
         response = provider.process_data(payment, request)
-        
+
         assert response.status_code == 200
         assert payment.status == PaymentStatus.CONFIRMED
         payment.set_renew_token.assert_called_once()
@@ -746,9 +746,9 @@ def test_process_data_checkout_session_expired():
     """Test processing checkout.session.expired webhook event."""
     payment = Payment()
     payment.token = "payment-token-123"
-    
+
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")
-    
+
     event_data = {
         "type": "checkout.session.expired",
         "data": {
@@ -758,15 +758,15 @@ def test_process_data_checkout_session_expired():
             }
         },
     }
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with patch("stripe.Webhook.construct_event", return_value=event_data):
         response = provider.process_data(payment, request)
-        
+
         assert response.status_code == 200
         assert payment.status == PaymentStatus.REJECTED
 
@@ -774,22 +774,22 @@ def test_process_data_checkout_session_expired():
 def test_process_data_unknown_event_type():
     """Test that unknown event types are ignored."""
     payment = Payment()
-    
+
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")
-    
+
     event_data = {
         "type": "payment_intent.succeeded",  # Not in stripe_enabled_events
         "data": {"object": {}},
     }
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with patch("stripe.Webhook.construct_event", return_value=event_data):
         response = provider.process_data(payment, request)
-        
+
         assert response.status_code == 200
         # Status should not change for unknown events
         assert payment.status == PaymentStatus.WAITING
@@ -798,7 +798,7 @@ def test_process_data_unknown_event_type():
 @pytest.mark.django_db
 def test_webhook_flow_setup_intent_with_token_in_metadata():
     """Integration test: Full webhook flow for setup_intent.succeeded.
-    
+
     This simulates the actual webhook flow:
     1. Checkout Session is created with payment_token in metadata
     2. SetupIntent is created and inherits metadata from session
@@ -810,14 +810,14 @@ def test_webhook_flow_setup_intent_with_token_in_metadata():
     payment = Payment()
     payment.token = "test-payment-token-123"
     payment.set_renew_token = Mock()
-    
+
     provider = StripeProviderV3(
         api_key=API_KEY,
         endpoint_secret="whsec_test",
         store_payment_method=True,
         use_setup_mode=True,
     )
-    
+
     # Simulate Stripe's setup_intent.succeeded webhook with token in metadata
     event_data = {
         "type": "setup_intent.succeeded",
@@ -833,19 +833,19 @@ def test_webhook_flow_setup_intent_with_token_in_metadata():
             }
         },
     }
-    
+
     mock_payment_method = Mock()
     mock_payment_method.type = "card"
     mock_payment_method.card = Mock()
     mock_payment_method.card.exp_year = 2025
     mock_payment_method.card.exp_month = 12
     mock_payment_method.card.last4 = "4242"
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with (
         patch("stripe.Webhook.construct_event", return_value=event_data),
         patch("stripe.PaymentMethod.retrieve", return_value=mock_payment_method),
@@ -853,10 +853,10 @@ def test_webhook_flow_setup_intent_with_token_in_metadata():
         # Step 1: Extract token from webhook (simulates static_callback)
         token = provider.get_token_from_request(payment=None, request=request)
         assert token == "test-payment-token-123"
-        
+
         # Step 2: Process the webhook (simulates process_data)
         response = provider.process_data(payment, request)
-        
+
         # Step 3: Verify payment was updated correctly
         assert response.status_code == 200
         assert payment.status == PaymentStatus.CONFIRMED
@@ -872,7 +872,7 @@ def test_webhook_flow_setup_intent_with_token_in_metadata():
 @pytest.mark.django_db
 def test_webhook_flow_setup_intent_with_session_lookup():
     """Integration test: Full webhook flow with Checkout Session lookup fallback.
-    
+
     This simulates the scenario where SetupIntent metadata doesn't contain the
     payment_token (Stripe sometimes doesn't copy metadata), so we need to look
     up the Checkout Session to find the token.
@@ -880,14 +880,14 @@ def test_webhook_flow_setup_intent_with_session_lookup():
     payment = Payment()
     payment.token = "test-payment-token-456"
     payment.set_renew_token = Mock()
-    
+
     provider = StripeProviderV3(
         api_key=API_KEY,
         endpoint_secret="whsec_test",
         store_payment_method=True,
         use_setup_mode=True,
     )
-    
+
     # Simulate Stripe's setup_intent.succeeded webhook WITHOUT token in metadata
     event_data = {
         "type": "setup_intent.succeeded",
@@ -902,26 +902,26 @@ def test_webhook_flow_setup_intent_with_session_lookup():
             }
         },
     }
-    
+
     # Mock the Checkout Session that contains the payment token
     mock_session = {
         "mode": "setup",
         "client_reference_id": "test-payment-token-456",
-        "metadata": {"payment_token": "test-payment-token-456"}
+        "metadata": {"payment_token": "test-payment-token-456"},
     }
-    
+
     mock_payment_method = Mock()
     mock_payment_method.type = "card"
     mock_payment_method.card = Mock()
     mock_payment_method.card.exp_year = 2026
     mock_payment_method.card.exp_month = 6
     mock_payment_method.card.last4 = "1234"
-    
+
     request = MockRequest(
         body=json.dumps(event_data).encode(),
         headers={"STRIPE_SIGNATURE": "test_sig"},
     )
-    
+
     with (
         patch("stripe.Webhook.construct_event", return_value=event_data),
         patch("stripe.PaymentMethod.retrieve", return_value=mock_payment_method),
@@ -933,10 +933,10 @@ def test_webhook_flow_setup_intent_with_session_lookup():
         # Step 1: Extract token from webhook (requires session lookup)
         token = provider.get_token_from_request(payment=None, request=request)
         assert token == "test-payment-token-456"
-        
+
         # Step 2: Process the webhook
         response = provider.process_data(payment, request)
-        
+
         # Step 3: Verify payment was updated correctly
         assert response.status_code == 200
         assert payment.status == PaymentStatus.CONFIRMED
