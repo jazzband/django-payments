@@ -42,10 +42,13 @@ def authorize(fun):
             response = fun(*args, **kwargs)
         except HTTPError as e:
             if e.response.status_code == 401:
-                last_auth_response = self.get_last_response(payment, is_auth=True)
-                if "access_token" in last_auth_response:
-                    del last_auth_response["access_token"]
-                    self.set_response_data(payment, last_auth_response, is_auth=True)
+                if payment is not None:
+                    last_auth_response = self.get_last_response(payment, is_auth=True)
+                    if "access_token" in last_auth_response:
+                        del last_auth_response["access_token"]
+                        self.set_response_data(
+                            payment, last_auth_response, is_auth=True
+                        )
                 self.access_token = self.get_access_token(payment)
                 response = fun(*args, **kwargs)
             else:
@@ -114,20 +117,21 @@ class PaypalProvider(BasicProvider):
         return extra_data.get("links", {})
 
     @authorize
-    def post(self, payment, *args, **kwargs):
+    def http_request(self, payment, *args, http_method=None, **kwargs):
         kwargs["headers"] = {
             "Content-Type": "application/json",
             "Authorization": self.access_token,
         }
         if "data" in kwargs:
             kwargs["data"] = json.dumps(kwargs["data"])
-        response = requests.post(*args, **kwargs)
+        response = http_method(*args, **kwargs)
         try:
             data = response.json()
         except ValueError:
             data = {}
         if 400 <= response.status_code <= 500:
-            self.set_error_data(payment, data)
+            if payment is not None:
+                self.set_error_data(payment, data)
             logger.debug(data)
             message = "Paypal error"
             if response.status_code == 400:
@@ -139,10 +143,46 @@ class PaypalProvider(BasicProvider):
                 message = error_data.get("message", message)
             else:
                 logger.warning(message, extra={"status_code": response.status_code})
-            payment.change_status(PaymentStatus.ERROR, message)
+            if payment is not None:
+                payment.change_status(PaymentStatus.ERROR, message)
             raise PaymentError(message)
-        self.set_response_data(payment, data)
+        if payment is not None:
+            self.set_response_data(payment, data)
         return data
+
+    def post(self, payment, *args, **kwargs):
+        """
+        Perform a POST request to the PayPal API.
+
+        Args:
+            payment: Payment instance (can be None for requests not tied to a payment)
+            *args: Positional arguments passed to requests.post()
+            **kwargs: Keyword arguments passed to requests.post()
+
+        Returns:
+            dict: JSON response data from PayPal API
+
+        Raises:
+            PaymentError: If the API returns an error status code
+        """
+        return self.http_request(payment, *args, http_method=requests.post, **kwargs)
+
+    def get(self, payment, *args, **kwargs):
+        """
+        Perform a GET request to the PayPal API.
+
+        Args:
+            payment: Payment instance (can be None for requests not tied to a payment)
+            *args: Positional arguments passed to requests.get()
+            **kwargs: Keyword arguments passed to requests.get()
+
+        Returns:
+            dict: JSON response data from PayPal API
+
+        Raises:
+            PaymentError: If the API returns an error status code
+        """
+        return self.http_request(payment, *args, http_method=requests.get, **kwargs)
 
     def get_last_response(self, payment, is_auth=False):
         extra_data = json.loads(payment.extra_data or "{}")
@@ -151,17 +191,19 @@ class PaypalProvider(BasicProvider):
         return extra_data.get("response", {})
 
     def get_access_token(self, payment):
-        last_auth_response = self.get_last_response(payment, is_auth=True)
-        created = payment.created
-        now = timezone.now()
-        if (
-            "access_token" in last_auth_response
-            and "expires_in" in last_auth_response
-            and (created + timedelta(seconds=last_auth_response["expires_in"])) > now
-        ):
-            return "{} {}".format(
-                last_auth_response["token_type"], last_auth_response["access_token"]
-            )
+        if payment is not None:
+            last_auth_response = self.get_last_response(payment, is_auth=True)
+            created = payment.created
+            now = timezone.now()
+            expires_in = last_auth_response.get("expires_in")
+            if (
+                "access_token" in last_auth_response
+                and expires_in is not None
+                and (created + timedelta(seconds=expires_in)) > now
+            ):
+                return "{} {}".format(
+                    last_auth_response["token_type"], last_auth_response["access_token"]
+                )
         headers = {"Accept": "application/json", "Accept-Language": "en_US"}
         post = {"grant_type": "client_credentials"}
         response = requests.post(
@@ -172,8 +214,9 @@ class PaypalProvider(BasicProvider):
         )
         response.raise_for_status()
         data = response.json()
-        last_auth_response.update(data)
-        self.set_response_data(payment, last_auth_response, is_auth=True)
+        if payment is not None:
+            last_auth_response.update(data)
+            self.set_response_data(payment, last_auth_response, is_auth=True)
         return "{} {}".format(data["token_type"], data["access_token"])
 
     def get_transactions_items(self, payment):
