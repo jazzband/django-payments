@@ -569,6 +569,47 @@ class StripeProviderV3(BasicProvider):
                 "Failed to store PaymentMethod for payment %s: %s", payment.id, e
             )
 
+    def _store_payment_method_from_setup_intent(self, payment, setup_intent):
+        """Extract and store PaymentMethod from SetupIntent."""
+        try:
+            stripe.api_key = self.api_key
+            
+            payment_method_id = setup_intent.get("payment_method")
+            customer_id = setup_intent.get("customer")
+            
+            if not payment_method_id:
+                return
+
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+            
+            # Handle both dict-like and Mock objects
+            if hasattr(payment_method, "card"):
+                card = payment_method.card
+                card_data = {
+                    "card_masked_number": getattr(card, "last4", None),
+                    "card_expire_year": getattr(card, "exp_year", None),
+                    "card_expire_month": getattr(card, "exp_month", None),
+                }
+            else:
+                card = payment_method.get("card", {})
+                card_data = {
+                    "card_masked_number": card.get("last4"),
+                    "card_expire_year": card.get("exp_year"),
+                    "card_expire_month": card.get("exp_month"),
+                }
+            
+            payment.set_renew_token(
+                token=payment_method_id,
+                customer_id=customer_id,
+                **card_data,
+            )
+            
+        except Exception:  # noqa: broad-except - don't fail webhooks
+            logger.warning(
+                "Failed to store PaymentMethod from SetupIntent for payment %s",
+                payment.id,
+            )
+
     def _retrieve_transaction_fee(self, payment_intent_id):
         """Retrieve transaction fee from Stripe for a given PaymentIntent.
         
@@ -610,39 +651,64 @@ class StripeProviderV3(BasicProvider):
         Updates the payment status and adds the event to the attrs property
         """
         event = self.return_event_payload(request)
-        if event.get("type") in stripe_enabled_events:
+        event_type = event.get("type")
+        
+        if event_type in stripe_enabled_events:
             try:
-                session_info = event["data"]["object"]
+                event_object = event["data"]["object"]
             except Exception as e:
                 raise PaymentError(
-                    code=400, message="session not present, check Stripe Dashboard"
+                    code=400, message="Event object not present, check Stripe Dashboard"
                 ) from e
 
-            if session_info["status"] == "expired":
-                # Expired Order
-                payment.change_status(PaymentStatus.REJECTED)
+            # Handle setup_intent.succeeded events
+            if event_type == "setup_intent.succeeded":
+                setup_intent = event_object
+                
+                if setup_intent["status"] == "succeeded":
+                    with transaction.atomic():
+                        if self.store_payment_method and hasattr(
+                            payment, "set_renew_token"
+                        ):
+                            self._store_payment_method_from_setup_intent(
+                                payment, setup_intent
+                            )
 
-            elif self._is_session_complete(session_info):
-                # Store PaymentMethod BEFORE changing status
-                # This is important because status change triggers signal that
-                # sets token_verified=True. Use atomic transaction to prevent
-                # race conditions with concurrent webhooks
-                with transaction.atomic():
-                    if self.store_payment_method and hasattr(
-                        payment, "set_renew_token"
-                    ):
-                        self._store_payment_method_from_session(payment, session_info)
+                        payment.change_status(PaymentStatus.CONFIRMED)
 
-                    # Retrieve and store transaction fee
-                    payment_intent_id = session_info.get("payment_intent")
-                    if payment_intent_id:
-                        fee = self._retrieve_transaction_fee(payment_intent_id)
-                        if fee is not None:
-                            payment.attrs.stripe_fee = fee
+                payment.attrs.setup_intent = setup_intent
+                payment.save()
+                
+            else:
+                # Handle checkout.session.* events
+                session_info = event_object
 
-                    # Now change status (triggers signal that sets token_verified=True)
-                    payment.change_status(PaymentStatus.CONFIRMED)
+                if session_info["status"] == "expired":
+                    # Expired Order
+                    payment.change_status(PaymentStatus.REJECTED)
 
-            payment.attrs.session = session_info
-            payment.save()
+                elif self._is_session_complete(session_info):
+                    # Store PaymentMethod BEFORE changing status
+                    # This is important because status change triggers signal that
+                    # sets token_verified=True. Use atomic transaction to prevent
+                    # race conditions with concurrent webhooks
+                    with transaction.atomic():
+                        if self.store_payment_method and hasattr(
+                            payment, "set_renew_token"
+                        ):
+                            self._store_payment_method_from_session(payment, session_info)
+
+                        # Retrieve and store transaction fee
+                        payment_intent_id = session_info.get("payment_intent")
+                        if payment_intent_id:
+                            fee = self._retrieve_transaction_fee(payment_intent_id)
+                            if fee is not None:
+                                payment.attrs.stripe_fee = fee
+
+                        # Now change status (triggers signal that sets token_verified=True)
+                        payment.change_status(PaymentStatus.CONFIRMED)
+
+                payment.attrs.session = session_info
+                payment.save()
+                
         return JsonResponse({"status": "OK"})
