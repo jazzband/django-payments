@@ -61,6 +61,32 @@ class FraudStatus:
     ]
 
 
+class WalletStatus:
+    PENDING = "pending"
+    ACTIVE = "active"
+    ERASED = "erased"
+
+    CHOICES = [
+        (PENDING, pgettext_lazy("wallet status", "Pending")),
+        (ACTIVE, pgettext_lazy("wallet status", "Active")),
+        (ERASED, pgettext_lazy("wallet status", "Erased")),
+    ]
+
+
+class SubscriptionStatus:
+    PENDING = "pending"
+    ACTIVE = "active"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+
+    CHOICES = [
+        (PENDING, pgettext_lazy("subscription status", "Pending")),
+        (ACTIVE, pgettext_lazy("subscription status", "Active")),
+        (CANCELLED, pgettext_lazy("subscription status", "Cancelled")),
+        (EXPIRED, pgettext_lazy("subscription status", "Expired")),
+    ]
+
+
 class RedirectNeeded(Exception):
     pass
 

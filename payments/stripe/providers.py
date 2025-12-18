@@ -1,19 +1,25 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
+from urllib.parse import urljoin
 
 import stripe
+from django.db import transaction
 from django.http import JsonResponse
 
 from payments import PaymentError
 from payments import PaymentStatus
 from payments import RedirectNeeded
 from payments.core import BasicProvider
+from payments.core import get_base_url
 from payments.forms import PaymentForm as BasePaymentForm
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -66,6 +72,7 @@ stripe_enabled_events: list = [
     "checkout.session.async_payment_failed",
     "checkout.session.async_payment_succeeded",
     "checkout.session.completed",
+    "setup_intent.succeeded",  # For zero-dollar auth (card changes)
 ]
 
 
@@ -76,6 +83,13 @@ class StripeProviderV3(BasicProvider):
     :param use_token: Use instance.token instead of instance.pk in client_reference_id
     :param endpoint_secret: Endpoint Signing Secret.
     :param secure_endpoint: Validate the recieved data, useful for development.
+    :param recurring_payments: Enable wallet-based recurring payments
+        (server-initiated).
+    :param store_payment_method: Store PaymentMethod for future use
+        (auto-enabled if recurring_payments=True).
+    :param use_setup_mode: Use setup mode (for zero-dollar auth / card changes).
+        Creates SetupIntent instead of PaymentIntent. Mutually exclusive with
+        regular payments.
     """
 
     form_class = BasePaymentForm
@@ -86,6 +100,9 @@ class StripeProviderV3(BasicProvider):
         use_token=True,
         endpoint_secret=None,
         secure_endpoint=True,
+        recurring_payments=False,
+        store_payment_method=False,
+        use_setup_mode=False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -93,6 +110,11 @@ class StripeProviderV3(BasicProvider):
         self.use_token = use_token
         self.endpoint_secret = endpoint_secret
         self.secure_endpoint = secure_endpoint
+        self.recurring_payments = recurring_payments
+        self.use_setup_mode = use_setup_mode
+        self.store_payment_method = (
+            store_payment_method or recurring_payments or use_setup_mode
+        )
 
     def get_form(self, payment, data=None):
         if not payment.transaction_id:
@@ -115,30 +137,91 @@ class StripeProviderV3(BasicProvider):
         """Makes the call to Stripe to create the Checkout Session"""
         if not payment.transaction_id:
             stripe.api_key = self.api_key
+
             session_data = {
-                "line_items": self.get_line_items(payment),
-                "mode": "payment",
-                "success_url": payment.get_success_url(),
-                "cancel_url": payment.get_failure_url(),
+                "success_url": urljoin(get_base_url(), payment.get_success_url()),
+                "cancel_url": urljoin(get_base_url(), payment.get_failure_url()),
                 "client_reference_id": payment.token if self.use_token else payment.pk,
             }
-            # Patch session with billing email if exists
-            if payment.billing_email:
+
+            if self.use_setup_mode:
+                # Setup mode for zero-dollar auth (card changes)
+                # Collects payment method without charging
+                session_data["mode"] = "setup"
+                session_data["currency"] = payment.currency.lower()
+
+                # Reuse existing customer if available
+                renew_data = payment.get_renew_data()
+                if renew_data and renew_data.get("customer_id"):
+                    session_data["customer"] = renew_data["customer_id"]
+                else:
+                    # Force customer creation
+                    session_data["customer_creation"] = "always"
+
+                # Configure setup intent for future use
+                session_data["setup_intent_data"] = {
+                    "metadata": {"payment_id": str(payment.pk)},
+                }
+            else:
+                # Payment mode for normal payments
+                session_data["mode"] = "payment"
+                session_data["line_items"] = self.get_line_items(payment)
+
+                # Enable payment method storage for recurring payments
+                if self.store_payment_method:
+                    session_data["payment_intent_data"] = {
+                        "setup_future_usage": "off_session",
+                    }
+
+                    # Reuse existing customer if available (from previous payment)
+                    renew_data = payment.get_renew_data()
+                    if renew_data and renew_data.get("customer_id"):
+                        session_data["customer"] = renew_data["customer_id"]
+                    else:
+                        # Force customer creation for new subscriptions
+                        # This ensures PaymentMethod is attached to a customer
+                        session_data["customer_creation"] = "always"
+
+            # Patch session with billing email if exists (only if no customer set)
+            if payment.billing_email and "customer" not in session_data:
                 session_data.update({"customer_email": payment.billing_email})
 
-            # Patch session with billing name
+            # Store billing name and address in metadata for audit trail
+            # Note: We rely on Stripe's default billing_address_collection="auto"
+            # which only collects address when needed for tax/compliance.
+            # The metadata below is stored for audit trail regardless.
+            metadata = {}
             if payment.billing_first_name or payment.billing_last_name:
-                session_data.update(
-                    {
-                        "metadata": {
-                            "customer_name": f"{payment.billing_first_name} "
-                            f"{payment.billing_last_name}"
-                        }
-                    }
+                metadata["customer_name"] = (
+                    f"{payment.billing_first_name} {payment.billing_last_name}".strip()
                 )
+            if payment.billing_address_1:
+                metadata["billing_address_1"] = payment.billing_address_1
+            if payment.billing_address_2:
+                metadata["billing_address_2"] = payment.billing_address_2
+            if payment.billing_city:
+                metadata["billing_city"] = payment.billing_city
+            if payment.billing_postcode:
+                metadata["billing_postcode"] = payment.billing_postcode
+            if payment.billing_country_code:
+                metadata["billing_country_code"] = payment.billing_country_code
+            if payment.billing_country_area:
+                metadata["billing_country_area"] = payment.billing_country_area
+            if payment.billing_phone:
+                metadata["billing_phone"] = str(payment.billing_phone)
+
+            if metadata:
+                session_data["metadata"] = metadata
+
+            # Always store payment_token in session metadata for webhook routing
+            # This allows webhooks to find the payment regardless of mode (payment/setup)
+            if "metadata" not in session_data:
+                session_data["metadata"] = {}
+            session_data["metadata"]["payment_token"] = str(payment.token)
+
             try:
                 return stripe.checkout.Session.create(**session_data)
-            except stripe.StripeError as e:
+            except stripe.error.StripeError as e:
                 # Payment has been declined by Stripe, check Stripe Dashboard
                 raise PaymentError(e) from e
         else:
@@ -159,7 +242,7 @@ class StripeProviderV3(BasicProvider):
                     amount=self.convert_amount(payment.currency, to_refund),
                     reason="requested_by_customer",
                 )
-            except stripe.StripeError as e:
+            except stripe.error.StripeError as e:
                 raise PaymentError(e) from e
             else:
                 payment.attrs.refund = json.dumps(refund)
@@ -183,6 +266,10 @@ class StripeProviderV3(BasicProvider):
     def get_line_items(self, payment) -> list:
         order_no = payment.token if self.use_token else payment.pk
         product_data = StripeProductData(name=f"Order #{order_no}")
+
+        # Add description if available
+        if payment.description:
+            product_data.description = payment.description
 
         price_data = StripePriceData(
             currency=payment.currency.lower(),
@@ -218,24 +305,348 @@ class StripeProviderV3(BasicProvider):
             except ValueError as e:
                 # Invalid payload
                 raise e
-            except stripe.SignatureVerificationError as e:
+            except stripe.error.SignatureVerificationError as e:
                 # Invalid signature
                 raise e
         else:
             return json.loads(request.body)
 
-    def get_token_from_request(self, payment, request) -> str:
+    def get_token_from_request(self, payment, request) -> str | None:
         """Return payment token from provider request."""
         stripe.api_key = self.api_key
         event = self.return_event_payload(request)
+        event_type = event.get("type")
+
+        # checkout.session events have client_reference_id or metadata
+        if event_type and event_type.startswith("checkout.session"):
+            try:
+                session = event["data"]["object"]
+                # Try client_reference_id first
+                client_ref = session.get("client_reference_id")
+                if client_ref:
+                    return client_ref
+                # Fallback to metadata (always present after our changes)
+                metadata = session.get("metadata", {})
+                return metadata.get("payment_token")
+            except (KeyError, TypeError):
+                return None
+
+        # setup_intent events (for zero-dollar auth/card changes)
+        # Need to find the Checkout Session that created this SetupIntent
+        if event_type and event_type.startswith("setup_intent"):
+            try:
+                setup_intent = event["data"]["object"]
+                customer_id = setup_intent.get("customer")
+                created_time = setup_intent.get("created", 0)
+
+                if not customer_id:
+                    return None
+
+                # Search for recent Checkout Sessions for this customer
+                # Narrow time window (5 minutes) for efficiency
+                sessions = stripe.checkout.Session.list(
+                    limit=10,
+                    customer=customer_id,
+                    created={"gte": created_time - 300, "lte": created_time + 60},
+                )
+
+                # Find the setup mode session and extract payment_token from metadata
+                for session in sessions.data:
+                    if session.get("mode") == "setup":
+                        metadata = session.get("metadata", {})
+                        payment_token = metadata.get("payment_token")
+                        if payment_token:
+                            return payment_token
+
+                return None
+            except (KeyError, TypeError, stripe.error.StripeError):
+                return None
+
+        # payment_intent and other events don't need token extraction
+        # These are follow-up webhooks - already processed in checkout.session
+        return None
+
+    def autocomplete_with_wallet(self, payment):
+        """
+        Complete payment using stored PaymentMethod (server-initiated).
+
+        This method charges a stored payment method without user interaction.
+        Uses get_renew_data() to retrieve both payment_method_id and customer_id.
+
+        If 3D Secure or other authentication is required, raises RedirectNeeded.
+        """
+        stripe.api_key = self.api_key
+
+        # Get renew data (payment method and customer ID)
+        renew_data = payment.get_renew_data()
+        if not renew_data or not renew_data.get("token"):
+            raise PaymentError("No payment method token found for recurring payment")
+
+        payment_method_id = renew_data["token"]
+        customer_id = renew_data.get("customer_id")
+
+        if not customer_id:
+            raise PaymentError(
+                "No customer_id found for recurring payment. "
+                "Customer ID must be stored during first payment setup."
+            )
 
         try:
-            return event["data"]["object"]["client_reference_id"]
-        except Exception as e:
-            raise PaymentError(
-                code=400,
-                message="client_reference_id is not present, check Stripe Dashboard.",
-            ) from e
+            # Create PaymentIntent with customer (required for off_session)
+            intent_params = {
+                "amount": self.convert_amount(payment.currency, payment.total),
+                "currency": payment.currency.lower(),
+                "customer": customer_id,  # Required for off_session
+                "payment_method": payment_method_id,
+                "confirm": True,
+                "off_session": True,
+                "metadata": {
+                    "payment_token": payment.token,
+                    "payment_id": payment.pk if not self.use_token else None,
+                },
+            }
+
+            # Add description if available (visible in Stripe Dashboard)
+            if payment.description:
+                intent_params["description"] = payment.description
+
+            intent = stripe.PaymentIntent.create(**intent_params)
+
+            payment.transaction_id = intent.id
+            payment.attrs.payment_intent = intent
+            payment.save()
+
+            # Handle PaymentIntent status
+            self._handle_payment_intent_status(payment, intent)
+
+        except stripe.error.CardError as e:
+            # Card was declined
+            payment.change_status(PaymentStatus.REJECTED, str(e))
+            raise PaymentError(f"Card declined: {e}") from e
+
+        except stripe.error.StripeError as e:
+            # Other Stripe error
+            payment.change_status(PaymentStatus.ERROR, str(e))
+            raise PaymentError(f"Stripe error: {e}") from e
+
+    def _handle_payment_intent_status(self, payment, intent):
+        """
+        Handle PaymentIntent status and update payment accordingly.
+
+        Args:
+            payment: Payment instance to update
+            intent: Stripe PaymentIntent object
+
+        Raises:
+            RedirectNeeded: If 3D Secure authentication is required
+        """
+        if intent.status == "succeeded":
+            payment.captured_amount = payment.total
+            payment.change_status(PaymentStatus.CONFIRMED)
+            self._finalize_wallet_payment(payment)
+
+        elif intent.status == "requires_action":
+            # 3D Secure or other authentication needed
+            if intent.next_action and intent.next_action.type == "redirect_to_url":
+                redirect_url = intent.next_action.redirect_to_url.url
+                raise RedirectNeeded(redirect_url)
+            raise PaymentError(f"Payment requires action: {intent.next_action}")
+
+        elif intent.status in ["requires_payment_method", "canceled"]:
+            # Payment failed
+            error_message = "Payment failed"
+            if intent.last_payment_error:
+                error_message = intent.last_payment_error.message
+            payment.change_status(PaymentStatus.REJECTED, error_message)
+
+        else:
+            # Other status (processing, requires_capture, etc.)
+            payment.change_status(PaymentStatus.WAITING)
+
+    def erase_wallet(self, wallet):
+        """
+        Erase Stripe payment method by detaching from customer.
+
+        Stripe doesn't require explicit deletion - PaymentMethods are automatically
+        cleaned up when not used. However, we detach it from the customer for clarity
+        and to prevent accidental reuse.
+
+        Args:
+            wallet: BaseWallet instance to erase
+        """
+        stripe.api_key = self.api_key
+
+        renew_data = wallet.extra_data if hasattr(wallet, "extra_data") else {}
+        payment_method_id = wallet.token
+        customer_id = renew_data.get("customer_id")
+
+        if payment_method_id and customer_id:
+            try:
+                # Detach PaymentMethod from customer
+                stripe.PaymentMethod.detach(payment_method_id)
+            except stripe.error.StripeError as e:
+                # Log but don't fail - wallet is already marked ERASED
+                logger.warning(
+                    "Failed to detach Stripe PaymentMethod %s: %s",
+                    payment_method_id,
+                    e,
+                )
+
+        # Call parent to mark wallet as ERASED
+        super().erase_wallet(wallet)
+
+    def _is_session_complete(self, session_info):
+        """Check if Checkout Session is complete (payment or setup mode)."""
+        # Setup mode (zero-dollar): check setup_intent status
+        if session_info.get("mode") == "setup":
+            setup_intent_id = session_info.get("setup_intent")
+            if setup_intent_id:
+                stripe.api_key = self.api_key
+                setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
+                return setup_intent.status == "succeeded"
+            return False
+
+        # Payment mode: check payment_status
+        return session_info.get("payment_status") == "paid"
+
+    def _store_payment_method_from_session(self, payment, session_info):
+        """
+        Extract and store PaymentMethod and Customer from Checkout Session.
+
+        Called after payment is confirmed to store payment method for future
+        recurring charges. Handles both PaymentIntent (payment mode) and
+        SetupIntent (setup mode for zero-dollar auth).
+        """
+        stripe.api_key = self.api_key
+
+        try:
+            # Check if this is setup mode (zero-dollar) or payment mode
+            if session_info.get("mode") == "setup":
+                # Setup mode: Get SetupIntent
+                setup_intent_id = session_info.get("setup_intent")
+                if not setup_intent_id:
+                    return
+
+                setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
+                payment_method_id = setup_intent.payment_method
+                customer_id = setup_intent.customer
+            else:
+                # Payment mode: Get PaymentIntent
+                payment_intent_id = session_info.get("payment_intent")
+                if not payment_intent_id:
+                    return
+
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                payment_method_id = payment_intent.payment_method
+                customer_id = payment_intent.customer
+
+            if not payment_method_id:
+                return
+
+            # Get PaymentMethod details for card info
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+
+            # Extract card details
+            card_data = {}
+            if payment_method.type == "card" and payment_method.card:
+                card_data = {
+                    "card_expire_year": payment_method.card.exp_year,
+                    "card_expire_month": payment_method.card.exp_month,
+                    "card_masked_number": payment_method.card.last4,
+                }
+
+            # Store payment method token and customer ID
+            payment.set_renew_token(
+                token=payment_method_id,
+                customer_id=customer_id,
+                **card_data,
+            )
+
+        except stripe.error.StripeError as e:
+            # Failed to retrieve payment method, but payment was successful
+            # Don't fail the payment, just log the error
+            logger.exception(
+                "Failed to store PaymentMethod for payment %s: %s", payment.id, e
+            )
+
+    def _store_payment_method_from_setup_intent(self, payment, setup_intent):
+        """Extract and store PaymentMethod from SetupIntent."""
+        try:
+            stripe.api_key = self.api_key
+
+            payment_method_id = setup_intent.get("payment_method")
+            customer_id = setup_intent.get("customer")
+
+            if not payment_method_id:
+                return
+
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+
+            # Handle both dict-like and Mock objects
+            if hasattr(payment_method, "card"):
+                card = payment_method.card
+                card_data = {
+                    "card_masked_number": getattr(card, "last4", None),
+                    "card_expire_year": getattr(card, "exp_year", None),
+                    "card_expire_month": getattr(card, "exp_month", None),
+                }
+            else:
+                card = payment_method.get("card", {})
+                card_data = {
+                    "card_masked_number": card.get("last4"),
+                    "card_expire_year": card.get("exp_year"),
+                    "card_expire_month": card.get("exp_month"),
+                }
+
+            payment.set_renew_token(
+                token=payment_method_id,
+                customer_id=customer_id,
+                **card_data,
+            )
+
+        except Exception:  # noqa: broad-except - don't fail webhooks
+            logger.warning(
+                "Failed to store PaymentMethod from SetupIntent for payment %s",
+                payment.id,
+            )
+
+    def _retrieve_transaction_fee(self, payment_intent_id):
+        """Retrieve transaction fee from Stripe for a given PaymentIntent.
+
+        Args:
+            payment_intent_id: Stripe PaymentIntent ID
+
+        Returns:
+            int: Fee amount in cents, or None if unavailable
+        """
+        try:
+            stripe.api_key = self.api_key
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+
+            if (
+                not payment_intent.get("charges")
+                or not payment_intent["charges"]["data"]
+            ):
+                return None
+
+            charge = payment_intent["charges"]["data"][0]
+            balance_transaction_id = charge.get("balance_transaction")
+
+            if not balance_transaction_id:
+                return None
+
+            balance_transaction = stripe.BalanceTransaction.retrieve(
+                balance_transaction_id
+            )
+
+            return balance_transaction.get("fee")
+
+        except Exception:  # noqa: broad-except - don't fail webhooks
+            logger.warning(
+                "Failed to retrieve transaction fee for PaymentIntent %s",
+                payment_intent_id,
+            )
+            return None
 
     def process_data(self, payment, request):
         """Processes the event sent by stripe.
@@ -243,22 +654,66 @@ class StripeProviderV3(BasicProvider):
         Updates the payment status and adds the event to the attrs property
         """
         event = self.return_event_payload(request)
-        if event.get("type") in stripe_enabled_events:
+        event_type = event.get("type")
+
+        if event_type in stripe_enabled_events:
             try:
-                session_info = event["data"]["object"]
+                event_object = event["data"]["object"]
             except Exception as e:
                 raise PaymentError(
-                    code=400, message="session not present, check Stripe Dashboard"
+                    code=400, message="Event object not present, check Stripe Dashboard"
                 ) from e
 
-            if session_info["status"] == "expired":
-                # Expired Order
-                payment.change_status(PaymentStatus.REJECTED)
+            # Handle setup_intent.succeeded events
+            if event_type == "setup_intent.succeeded":
+                setup_intent = event_object
 
-            elif session_info["payment_status"] == "paid":
-                # Paid Order
-                payment.change_status(PaymentStatus.CONFIRMED)
+                if setup_intent["status"] == "succeeded":
+                    with transaction.atomic():
+                        if self.store_payment_method and hasattr(
+                            payment, "set_renew_token"
+                        ):
+                            self._store_payment_method_from_setup_intent(
+                                payment, setup_intent
+                            )
 
-            payment.attrs.session = session_info
-            payment.save()
+                        payment.change_status(PaymentStatus.CONFIRMED)
+
+                payment.attrs.setup_intent = setup_intent
+                payment.save()
+
+            else:
+                # Handle checkout.session.* events
+                session_info = event_object
+
+                if session_info["status"] == "expired":
+                    # Expired Order
+                    payment.change_status(PaymentStatus.REJECTED)
+
+                elif self._is_session_complete(session_info):
+                    # Store PaymentMethod BEFORE changing status
+                    # This is important because status change triggers signal that
+                    # sets token_verified=True. Use atomic transaction to prevent
+                    # race conditions with concurrent webhooks
+                    with transaction.atomic():
+                        if self.store_payment_method and hasattr(
+                            payment, "set_renew_token"
+                        ):
+                            self._store_payment_method_from_session(
+                                payment, session_info
+                            )
+
+                        # Retrieve and store transaction fee
+                        payment_intent_id = session_info.get("payment_intent")
+                        if payment_intent_id:
+                            fee = self._retrieve_transaction_fee(payment_intent_id)
+                            if fee is not None:
+                                payment.attrs.stripe_fee = fee
+
+                        # Now change status (triggers signal that sets token_verified=True)
+                        payment.change_status(PaymentStatus.CONFIRMED)
+
+                payment.attrs.session = session_info
+                payment.save()
+
         return JsonResponse({"status": "OK"})

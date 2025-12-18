@@ -9,6 +9,8 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
+from . import WalletStatus
+
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
@@ -142,6 +144,121 @@ class BasicProvider:
             qs = urlencode(extra_data)
             return url + "?" + qs
         return url
+
+    def autocomplete_with_wallet(self, payment):
+        """
+        Complete the payment with wallet (server-initiated charge).
+
+        This method charges a stored payment method without user interaction.
+        The amount to charge is taken from payment.total and can vary with each call.
+
+        Provider implementation should:
+        1. Retrieve the payment method token from payment.get_renew_token()
+        2. Create a charge with the payment provider's API using payment.total
+        3. Update payment status accordingly
+        4. Call self._finalize_wallet_payment(payment) on success
+
+        If user interaction is required (e.g., 3D Secure), raise RedirectNeeded
+        with the URL where the user should be redirected.
+
+        Args:
+            payment: BasePayment instance to charge (amount from payment.total)
+
+        Raises:
+            RedirectNeeded: If user interaction required (3DS, CVV, etc.)
+            PaymentError: If payment fails or no token found
+        """
+        raise NotImplementedError
+
+    def _finalize_wallet_payment(self, payment, wallet=None):
+        """
+        Internal helper to finalize wallet payment.
+
+        Should be called by providers after successful wallet payment.
+        Triggers payment_completed hook on the wallet if available.
+
+        Args:
+            payment: BasePayment instance that was charged
+            wallet: Optional wallet instance (will try to get from payment if not
+                provided)
+        """
+        if wallet is None and hasattr(payment, "wallet"):
+            wallet = payment.wallet
+
+        if wallet is not None:
+            wallet.payment_completed(payment)
+
+    def erase_wallet(self, wallet):
+        """
+        Erase/deactivate a wallet.
+
+        Default implementation marks wallet as ERASED. Providers should override
+        to also delete/detach the payment method from their system.
+
+        Args:
+            wallet: BaseWallet instance to erase
+        """
+        wallet.status = WalletStatus.ERASED
+        wallet.save(update_fields=["status"])
+
+    def autocomplete_with_subscription(self, payment):
+        """
+        Complete the payment as part of a subscription flow.
+
+        This method handles the initial payment and subscription setup with the
+        provider. After this, the provider will automatically charge on schedule.
+
+        Provider implementation should:
+        1. Create subscription with provider's API
+        2. Process initial payment if required
+        3. Store subscription_id on subscription object
+        4. Update payment status accordingly
+        5. Call self._finalize_subscription_payment(payment) on success
+
+        Args:
+            payment: BasePayment instance for subscription setup
+
+        Raises:
+            RedirectNeeded: If user interaction required (3DS, CVV, etc.)
+            PaymentError: If payment or subscription setup fails
+        """
+        raise NotImplementedError
+
+    def cancel_subscription(self, payment):
+        """
+        Cancel a provider-managed subscription.
+
+        Provider implementation should:
+        1. Get subscription from payment.get_subscription()
+        2. Cancel subscription with provider's API
+        3. Update subscription status to CANCELLED
+        4. Optionally update payment status
+
+        Args:
+            payment: BasePayment instance with associated subscription
+
+        Raises:
+            PaymentError: If cancellation fails at provider level
+        """
+        raise NotImplementedError
+
+    def _finalize_subscription_payment(self, payment, subscription=None):
+        """
+        Internal helper to finalize subscription payment.
+
+        Should be called by providers after successful subscription payment.
+        Triggers subscription_payment_completed hook on the subscription.
+
+        Args:
+            payment: BasePayment instance that was charged
+            subscription: Optional subscription instance (will try to get from
+                payment if not provided)
+        """
+        if subscription is None:
+            subscription = payment.get_subscription()
+
+        if subscription is not None:
+            subscription.subscription_payment_completed(payment)
 
     def capture(self, payment, amount=None):
         raise NotImplementedError

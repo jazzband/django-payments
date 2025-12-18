@@ -4,6 +4,39 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v4.1.0
+------
+
+**New Features**
+
+- Added wallet-based recurring payments interface for server-initiated payments:
+
+  * ``BaseWallet`` abstract model for storing payment method tokens
+  * ``BasePayment.get_renew_token()`` / ``set_renew_token()`` for token management
+  * ``BasePayment.get_renew_data()`` for provider-specific data (extends ``get_renew_token()``)
+  * ``BasePayment.autocomplete_with_wallet()`` for server-initiated charges
+  * ``BasicProvider.autocomplete_with_wallet()`` provider implementation method
+  * ``BasicProvider.erase_wallet()`` for payment method cleanup
+  * ``BasicProvider._finalize_wallet_payment()`` helper for triggering wallet hooks
+  * ``WalletStatus`` constants (PENDING, ACTIVE, ERASED)
+  * Comprehensive test suite (``payments/test_wallet.py``)
+  * Complete documentation (``docs/wallet.rst``)
+
+- This enables server-initiated recurring payments where your application controls
+  when to charge stored payment methods, as opposed to provider-managed subscriptions.
+
+**Provider Support**
+
+- DummyProvider now includes wallet interface reference implementation
+- PayU provider supports wallet interface (via ``django-payments-payu`` package)
+- Stripe wallet support in separate PR (#467)
+
+**Backward Compatibility**
+
+- All changes are backward compatible
+- Existing providers continue working without modifications
+- New methods have sensible defaults (return None, raise NotImplementedError)
+
 v4.0.0
 ------
 

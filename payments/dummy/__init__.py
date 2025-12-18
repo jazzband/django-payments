@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from payments import PaymentError
 from payments import PaymentStatus
 from payments import RedirectNeeded
+from payments import SubscriptionStatus
 from payments.core import BasicProvider
 
 from .forms import DummyForm
@@ -65,6 +66,83 @@ class DummyProvider(BasicProvider):
             payment.captured_amount = payment.total
             return HttpResponseRedirect(payment.get_success_url())
         return HttpResponseRedirect(payment.get_failure_url())
+
+    def autocomplete_with_wallet(self, payment):
+        """
+        Dummy implementation of wallet-based recurring payment.
+
+        This demonstrates the expected flow for wallet-based providers:
+        1. Get token from payment.get_renew_token()
+        2. Simulate charging with the stored payment method
+        3. Update payment status
+        4. Call _finalize_wallet_payment on success
+
+        Note: Real providers should validate wallet status before charging.
+        DummyProvider is lenient for testing purposes.
+        """
+        renew_token = payment.get_renew_token()
+        if not renew_token:
+            raise PaymentError("No payment method token found for recurring payment")
+
+        # Simulate successful charge
+        payment.transaction_id = f"dummy-wallet-charge-{payment.token}"
+        payment.captured_amount = payment.total
+        payment.change_status(PaymentStatus.CONFIRMED)
+        payment.save(update_fields=["transaction_id", "captured_amount"])
+
+        # Finalize wallet payment (triggers wallet.payment_completed)
+        self._finalize_wallet_payment(payment)
+
+    def autocomplete_with_subscription(self, payment):
+        """
+        Dummy implementation of subscription-based recurring payment.
+
+        This demonstrates the expected flow for subscription-based providers:
+        1. Get subscription from payment.get_subscription()
+        2. Simulate creating/confirming subscription with provider
+        3. Process initial payment
+        4. Store subscription_id
+        5. Call _finalize_subscription_payment on success
+        """
+        subscription = payment.get_subscription()
+        if not subscription:
+            raise PaymentError("No subscription associated with this payment")
+
+        # Simulate subscription creation with provider
+        if not subscription.subscription_id:
+            subscription.subscription_id = f"dummy-sub-{payment.token}"
+            subscription.save(update_fields=["subscription_id"])
+
+        # Simulate successful initial charge
+        payment.transaction_id = f"dummy-sub-charge-{payment.token}"
+        payment.captured_amount = payment.total
+        payment.change_status(PaymentStatus.CONFIRMED)
+        payment.save(update_fields=["transaction_id", "captured_amount"])
+
+        # Finalize subscription payment
+        # (triggers subscription.subscription_payment_completed)
+        self._finalize_subscription_payment(payment, subscription)
+
+    def cancel_subscription(self, payment):
+        """
+        Dummy implementation of subscription cancellation.
+
+        This demonstrates the expected flow for cancelling subscriptions:
+        1. Get subscription from payment.get_subscription()
+        2. Cancel subscription with provider's API
+        3. Update subscription status to CANCELLED
+        """
+        subscription = payment.get_subscription()
+        if not subscription:
+            raise PaymentError("No subscription associated with this payment")
+
+        if not subscription.subscription_id:
+            raise PaymentError("Subscription not yet created with provider")
+
+        # Simulate cancellation with provider (in real provider, make API call here)
+        # For dummy, we just mark it as cancelled
+        subscription.status = SubscriptionStatus.CANCELLED
+        subscription.save(update_fields=["status"])
 
     def capture(self, payment, amount=None):
         payment.change_status(PaymentStatus.CONFIRMED)

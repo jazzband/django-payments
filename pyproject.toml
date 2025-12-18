@@ -81,10 +81,11 @@ addopts =[
   "--cov-report=term-missing:skip-covered",
   "--no-cov-on-fail",
   "--color=yes",
+  "--ignore=testapp/payments",  # Ignore symlink to avoid duplicate test discovery
 ]
-testpaths = "payments"
+testpaths = ["payments", "testapp/testapp"]
 DJANGO_SETTINGS_MODULE = "test_settings"
-pythonpath = "."
+pythonpath = [".", "testapp/testapp"]  # Root first to avoid symlink issues
 
 [tool.ruff.lint]
 extend-select = [

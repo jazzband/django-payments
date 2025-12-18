@@ -17,6 +17,8 @@ from phonenumber_field.modelfields import PhoneNumberField
 from . import FraudStatus
 from . import PaymentStatus
 from . import PurchasedItem
+from . import SubscriptionStatus
+from . import WalletStatus
 from .core import provider_factory
 
 logger = logging.getLogger(__name__)
@@ -44,6 +46,174 @@ class PaymentAttributeProxy:
         data[key] = value
         self._payment.extra_data = json.dumps(data)
         return None
+
+
+class BaseWallet(models.Model):
+    """
+    Abstract model for storing payment method tokens for recurring payments.
+
+    This model provides a base structure for wallet-based payment providers
+    (PayU, Stripe, Adyen, etc.) that support server-initiated recurring payments.
+
+    Typical usage:
+        1. Create wallet when user enrolls in recurring payments
+        2. After first successful payment, provider stores token and activates wallet
+        3. For recurring charges, retrieve token and charge through provider
+        4. When user cancels, erase wallet through provider.erase_wallet()
+
+    Example implementation:
+        class Wallet(BaseWallet):
+            user = models.ForeignKey(User, on_delete=models.CASCADE)
+            payment_provider = models.CharField(max_length=50)
+
+            def payment_completed(self, payment):
+                # Custom logic after successful payment
+                if payment.status == PaymentStatus.CONFIRMED:
+                    self.activate()
+                    self.user.send_notification("Payment successful")
+    """
+
+    token = models.CharField(
+        _("wallet token/id"),
+        help_text=_(
+            "Payment method token/ID from provider (e.g., PaymentMethod ID for Stripe, "
+            "card token for PayU, recurringDetailReference for Adyen)"
+        ),
+        max_length=255,
+        default="",
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=10, choices=WalletStatus.CHOICES, default=WalletStatus.PENDING
+    )
+    extra_data = models.JSONField(
+        _("extra data"),
+        help_text=_(
+            "Provider-specific data (e.g., card details, expiry dates, customer IDs)"
+        ),
+        default=dict,
+    )
+
+    class Meta:
+        abstract = True
+
+    def payment_completed(self, payment):
+        """
+        Called after a payment using this wallet is completed successfully.
+
+        Default implementation activates the wallet on first successful payment.
+        Override in subclass for custom behavior (notifications, logging, etc.).
+
+        Args:
+            payment: The BasePayment instance that was completed
+        """
+        if (
+            payment.status == PaymentStatus.CONFIRMED
+            and self.status == WalletStatus.PENDING
+        ):
+            self.status = WalletStatus.ACTIVE
+            self.save(update_fields=["status"])
+
+    def activate(self):
+        """Mark wallet as active and ready for recurring charges."""
+        self.status = WalletStatus.ACTIVE
+        self.save(update_fields=["status"])
+
+    def erase(self):
+        """Mark wallet as erased (no longer usable)."""
+        self.status = WalletStatus.ERASED
+        self.save(update_fields=["status"])
+
+
+class BaseSubscription(models.Model):
+    """
+    Abstract model for managing provider-controlled recurring subscriptions.
+
+    This model represents subscriptions where the payment provider manages
+    the billing schedule and automatically charges on a fixed interval
+    (monthly, yearly, etc.) with a fixed amount.
+
+    This differs from wallet-based payments where:
+    - Wallet: Application controls when to charge and how much (variable amounts)
+    - Subscription: Provider controls schedule and amount (fixed intervals)
+
+    Typical usage:
+        1. Create subscription when user signs up for recurring service
+        2. Provider creates subscription and returns subscription_id
+        3. Provider automatically charges on schedule
+        4. Application receives webhooks for each charge
+        5. When user cancels, call payment.cancel_subscription()
+
+    Example implementation:
+        class Subscription(BaseSubscription):
+            user = models.ForeignKey(User, on_delete=models.CASCADE)
+            plan = models.CharField(max_length=50)  # e.g., "basic", "premium"
+
+            def subscription_payment_completed(self, payment):
+                # Custom logic after each recurring payment
+                if payment.status == PaymentStatus.CONFIRMED:
+                    self.user.extend_subscription_period()
+    """
+
+    subscription_id = models.CharField(
+        _("subscription ID"),
+        help_text=_(
+            "Provider's subscription identifier (e.g., Stripe subscription ID, "
+            "PayPal billing agreement ID)"
+        ),
+        max_length=255,
+        default="",
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=SubscriptionStatus.CHOICES,
+        default=SubscriptionStatus.PENDING,
+    )
+    extra_data = models.JSONField(
+        _("extra data"),
+        help_text=_(
+            "Provider-specific subscription data (e.g., plan details, "
+            "next billing date, cancellation reason)"
+        ),
+        default=dict,
+    )
+
+    class Meta:
+        abstract = True
+
+    def subscription_payment_completed(self, payment):
+        """
+        Called after each recurring payment is completed.
+
+        Default implementation activates subscription on first payment.
+        Override in subclass for custom behavior (extend service period,
+        send notifications, etc.).
+
+        Args:
+            payment: The BasePayment instance for this recurring charge
+        """
+        if (
+            payment.status == PaymentStatus.CONFIRMED
+            and self.status == SubscriptionStatus.PENDING
+        ):
+            self.status = SubscriptionStatus.ACTIVE
+            self.save(update_fields=["status"])
+
+    def activate(self):
+        """Mark subscription as active."""
+        self.status = SubscriptionStatus.ACTIVE
+        self.save(update_fields=["status"])
+
+    def cancel(self):
+        """Mark subscription as cancelled."""
+        self.status = SubscriptionStatus.CANCELLED
+        self.save(update_fields=["status"])
+
+    def expire(self):
+        """Mark subscription as expired."""
+        self.status = SubscriptionStatus.EXPIRED
+        self.save(update_fields=["status"])
 
 
 class BasePayment(models.Model):
@@ -191,6 +361,178 @@ class BasePayment(models.Model):
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
+
+    def get_payment_url(self) -> str:
+        """
+        Get the url the view that handles the payment
+        (payment_details() in documentation)
+        For now used only by PayU provider to redirect users back to CVV2 form
+        """
+        raise NotImplementedError
+
+    def autocomplete_with_wallet(self):
+        """
+        Complete the payment with wallet (server-initiated charge).
+
+        This method charges a stored payment method without user interaction.
+        The amount is taken from payment.total - it can vary with each charge.
+
+        Use cases:
+        - Subscription renewals (fixed or variable amounts)
+        - Usage-based billing (charges based on consumption)
+        - Flexible billing (proration, credits, discounts)
+        - Multi-charge workflows (deposits, installments)
+
+        Security: This method performs NO authorization checks. The caller must:
+        - Verify user ownership of payment/wallet before calling
+        - Implement rate limiting to prevent abuse
+        - Validate payment amount and currency
+
+        Raises:
+            RedirectNeeded: If user interaction required (3D Secure, CVV, etc.)
+            PaymentError: If payment fails or no token found
+        """
+        provider = provider_factory(self.variant)
+        provider.autocomplete_with_wallet(self)
+
+    def get_renew_token(self):
+        """
+        Get stored payment method token for recurring payments.
+
+        Default implementation returns None. Subclasses should override this method
+        to return the token from their storage mechanism (e.g., from a related
+        wallet model, RecurringUserPlan model, or extra_data field).
+
+        Security: Only return token if wallet status is ACTIVE. Never return
+        tokens from PENDING or ERASED wallets.
+
+        For simple use cases with wallet support, this can be implemented as:
+            if self.wallet and self.wallet.status == WalletStatus.ACTIVE:
+                return self.wallet.token
+            return None
+
+        Returns:
+            str or None: Payment method token/ID for recurring charges
+        """
+        return
+
+    def get_renew_data(self):
+        """
+        Get all data needed for recurring payment charge.
+
+        Default implementation returns token only (backward compatible with
+        get_renew_token). Override to return provider-specific data
+        (customer_id, etc.).
+
+        Example override for providers requiring additional data:
+            def get_renew_data(self):
+                token = self.wallet.token
+                if not token:
+                    return None
+                return {
+                    "token": token,
+                    "customer_id": self.wallet.extra_data.get("stripe_customer_id"),
+                }
+
+        Returns:
+            dict or None: Payment data with at minimum {"token": "xxx"},
+                or None if no data
+        """
+        token = self.get_renew_token()
+        return {"token": token} if token else None
+
+    def set_renew_token(
+        self,
+        token,
+        card_expire_year=None,
+        card_expire_month=None,
+        card_masked_number=None,
+        automatic_renewal=True,
+        **kwargs,
+    ):
+        """
+        Store payment method token for future recurring payments.
+
+        Default implementation does nothing. Subclasses should override this method
+        to store the token in their storage mechanism (e.g., in a related wallet
+        model, RecurringUserPlan model, or extra_data field).
+
+        For simple use cases with wallet support, this can be implemented as:
+            self.wallet_token = token
+            self.save()
+
+        Args:
+            token: Payment method token/ID from the provider
+            card_expire_year: Card expiration year (optional)
+            card_expire_month: Card expiration month (optional)
+            card_masked_number: Masked card number for display (optional)
+            automatic_renewal: Whether automatic renewal is enabled (optional)
+            **kwargs: Provider-specific data (e.g., customer_id for Stripe)
+        """
+
+    def get_subscription(self):
+        """
+        Get subscription object associated with this payment.
+
+        Default implementation returns None. Subclasses should override this method
+        to return the subscription from their storage mechanism (e.g., from a related
+        subscription model or RecurringUserPlan model).
+
+        For simple use cases with subscription support, this can be implemented as:
+            if hasattr(self, 'subscription'):
+                return self.subscription
+            return None
+
+        Returns:
+            BaseSubscription or None: Subscription instance if this is a recurring
+                payment, None otherwise
+        """
+        return
+
+    def cancel_subscription(self):
+        """
+        Cancel the subscription associated with this payment.
+
+        This method cancels a provider-managed subscription. The provider will
+        stop automatically charging the customer on the scheduled intervals.
+
+        Security: This method performs NO authorization checks. The caller must:
+        - Verify user ownership of payment/subscription before calling
+        - Implement proper access controls
+
+        Raises:
+            ValueError: If no subscription is associated with this payment
+            PaymentError: If cancellation fails at provider level
+        """
+        subscription = self.get_subscription()
+        if not subscription:
+            raise ValueError("No subscription associated with this payment")
+
+        provider = provider_factory(self.variant)
+        provider.cancel_subscription(self)
+
+    def autocomplete_with_subscription(self):
+        """
+        Complete the payment as part of a subscription flow.
+
+        This method is called during subscription setup to complete the initial
+        payment and activate the subscription. After this, the provider will
+        automatically charge on schedule.
+
+        Use cases:
+        - Initial subscription payment (first charge)
+        - Subscription reactivation after failed payment
+
+        Security: This method performs NO authorization checks. The caller must:
+        - Verify user ownership of payment/subscription before calling
+        - Validate subscription parameters
+
+        Raises:
+            RedirectNeeded: If user interaction required (3D Secure, CVV, etc.)
+            PaymentError: If payment fails or subscription setup fails
+        """
+        provider = provider_factory(self.variant)
+        provider.autocomplete_with_subscription(self)
 
     def capture(self, amount=None):
         """Capture a pre-authorized payment.
