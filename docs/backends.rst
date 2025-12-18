@@ -217,29 +217,35 @@ Stripe
 
 Example::
 
-      # Settings for Production
+      # Production
       PAYMENT_VARIANTS = {
           'stripe': (
               'payments.stripe.StripeProviderV3',
               {
-                  'api_key': 'sk_test_123456',
-                  'use_token': True,
+                  'api_key': 'sk_live_123456',
                   'endpoint_secret': 'whsec_123456',
-                  'secure_endpoint': True
+                  'secure_endpoint': True,
+                  # Optional: use_token defaults to True
+                  # 'use_token': True,  # Use payment.token instead of payment.pk in client_reference_id
               }
           )
       }
-      # Settings for Development
+
+      # Development
       PAYMENT_VARIANTS = {
           'stripe': (
               'payments.stripe.StripeProviderV3',
               {
                   'api_key': 'sk_test_123456',
-                  'use_token': True,
-                  'secure_endpoint': False
+                  'secure_endpoint': False,
+                  # Optional: use_token defaults to True
               }
           )
       }
+
+.. note::
+
+   Stripe uses global webhook endpoints. See :doc:`webhooks` for webhook configuration.
 
 
 MercadoPago

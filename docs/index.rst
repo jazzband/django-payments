@@ -33,6 +33,7 @@ Contents:
    usage.rst
    refund.rst
    preauth.rst
+   wallet.rst
    webhooks.rst
    api.rst
    changelog.rst
