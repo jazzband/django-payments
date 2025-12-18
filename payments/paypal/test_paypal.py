@@ -522,9 +522,7 @@ def test_provider_get_with_none_payment(paypal_provider):
     expected_token = "test_access_token"
     expected_token_type = "Bearer"
 
-    with patch("requests.post") as mocked_post, patch(
-        "requests.get"
-    ) as mocked_get:
+    with patch("requests.post") as mocked_post, patch("requests.get") as mocked_get:
         # Mock for token acquisition
         token_response_mock = MagicMock()
         token_response_mock.json.return_value = {
@@ -589,9 +587,7 @@ def test_provider_get_with_none_payment_handles_401(paypal_provider):
     expected_token = "test_access_token"
     expected_token_type = "Bearer"
 
-    with patch("requests.post") as mocked_post, patch(
-        "requests.get"
-    ) as mocked_get:
+    with patch("requests.post") as mocked_post, patch("requests.get") as mocked_get:
         # Mock for token acquisition (called twice due to 401 retry)
         token_response_mock = MagicMock()
         token_response_mock.json.return_value = {
@@ -604,7 +600,7 @@ def test_provider_get_with_none_payment_handles_401(paypal_provider):
         # Mock for the GET request - first 401, then success
         get_response_401 = MagicMock()
         get_response_401.status_code = 401
-        
+
         get_response_200 = MagicMock()
         get_response_200.json.return_value = expected_get_response_data
         get_response_200.status_code = 200
@@ -612,7 +608,7 @@ def test_provider_get_with_none_payment_handles_401(paypal_provider):
         mocked_post.return_value = token_response_mock
         mocked_get.side_effect = [
             HTTPError(response=get_response_401),
-            get_response_200
+            get_response_200,
         ]
 
         response_data = paypal_provider.get(None, test_url)
