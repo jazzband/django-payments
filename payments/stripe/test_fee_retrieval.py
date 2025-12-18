@@ -1,6 +1,10 @@
 """Tests for Stripe transaction fee retrieval."""
+
+from __future__ import annotations
+
 from decimal import Decimal
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import pytest
 
@@ -143,7 +147,9 @@ def test_retrieve_transaction_fee_stripe_error(mock_pi_retrieve):
 @pytest.mark.django_db
 @patch("stripe.BalanceTransaction.retrieve")
 @patch("stripe.PaymentIntent.retrieve")
-def test_process_data_stores_fee_in_session_completed(mock_pi_retrieve, mock_bt_retrieve):
+def test_process_data_stores_fee_in_session_completed(
+    mock_pi_retrieve, mock_bt_retrieve
+):
     """Test that process_data stores the transaction fee for checkout.session.completed."""
     payment = Payment()
     provider = StripeProviderV3(api_key=API_KEY, endpoint_secret="whsec_test")

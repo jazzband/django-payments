@@ -573,15 +573,15 @@ class StripeProviderV3(BasicProvider):
         """Extract and store PaymentMethod from SetupIntent."""
         try:
             stripe.api_key = self.api_key
-            
+
             payment_method_id = setup_intent.get("payment_method")
             customer_id = setup_intent.get("customer")
-            
+
             if not payment_method_id:
                 return
 
             payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
-            
+
             # Handle both dict-like and Mock objects
             if hasattr(payment_method, "card"):
                 card = payment_method.card
@@ -597,13 +597,13 @@ class StripeProviderV3(BasicProvider):
                     "card_expire_year": card.get("exp_year"),
                     "card_expire_month": card.get("exp_month"),
                 }
-            
+
             payment.set_renew_token(
                 token=payment_method_id,
                 customer_id=customer_id,
                 **card_data,
             )
-            
+
         except Exception:  # noqa: broad-except - don't fail webhooks
             logger.warning(
                 "Failed to store PaymentMethod from SetupIntent for payment %s",
@@ -612,32 +612,35 @@ class StripeProviderV3(BasicProvider):
 
     def _retrieve_transaction_fee(self, payment_intent_id):
         """Retrieve transaction fee from Stripe for a given PaymentIntent.
-        
+
         Args:
             payment_intent_id: Stripe PaymentIntent ID
-            
+
         Returns:
             int: Fee amount in cents, or None if unavailable
         """
         try:
             stripe.api_key = self.api_key
             payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-            
-            if not payment_intent.get("charges") or not payment_intent["charges"]["data"]:
+
+            if (
+                not payment_intent.get("charges")
+                or not payment_intent["charges"]["data"]
+            ):
                 return None
-            
+
             charge = payment_intent["charges"]["data"][0]
             balance_transaction_id = charge.get("balance_transaction")
-            
+
             if not balance_transaction_id:
                 return None
-            
+
             balance_transaction = stripe.BalanceTransaction.retrieve(
                 balance_transaction_id
             )
-            
+
             return balance_transaction.get("fee")
-            
+
         except Exception:  # noqa: broad-except - don't fail webhooks
             logger.warning(
                 "Failed to retrieve transaction fee for PaymentIntent %s",
@@ -652,7 +655,7 @@ class StripeProviderV3(BasicProvider):
         """
         event = self.return_event_payload(request)
         event_type = event.get("type")
-        
+
         if event_type in stripe_enabled_events:
             try:
                 event_object = event["data"]["object"]
@@ -664,7 +667,7 @@ class StripeProviderV3(BasicProvider):
             # Handle setup_intent.succeeded events
             if event_type == "setup_intent.succeeded":
                 setup_intent = event_object
-                
+
                 if setup_intent["status"] == "succeeded":
                     with transaction.atomic():
                         if self.store_payment_method and hasattr(
@@ -678,7 +681,7 @@ class StripeProviderV3(BasicProvider):
 
                 payment.attrs.setup_intent = setup_intent
                 payment.save()
-                
+
             else:
                 # Handle checkout.session.* events
                 session_info = event_object
@@ -696,7 +699,9 @@ class StripeProviderV3(BasicProvider):
                         if self.store_payment_method and hasattr(
                             payment, "set_renew_token"
                         ):
-                            self._store_payment_method_from_session(payment, session_info)
+                            self._store_payment_method_from_session(
+                                payment, session_info
+                            )
 
                         # Retrieve and store transaction fee
                         payment_intent_id = session_info.get("payment_intent")
@@ -710,5 +715,5 @@ class StripeProviderV3(BasicProvider):
 
                 payment.attrs.session = session_info
                 payment.save()
-                
+
         return JsonResponse({"status": "OK"})
