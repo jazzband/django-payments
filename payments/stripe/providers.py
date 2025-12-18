@@ -569,6 +569,41 @@ class StripeProviderV3(BasicProvider):
                 "Failed to store PaymentMethod for payment %s: %s", payment.id, e
             )
 
+    def _retrieve_transaction_fee(self, payment_intent_id):
+        """Retrieve transaction fee from Stripe for a given PaymentIntent.
+        
+        Args:
+            payment_intent_id: Stripe PaymentIntent ID
+            
+        Returns:
+            int: Fee amount in cents, or None if unavailable
+        """
+        try:
+            stripe.api_key = self.api_key
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            
+            if not payment_intent.get("charges") or not payment_intent["charges"]["data"]:
+                return None
+            
+            charge = payment_intent["charges"]["data"][0]
+            balance_transaction_id = charge.get("balance_transaction")
+            
+            if not balance_transaction_id:
+                return None
+            
+            balance_transaction = stripe.BalanceTransaction.retrieve(
+                balance_transaction_id
+            )
+            
+            return balance_transaction.get("fee")
+            
+        except Exception:  # noqa: broad-except - don't fail webhooks
+            logger.warning(
+                "Failed to retrieve transaction fee for PaymentIntent %s",
+                payment_intent_id,
+            )
+            return None
+
     def process_data(self, payment, request):
         """Processes the event sent by stripe.
 
@@ -597,6 +632,13 @@ class StripeProviderV3(BasicProvider):
                         payment, "set_renew_token"
                     ):
                         self._store_payment_method_from_session(payment, session_info)
+
+                    # Retrieve and store transaction fee
+                    payment_intent_id = session_info.get("payment_intent")
+                    if payment_intent_id:
+                        fee = self._retrieve_transaction_fee(payment_intent_id)
+                        if fee is not None:
+                            payment.attrs.stripe_fee = fee
 
                     # Now change status (triggers signal that sets token_verified=True)
                     payment.change_status(PaymentStatus.CONFIRMED)
