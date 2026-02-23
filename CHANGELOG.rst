@@ -7,6 +7,8 @@ releases, in reverse chronological order.
 v4.0.0
 ------
 
+- Fixed ``StripeProviderV3`` not setting ``captured_amount`` on payment
+  confirmation in ``process_data()`` and ``status()``, which broke refunds.
 - ``StripeProvider``, which was deprecated in v3.0.0, has been dropped. Use
   ``StripeProviderV3`` instead.
 - Drop support for Django 5.0.

@@ -173,6 +173,7 @@ class StripeProviderV3(BasicProvider):
             stripe.api_key = self.api_key
             session = stripe.checkout.Session.retrieve(payment.transaction_id)
             if session.payment_status == "paid":
+                payment.captured_amount = payment.total
                 payment.change_status(PaymentStatus.CONFIRMED)
                 payment.attrs.session = session
                 payment.save()
@@ -256,6 +257,7 @@ class StripeProviderV3(BasicProvider):
 
             elif session_info["payment_status"] == "paid":
                 # Paid Order
+                payment.captured_amount = payment.total
                 payment.change_status(PaymentStatus.CONFIRMED)
 
             payment.attrs.session = session_info

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -118,16 +119,35 @@ def test_provider_create_session_success_with_billing_name():
     provider.create_session(payment)
 
 
-@pytest.mark.skip(reason="Breaks global state and asserts nothing")
-def test_provider_status():
+def test_provider_status_confirmed():
     payment = Payment()
+    payment.attrs = payment_attrs()
+    payment.transaction_id = "cs_test_..."
     provider = StripeProviderV3(api_key=API_KEY)
 
-    class return_value:
+    class MockSession:
         payment_status = "paid"
 
-    with patch("stripe.checkout.Session.retrieve", return_value=return_value):
+    with patch("stripe.checkout.Session.retrieve", return_value=MockSession()):
         provider.status(payment)
+
+    assert payment.status == PaymentStatus.CONFIRMED
+    assert payment.captured_amount == payment.total
+
+
+def test_provider_status_not_paid():
+    payment = Payment()
+    payment.transaction_id = "cs_test_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+
+    class MockSession:
+        payment_status = "unpaid"
+
+    with patch("stripe.checkout.Session.retrieve", return_value=MockSession()):
+        provider.status(payment)
+
+    assert payment.status == PaymentStatus.WAITING
+    assert payment.captured_amount == 0
 
 
 def test_provider_refund_failure_bad_status():
@@ -247,3 +267,51 @@ def test_provider_refund_zero_decimal_currency_returns_currency_units():
         )
 
     assert result == 3000
+
+
+def _make_webhook_request(event_type, session_status, payment_status):
+    body = json.dumps(
+        {
+            "type": event_type,
+            "data": {
+                "object": {
+                    "status": session_status,
+                    "payment_status": payment_status,
+                    "payment_intent": "pi_...",
+                }
+            },
+        }
+    )
+    request = Mock()
+    request.body = body
+    return request
+
+
+def test_process_data_sets_captured_amount_on_payment():
+    payment = Payment()
+    provider = StripeProviderV3(api_key=API_KEY, secure_endpoint=False)
+    request = _make_webhook_request(
+        event_type="checkout.session.completed",
+        session_status="complete",
+        payment_status="paid",
+    )
+
+    provider.process_data(payment, request)
+
+    assert payment.status == PaymentStatus.CONFIRMED
+    assert payment.captured_amount == payment.total
+
+
+def test_process_data_does_not_set_captured_amount_on_expiry():
+    payment = Payment()
+    provider = StripeProviderV3(api_key=API_KEY, secure_endpoint=False)
+    request = _make_webhook_request(
+        event_type="checkout.session.expired",
+        session_status="expired",
+        payment_status="unpaid",
+    )
+
+    provider.process_data(payment, request)
+
+    assert payment.status == PaymentStatus.REJECTED
+    assert payment.captured_amount == 0
