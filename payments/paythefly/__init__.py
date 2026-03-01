@@ -175,7 +175,9 @@ class PayTheFlyProvider(BasicProvider):
         super().__init__(**kwargs)
 
         if not self._capture:
-            raise ImproperlyConfigured("PayTheFly does not support pre-authorization.")
+            raise ImproperlyConfigured(
+                "PayTheFly does not support pre-authorization."
+            )
 
         if chain_id not in CHAIN_CONFIG:
             raise ImproperlyConfigured(
