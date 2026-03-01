@@ -6,7 +6,6 @@ import json
 import time
 from decimal import Decimal
 from unittest.mock import MagicMock
-from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
@@ -19,7 +18,6 @@ from payments import PaymentError
 from payments import PaymentStatus
 from payments import RedirectNeeded
 
-from . import CHAIN_CONFIG
 from . import PayTheFlyProvider
 from . import _amount_to_wei
 from . import _verify_webhook_signature
@@ -246,7 +244,7 @@ class TestGetForm:
         assert f"projectId={PROJECT_ID}" in redirect_url
         assert f"serialNo={PAYMENT_TOKEN}" in redirect_url
         assert "signature=" in redirect_url
-        assert f"chainId=56" in redirect_url
+        assert "chainId=56" in redirect_url
         assert "amount=0.01" in redirect_url
 
     @patch(
@@ -368,11 +366,13 @@ class TestProcessData:
         provider = _make_provider()
         payment = Payment()
         data_str = json.dumps({"serial_no": payment.token, "tx_type": 1})
-        body = json.dumps({
-            "data": data_str,
-            "sign": "invalidsignature",
-            "timestamp": int(time.time()),
-        })
+        body = json.dumps(
+            {
+                "data": data_str,
+                "sign": "invalidsignature",
+                "timestamp": int(time.time()),
+            }
+        )
         request = MagicMock()
         request.body = body.encode()
 
