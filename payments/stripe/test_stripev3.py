@@ -175,3 +175,75 @@ def test_provider_refund_success():
         provider.refund(payment)
 
     assert payment.status == PaymentStatus.CONFIRMED
+
+
+def test_provider_refund_returns_currency_units():
+    payment = Payment()
+    payment.status = PaymentStatus.CONFIRMED
+    payment.total = 30
+    payment.currency = "USD"
+    payment.attrs.session["payment_intent"] = "pi_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+    return_value = {
+        "id": "re_...",
+        "payment_status": "succeeded",
+        "amount": 3000,
+    }
+
+    with patch("stripe.Refund.create", return_value=return_value) as mock_create:
+        result = provider.refund(payment)
+        mock_create.assert_called_once_with(
+            payment_intent="pi_...",
+            amount=3000,
+            reason="requested_by_customer",
+        )
+
+    assert result == 30
+
+
+def test_provider_refund_partial_returns_currency_units():
+    payment = Payment()
+    payment.status = PaymentStatus.CONFIRMED
+    payment.total = 30
+    payment.currency = "USD"
+    payment.attrs.session["payment_intent"] = "pi_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+    return_value = {
+        "id": "re_...",
+        "payment_status": "succeeded",
+        "amount": 1500,
+    }
+
+    with patch("stripe.Refund.create", return_value=return_value) as mock_create:
+        result = provider.refund(payment, amount=15)
+        mock_create.assert_called_once_with(
+            payment_intent="pi_...",
+            amount=1500,
+            reason="requested_by_customer",
+        )
+
+    assert result == 15
+
+
+def test_provider_refund_zero_decimal_currency_returns_currency_units():
+    payment = Payment()
+    payment.status = PaymentStatus.CONFIRMED
+    payment.total = 3000
+    payment.currency = "JPY"
+    payment.attrs.session["payment_intent"] = "pi_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+    return_value = {
+        "id": "re_...",
+        "payment_status": "succeeded",
+        "amount": 3000,
+    }
+
+    with patch("stripe.Refund.create", return_value=return_value) as mock_create:
+        result = provider.refund(payment, amount=3000)
+        mock_create.assert_called_once_with(
+            payment_intent="pi_...",
+            amount=3000,
+            reason="requested_by_customer",
+        )
+
+    assert result == 3000

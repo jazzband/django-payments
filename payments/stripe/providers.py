@@ -144,7 +144,7 @@ class StripeProviderV3(BasicProvider):
         else:
             raise PaymentError("This payment has already been processed.")
 
-    def refund(self, payment, amount=None) -> int:
+    def refund(self, payment, amount=None):
         if payment.status == PaymentStatus.CONFIRMED:
             to_refund = amount or payment.total
             try:
@@ -164,7 +164,7 @@ class StripeProviderV3(BasicProvider):
             else:
                 payment.attrs.refund = json.dumps(refund)
                 payment.save()
-                return self.convert_amount(payment.currency, to_refund)
+                return to_refund
 
         raise PaymentError("Only Confirmed payments can be refunded")
 
