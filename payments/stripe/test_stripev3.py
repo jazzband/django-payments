@@ -157,6 +157,9 @@ def test_provider_refund_failure_stripe_error():
             provider.refund(payment)
 
 
+## Provider.refund() should not change the payment status.
+## Status management is handled by BasePayment.refund().
+## Refunds should be performed via payment.refund() (see docs/refund.rst).
 def test_provider_refund_success():
     payment = Payment()
     payment.status = PaymentStatus.CONFIRMED
@@ -171,4 +174,4 @@ def test_provider_refund_success():
     with patch("stripe.Refund.create", return_value=return_value):
         provider.refund(payment)
 
-    assert payment.status == PaymentStatus.REFUNDED
+    assert payment.status == PaymentStatus.CONFIRMED

@@ -164,7 +164,6 @@ class StripeProviderV3(BasicProvider):
             else:
                 payment.attrs.refund = json.dumps(refund)
                 payment.save()
-                payment.change_status(PaymentStatus.REFUNDED)
                 return self.convert_amount(payment.currency, to_refund)
 
         raise PaymentError("Only Confirmed payments can be refunded")
