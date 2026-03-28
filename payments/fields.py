@@ -8,6 +8,7 @@ from django import forms
 from django.core import validators
 from django.utils.translation import gettext_lazy as _
 
+from .core import CARD_TYPES
 from .core import get_credit_card_issuer
 from .utils import get_month_choices
 from .utils import get_year_choices
@@ -34,16 +35,17 @@ class CreditCardNumberField(forms.CharField):
             value = re.sub(r"[\s-]+", "", value)
         return super().to_python(value)
 
-    def validate(self, value):
-        card_type, issuer_name = get_credit_card_issuer(value)
+    def validate(self, value) -> None:
+        card_type, _issuer_name = get_credit_card_issuer(value)
         if value in validators.EMPTY_VALUES and self.required:
             raise forms.ValidationError(self.error_messages["required"])
         if value and not self.cart_number_checksum_validation(self, value):
             raise forms.ValidationError(self.error_messages["invalid"])
         if value and self.valid_types is not None and card_type not in self.valid_types:
-            valid_types = map(issuer_name, self.valid_types)
+            card_type_names = {ct: name for _, ct, name in CARD_TYPES}
+            valid_type_names = [card_type_names.get(t, t) for t in self.valid_types]
             error_message = self.error_messages["invalid_type"] % {
-                "valid_types": ", ".join(valid_types)
+                "valid_types": ", ".join(valid_type_names)
             }
             raise forms.ValidationError(error_message)
 
