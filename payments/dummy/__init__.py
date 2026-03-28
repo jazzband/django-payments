@@ -71,7 +71,7 @@ class DummyProvider(BasicProvider):
         payment.captured_amount = amount or payment.total
         return amount
 
-    def release(self, payment):
+    def release(self, payment) -> None:
         return None
 
     def refund(self, payment, amount=None):

@@ -4,6 +4,7 @@ import json
 import logging
 import re
 from typing import TYPE_CHECKING
+from typing import NoReturn
 from uuid import uuid4
 
 from django.http import HttpRequest
@@ -45,7 +46,7 @@ class MercadoPagoProvider(BasicProvider):
     :param sandbox: Whether to use sandbox mode.
     """
 
-    def __init__(self, access_token: str, sandbox: bool):
+    def __init__(self, access_token: str, sandbox: bool) -> None:
         self.client = SDK(access_token)
         self.is_sandbox = sandbox
 
@@ -156,7 +157,7 @@ class MercadoPagoProvider(BasicProvider):
 
         return redirect(payment.get_success_url())
 
-    def process_collection(self, payment: BasePayment, collection_id):
+    def process_collection(self, payment: BasePayment, collection_id) -> None:
         """Process a collection event from MercadoPago.
 
         :param collection_id: The collection ID we got from MercadoPago.
@@ -185,7 +186,7 @@ class MercadoPagoProvider(BasicProvider):
             return self.process_notification(payment, request)
         return None
 
-    def get_form(self, payment: BasePayment, data=None):
+    def get_form(self, payment: BasePayment, data=None) -> NoReturn:
         preference = self.get_or_create_preference(payment)
         logger.debug("Got preference: %s", preference)
 
@@ -203,7 +204,7 @@ class MercadoPagoProvider(BasicProvider):
     def refund(self, payment: BasePayment, amount=None):
         raise NotImplementedError
 
-    def poll_for_updates(self, payment: BasePayment):
+    def poll_for_updates(self, payment: BasePayment) -> None:
         """Fetch updates from MercadoPago if notifications were missed."""
         data = self.client.payment().search(
             {

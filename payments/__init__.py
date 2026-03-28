@@ -66,7 +66,12 @@ class RedirectNeeded(Exception):
 
 
 class PaymentError(Exception):
-    def __init__(self, message, code=None, gateway_message=None):
+    def __init__(
+        self,
+        message: str,
+        code: str | int | None = None,
+        gateway_message: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.gateway_message = gateway_message

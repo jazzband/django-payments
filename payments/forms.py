@@ -27,7 +27,7 @@ class PaymentForm(forms.Form):
         payment=None,
         hidden_inputs=True,
         autosubmit=False,
-    ):
+    ) -> None:
         if hidden_inputs and data is not None:
             super().__init__(auto_id=False)
             for key, val in data.items():
@@ -54,16 +54,35 @@ class CreditCardPaymentForm(PaymentForm):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, hidden_inputs=False, **kwargs)
+    def __init__(
+        self,
+        data=None,
+        action="",
+        method="post",
+        provider=None,
+        payment=None,
+        hidden_inputs=False,
+        autosubmit=False,
+    ) -> None:
+        super().__init__(
+            data=data,
+            action=action,
+            method=method,
+            provider=provider,
+            payment=payment,
+            hidden_inputs=False,
+            autosubmit=autosubmit,
+        )
         if hasattr(self, "VALID_TYPES"):
-            self.fields["number"].valid_types = self.VALID_TYPES
+            number_field = self.fields["number"]
+            assert isinstance(number_field, CreditCardNumberField)
+            number_field.valid_types = self.VALID_TYPES
 
 
 class CreditCardPaymentFormWithName(CreditCardPaymentForm):
     name = CreditCardNameField(label=_("Name on Credit Card"), max_length=128)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         name_field = self.fields.pop("name")
         fields = OrderedDict({"name": name_field})

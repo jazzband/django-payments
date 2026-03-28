@@ -37,26 +37,26 @@ class Payment(Mock):
     captured_amount = 0
     message = ""
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
-    def change_status(self, status, message=""):
+    def change_status(self, status: str, message: str = "") -> None:
         self.status = status
         self.message = message
 
 
 @pytest.fixture
-def payment():
+def payment() -> Payment:
     return Payment()
 
 
-def test_provider_redirects_to_success_on_payment_success(payment):
+def test_provider_redirects_to_success_on_payment_success(payment: Payment) -> None:
     provider = AuthorizeNetProvider(login_id=LOGIN_ID, transaction_key=TRANSACTION_KEY)
 
     response_data = [
@@ -82,7 +82,7 @@ def test_provider_redirects_to_success_on_payment_success(payment):
 
 
 @pytest.mark.skip
-def test_provider_shows_validation_error_message(payment):
+def test_provider_shows_validation_error_message(payment: Payment) -> None:
     provider = AuthorizeNetProvider(login_id=LOGIN_ID, transaction_key=TRANSACTION_KEY)
 
     error_msg = "The merchant does not accept this type of credit card."
@@ -102,7 +102,7 @@ def test_provider_shows_validation_error_message(payment):
 
 
 @pytest.mark.skip
-def test_provider_shows_rejection_error_message(payment):
+def test_provider_shows_rejection_error_message(payment: Payment) -> None:
     provider = AuthorizeNetProvider(login_id=LOGIN_ID, transaction_key=TRANSACTION_KEY)
 
     error_msg = " This transaction has been declined."

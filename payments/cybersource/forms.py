@@ -22,7 +22,7 @@ class FingerprintInput(forms.CharField):
     widget = FingerprintWidget
     hidden_widget = FingerprintWidget
 
-    def __init__(self, org_id, merchant_id, fingerprint_url, *args, **kwargs):
+    def __init__(self, org_id, merchant_id, fingerprint_url, *args, **kwargs) -> None:
         self.org_id = org_id
         self.merchant_id = merchant_id
         self.fingerprint_url = fingerprint_url
@@ -37,7 +37,7 @@ class FingerprintInput(forms.CharField):
 
 
 class PaymentForm(CreditCardPaymentFormWithName):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.provider.org_id:
             try:

@@ -23,7 +23,14 @@ class BraintreeProvider(BasicProvider):
     :param sandbox: Whether to use a sandbox environment for testing
     """
 
-    def __init__(self, merchant_id, public_key, private_key, sandbox=True, **kwargs):
+    def __init__(
+        self,
+        merchant_id,
+        public_key,
+        private_key,
+        sandbox=True,
+        **kwargs,
+    ) -> None:
         self.merchant_id = merchant_id
         self.public_key = public_key
         self.private_key = private_key

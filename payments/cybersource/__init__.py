@@ -68,7 +68,7 @@ class CyberSourceProvider(BasicProvider):
         fingerprint_url="https://h.online-metrix.net/fp/",
         sandbox=True,
         capture=True,
-    ):
+    ) -> None:
         self.merchant_id = merchant_id
         self.password = password
         local_path = os.path.dirname(__file__)
@@ -108,14 +108,14 @@ class CyberSourceProvider(BasicProvider):
             return e.args[0]
         return form
 
-    def _change_status_to_confirmed(self, payment):
+    def _change_status_to_confirmed(self, payment) -> None:
         if self._capture:
             payment.captured_amount = payment.total
             payment.change_status(PaymentStatus.CONFIRMED)
         else:
             payment.change_status(PaymentStatus.PREAUTH)
 
-    def _set_proper_payment_status_from_reason_code(self, payment, reason_code):
+    def _set_proper_payment_status_from_reason_code(self, payment, reason_code) -> None:
         if reason_code == ACCEPTED:
             payment.change_fraud_status(FraudStatus.ACCEPT, commit=False)
             self._change_status_to_confirmed(payment)
@@ -164,7 +164,7 @@ class CyberSourceProvider(BasicProvider):
             payment.change_status(PaymentStatus.ERROR, message=error)
             raise PaymentError(error)
 
-    def charge(self, payment, data):
+    def charge(self, payment, data) -> None:
         if self._capture:
             params = self._prepare_sale(payment, data)
         else:
@@ -182,10 +182,10 @@ class CyberSourceProvider(BasicProvider):
             cc_data = dict(data)
             expiration = cc_data.pop("expiration")
             cc_data["expiration"] = {"month": expiration.month, "year": expiration.year}
-            cc_data = signing.dumps(cc_data)
+            cc_data_signed = signing.dumps(cc_data)
             payload = {
                 "PaReq": response.payerAuthEnrollReply.paReq,
-                "TermUrl": self.get_return_url(payment, {"token": cc_data}),
+                "TermUrl": self.get_return_url(payment, {"token": cc_data_signed}),
                 "MD": xid,
             }
             form = BaseForm(data=payload, action=action, autosubmit=True)
@@ -208,7 +208,7 @@ class CyberSourceProvider(BasicProvider):
             raise PaymentError(error)
         return amount
 
-    def release(self, payment):
+    def release(self, payment) -> None:
         params = self._prepare_release(payment)
         response = self._make_request(payment, params)
         if response.reasonCode == ACCEPTED:
@@ -384,7 +384,7 @@ class CyberSourceProvider(BasicProvider):
             "purchaseTotals": self._prepare_totals(payment, amount=amount),
         }
 
-    def _prepare_card_type(self, card_number):
+    def _prepare_card_type(self, card_number) -> str | None:
         card_type, _card_name = get_credit_card_issuer(card_number)
         if card_type == "visa":
             return "001"

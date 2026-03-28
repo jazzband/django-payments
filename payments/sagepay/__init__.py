@@ -33,7 +33,7 @@ class SagepayProvider(BasicProvider):
     _version = "3.00"
     _action = "https://test.sagepay.com/Simulator/VSPFormGateway.asp"
 
-    def __init__(self, vendor, encryption_key, endpoint=_action, **kwargs):
+    def __init__(self, vendor, encryption_key, endpoint=_action, **kwargs) -> None:
         self._vendor = vendor
         self._enckey = encryption_key.encode("utf-8")
         self._action = endpoint

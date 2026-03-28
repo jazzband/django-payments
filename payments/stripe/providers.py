@@ -5,6 +5,7 @@ from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
+from typing import NoReturn
 
 import stripe
 from django.http import JsonResponse
@@ -87,14 +88,14 @@ class StripeProviderV3(BasicProvider):
         endpoint_secret=None,
         secure_endpoint=True,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(**kwargs)
         self.api_key = api_key
         self.use_token = use_token
         self.endpoint_secret = endpoint_secret
         self.secure_endpoint = secure_endpoint
 
-    def get_form(self, payment, data=None):
+    def get_form(self, payment, data=None) -> NoReturn:
         if not payment.transaction_id:
             try:
                 session = self.create_session(payment)
@@ -138,7 +139,7 @@ class StripeProviderV3(BasicProvider):
                 )
             try:
                 return stripe.checkout.Session.create(**session_data)
-            except stripe.StripeError as e:
+            except stripe.StripeError as e:  # type: ignore[attr-defined]
                 # Payment has been declined by Stripe, check Stripe Dashboard
                 raise PaymentError(e) from e
         else:
@@ -159,7 +160,7 @@ class StripeProviderV3(BasicProvider):
                     amount=self.convert_amount(payment.currency, to_refund),
                     reason="requested_by_customer",
                 )
-            except stripe.StripeError as e:
+            except stripe.StripeError as e:  # type: ignore[attr-defined]
                 raise PaymentError(e) from e
             else:
                 payment.attrs.refund = json.dumps(refund)
@@ -218,7 +219,7 @@ class StripeProviderV3(BasicProvider):
             except ValueError as e:
                 # Invalid payload
                 raise e
-            except stripe.SignatureVerificationError as e:
+            except stripe.SignatureVerificationError as e:  # type: ignore[attr-defined]
                 # Invalid signature
                 raise e
         else:

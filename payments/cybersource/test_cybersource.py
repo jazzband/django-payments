@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import types
 from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
@@ -42,24 +43,25 @@ class Payment(Mock):
     captured_amount = 0
     message = ""
 
-    class attrs:
-        fingerprint_session_id = "fake"
-        merchant_defined_data: dict[str, str] = {}
+    attrs = types.SimpleNamespace(
+        fingerprint_session_id="fake",
+        merchant_defined_data={},
+    )
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
-    def change_status(self, status, message=""):
+    def change_status(self, status: str, message: str = "") -> None:
         self.status = status
         self.message = message
 
-    def get_purchased_items(self):
+    def get_purchased_items(self) -> list[PurchasedItem]:
         return [
             PurchasedItem(
                 name="foo",
@@ -73,7 +75,7 @@ class Payment(Mock):
 
 @pytest.fixture
 @patch("payments.cybersource.suds.client.Client", new=MagicMock())
-def provider():
+def provider() -> tuple[Payment, CyberSourceProvider]:
     payment = Payment()
     return payment, CyberSourceProvider(
         merchant_id=MERCHANT_ID, password=PASSWORD, org_id=ORG_ID
@@ -81,7 +83,10 @@ def provider():
 
 
 @patch.object(CyberSourceProvider, "_make_request")
-def test_provider_raises_redirect_needed_on_success(mocked_request, provider):
+def test_provider_raises_redirect_needed_on_success(
+    mocked_request: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     transaction_id = 1234
     response = MagicMock()
@@ -96,7 +101,10 @@ def test_provider_raises_redirect_needed_on_success(mocked_request, provider):
 
 
 @patch.object(CyberSourceProvider, "_make_request")
-def test_provider_returns_form_on_3d_secure(mocked_request, provider):
+def test_provider_returns_form_on_3d_secure(
+    mocked_request: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     response = MagicMock()
     response.reasonCode = AUTHENTICATE_REQUIRED
@@ -107,7 +115,10 @@ def test_provider_returns_form_on_3d_secure(mocked_request, provider):
 
 
 @patch.object(CyberSourceProvider, "_make_request")
-def test_provider_shows_validation_error_message_response(mocked_request, provider):
+def test_provider_shows_validation_error_message_response(
+    mocked_request: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     error_message = "The card you are trying to use was reported as lost or stolen."
     error_code = 205
@@ -118,16 +129,21 @@ def test_provider_shows_validation_error_message_response(mocked_request, provid
     assert form.errors["__all__"][0] == error_message
 
 
-def test_provider_shows_validation_error_message_duplicate(provider):
+def test_provider_shows_validation_error_message_duplicate(
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
-    payment.transaction_id = 1
+    payment.transaction_id = 1  # type: ignore[assignment]
     error_message = "This payment has already been processed."
     form = prov.get_form(payment=payment, data=PROCESS_DATA)
     assert form.errors["__all__"][0] == error_message
 
 
 @patch.object(CyberSourceProvider, "_make_request")
-def test_provider_captures_payment(mocked_request, provider):
+def test_provider_captures_payment(
+    mocked_request: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     transaction_id = 1234
     response = MagicMock()
@@ -139,7 +155,10 @@ def test_provider_captures_payment(mocked_request, provider):
 
 
 @patch.object(CyberSourceProvider, "_make_request")
-def test_provider_refunds_payment(mocked_request, provider):
+def test_provider_refunds_payment(
+    mocked_request: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     payment.captured_amount = payment.total
     response = MagicMock()
@@ -150,7 +169,10 @@ def test_provider_refunds_payment(mocked_request, provider):
 
 
 @patch.object(CyberSourceProvider, "_make_request")
-def test_provider_releases_payment(mocked_request, provider):
+def test_provider_releases_payment(
+    mocked_request: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     transaction_id = 123
     response = MagicMock()
@@ -164,8 +186,10 @@ def test_provider_releases_payment(mocked_request, provider):
 @patch("payments.cybersource.redirect")
 @patch.object(CyberSourceProvider, "_make_request")
 def test_provider_redirects_on_success_captured_payment(
-    mocked_request, mocked_redirect, provider
-):
+    mocked_request: MagicMock,
+    mocked_redirect: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     transaction_id = 1234
     xid = "abc"
@@ -197,7 +221,10 @@ def test_provider_redirects_on_success_captured_payment(
 @patch("payments.cybersource.redirect")
 @patch.object(CyberSourceProvider, "_make_request")
 @patch("payments.cybersource.suds.client.Client", new=MagicMock())
-def test_provider_redirects_on_success_preauth_payment(mocked_request, mocked_redirect):
+def test_provider_redirects_on_success_preauth_payment(
+    mocked_request: MagicMock,
+    mocked_redirect: MagicMock,
+) -> None:
     payment = Payment()
     provider = CyberSourceProvider(
         merchant_id=MERCHANT_ID, password=PASSWORD, org_id=ORG_ID, capture=False
@@ -232,7 +259,11 @@ def test_provider_redirects_on_success_preauth_payment(mocked_request, mocked_re
 @patch("payments.cybersource.redirect")
 @patch.object(CyberSourceProvider, "_make_request")
 @patch("payments.cybersource.suds.client.Client", new=MagicMock())
-def test_provider_redirects_on_failure(mocked_request, mocked_redirect, provider):
+def test_provider_redirects_on_failure(
+    mocked_request: MagicMock,
+    mocked_redirect: MagicMock,
+    provider: tuple[Payment, CyberSourceProvider],
+) -> None:
     payment, prov = provider
     transaction_id = 1234
     xid = "abc"

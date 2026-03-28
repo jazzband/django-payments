@@ -37,7 +37,7 @@ PROCESS_DATA = {
 class PaymentQuerySet(Mock):
     __payments: dict = {}
 
-    def create(self, **kwargs):
+    def create(self, **kwargs: object) -> Payment:
         if kwargs:
             raise NotImplementedError(f"arguments not supported yet: {kwargs}")
         id_ = max(self.__payments) + 1 if self.__payments else 1
@@ -47,7 +47,7 @@ class PaymentQuerySet(Mock):
         payment.save()
         return payment
 
-    def get(self, *args, **kwargs):
+    def get(self, *args: object, **kwargs: object) -> Payment:
         if args or kwargs:
             return self.filter(*args, **kwargs).get()
         payment = Payment()
@@ -56,7 +56,12 @@ class PaymentQuerySet(Mock):
             setattr(payment, payment_field_name, deepcopy(payment_field_value))
         return payment
 
-    def filter(self, *args, pk=None, **kwargs):
+    def filter(
+        self,
+        *args: object,
+        pk: object = None,
+        **kwargs: object,
+    ) -> PaymentQuerySet:
         if args or kwargs:
             raise NotImplementedError(f"arguments not supported yet: {args}, {kwargs}")
         if pk is not None:
@@ -65,7 +70,7 @@ class PaymentQuerySet(Mock):
             )
         return self
 
-    def update(self, **kwargs):
+    def update(self, **kwargs: object) -> None:
         for payment in self.__payments.values():
             for field_name, field_value in kwargs.items():
                 if not any(
@@ -79,7 +84,7 @@ class PaymentQuerySet(Mock):
                     )
                 payment[field_name] = deepcopy(field_value)
 
-    def delete(self):
+    def delete(self) -> None:
         self.__payments.clear()
 
 
@@ -110,31 +115,36 @@ class Payment(Mock):
     )
 
     @property
-    def pk(self):
+    def pk(self) -> int:
         return self.id
 
-    def change_status(self, status, message=""):
+    def change_status(self, status: str, message: str = "") -> None:
         self.status = status
         self.message = message
         self.save(update_fields=["status", "message"])
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_purchased_items(self):
+    def get_purchased_items(self) -> list[PurchasedItem]:
         return [
             PurchasedItem(
                 name="foo", quantity=10, price=Decimal("20"), currency="USD", sku="bar"
             )
         ]
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
-    def save(self, *args, update_fields=None, **kwargs):
+    def save(
+        self,
+        *args: object,
+        update_fields: set[str] | list[str] | None = None,
+        **kwargs: object,
+    ) -> None:
         if args or kwargs:
             raise NotImplementedError(f"arguments not supported yet: {args}, {kwargs}")
         if update_fields is None:
@@ -148,7 +158,7 @@ class Payment(Mock):
             **{field: getattr(self, field) for field in update_fields}
         )
 
-    def refresh_from_db(self, *args, **kwargs):
+    def refresh_from_db(self, *args: object, **kwargs: object) -> None:
         if args or kwargs:
             raise NotImplementedError(f"arguments not supported yet: {args}, {kwargs}")
         payment_from_db = Payment.objects.get(pk=self.pk)
@@ -157,7 +167,11 @@ class Payment(Mock):
             setattr(self, field.name, field_value_from_db)
 
     class Meta(Mock):
-        def get_fields(self, include_parents=True, include_hidden=False):
+        def get_fields(
+            self,
+            include_parents: bool = True,
+            include_hidden: bool = False,
+        ) -> tuple[Mock, ...]:
             fields = []
             for field_name in {
                 "id",
@@ -186,17 +200,20 @@ class Payment(Mock):
 
 
 @pytest.fixture
-def paypal_payment():
+def paypal_payment() -> Payment:
     Payment.objects.delete()
     return Payment.objects.create()
 
 
 @pytest.fixture
-def paypal_provider():
+def paypal_provider() -> PaypalProvider:
     return PaypalProvider(secret=SECRET, client_id=CLIENT_ID)
 
 
-def test_provider_raises_redirect_needed_on_success(paypal_payment, paypal_provider):
+def test_provider_raises_redirect_needed_on_success(
+    paypal_payment: Payment,
+    paypal_provider: PaypalProvider,
+) -> None:
     with patch("requests.post") as mocked_post:
         transaction_id = "1234"
         data = MagicMock()
@@ -219,7 +236,11 @@ def test_provider_raises_redirect_needed_on_success(paypal_payment, paypal_provi
 
 
 @patch("requests.post")
-def test_provider_captures_payment(mocked_post, paypal_payment, paypal_provider):
+def test_provider_captures_payment(
+    mocked_post: MagicMock,
+    paypal_payment: Payment,
+    paypal_provider: PaypalProvider,
+) -> None:
     data = MagicMock()
     data.return_value = {
         "state": "completed",
@@ -236,8 +257,8 @@ def test_provider_captures_payment(mocked_post, paypal_payment, paypal_provider)
 
 @patch("requests.post")
 def test_provider_handles_captured_payment(
-    mocked_post, paypal_payment, paypal_provider
-):
+    mocked_post: MagicMock, paypal_payment: Payment, paypal_provider: PaypalProvider
+) -> None:
     data = MagicMock()
     data.return_value = {"name": "AUTHORIZATION_ALREADY_COMPLETED"}
     response = MagicMock()
@@ -248,7 +269,11 @@ def test_provider_handles_captured_payment(
 
 
 @patch("requests.post")
-def test_provider_refunds_payment_fully(mocked_post, paypal_payment, paypal_provider):
+def test_provider_refunds_payment_fully(
+    mocked_post: MagicMock,
+    paypal_payment: Payment,
+    paypal_provider: PaypalProvider,
+) -> None:
     data = MagicMock()
     data.side_effect = [
         {"token_type": "test_token_type", "access_token": "test_access_token"},
@@ -272,8 +297,8 @@ def test_provider_refunds_payment_fully(mocked_post, paypal_payment, paypal_prov
 
 @patch("requests.post")
 def test_provider_refunds_payment_partially(
-    mocked_post, paypal_payment, paypal_provider
-):
+    mocked_post: MagicMock, paypal_payment: Payment, paypal_provider: PaypalProvider
+) -> None:
     data = MagicMock()
     data.side_effect = [
         {"token_type": "test_token_type", "access_token": "test_access_token"},
@@ -298,8 +323,11 @@ def test_provider_refunds_payment_partially(
 @patch("requests.post")
 @patch("payments.paypal.redirect")
 def test_provider_redirects_on_success_captured_payment(
-    mocked_redirect, mocked_post, paypal_payment, paypal_provider
-):
+    mocked_redirect: MagicMock,
+    mocked_post: MagicMock,
+    paypal_payment: Payment,
+    paypal_provider: PaypalProvider,
+) -> None:
     data = MagicMock()
     data.return_value = {
         "token_type": "test_token_type",
@@ -332,8 +360,8 @@ def test_provider_redirects_on_success_captured_payment(
 @patch("requests.post")
 @patch("payments.paypal.redirect")
 def test_provider_redirects_on_success_preauth_payment(
-    mocked_redirect, mocked_post, paypal_payment
-):
+    mocked_redirect: MagicMock, mocked_post: MagicMock, paypal_payment: Payment
+) -> None:
     data = MagicMock()
     data.return_value = {
         "token_type": "test_token_type",
@@ -366,8 +394,8 @@ def test_provider_redirects_on_success_preauth_payment(
 
 @patch("payments.paypal.redirect")
 def test_provider_request_without_payerid_redirects_on_failure(
-    mocked_redirect, paypal_payment, paypal_provider
-):
+    mocked_redirect: MagicMock, paypal_payment: Payment, paypal_provider: PaypalProvider
+) -> None:
     request = MagicMock()
     request.GET = {"token": "test", "PayerID": None}
     paypal_provider.process_data(paypal_payment, request)
@@ -377,7 +405,11 @@ def test_provider_request_without_payerid_redirects_on_failure(
 
 
 @patch("requests.post")
-def test_provider_renews_access_token(mocked_post, paypal_payment, paypal_provider):
+def test_provider_renews_access_token(
+    mocked_post: MagicMock,
+    paypal_payment: Payment,
+    paypal_provider: PaypalProvider,
+) -> None:
     new_token = "new_test_token"
     response401 = MagicMock()
     response401.status_code = 401
@@ -407,18 +439,18 @@ def test_provider_renews_access_token(mocked_post, paypal_payment, paypal_provid
 
 
 @pytest.fixture
-def paypal_card_payment():
+def paypal_card_payment() -> Payment:
     return Payment(extra_data="")
 
 
 @pytest.fixture
-def paypal_card_provider():
+def paypal_card_provider() -> PaypalCardProvider:
     return PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID)
 
 
 def test_provider_raises_redirect_needed_on_success_captured_payment_card(
-    paypal_card_payment, paypal_card_provider
-):
+    paypal_card_payment: Payment, paypal_card_provider: PaypalCardProvider
+) -> None:
     with patch("requests.post") as mocked_post:
         transaction_id = "1234"
         data = MagicMock()
@@ -458,8 +490,8 @@ def test_provider_raises_redirect_needed_on_success_captured_payment_card(
 
 
 def test_provider_raises_redirect_needed_on_success_preauth_payment_card(
-    paypal_card_payment,
-):
+    paypal_card_payment: Payment,
+) -> None:
     provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID, capture=False)
     with patch("requests.post") as mocked_post:
         transaction_id = "1234"
@@ -499,7 +531,10 @@ def test_provider_raises_redirect_needed_on_success_preauth_payment_card(
     assert "refund" in links
 
 
-def test_form_shows_validation_error_message(paypal_card_payment, paypal_card_provider):
+def test_form_shows_validation_error_message(
+    paypal_card_payment: Payment,
+    paypal_card_provider: PaypalCardProvider,
+) -> None:
     with patch("requests.post") as mocked_post:
         error_message = "error message"
         data = MagicMock()
@@ -515,7 +550,10 @@ def test_form_shows_validation_error_message(paypal_card_payment, paypal_card_pr
     assert form.errors["__all__"][0] == error_message
 
 
-def test_form_shows_internal_error_message(paypal_card_payment, paypal_card_provider):
+def test_form_shows_internal_error_message(
+    paypal_card_payment: Payment,
+    paypal_card_provider: PaypalCardProvider,
+) -> None:
     with patch("requests.post") as mocked_post:
         error_message = "error message"
         data = MagicMock()

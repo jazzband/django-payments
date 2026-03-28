@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.http import HttpRequest
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
@@ -10,7 +11,7 @@ from payments import get_payment_model
 from testapp.testmain.forms import TestPaymentForm
 
 
-def payment_details(request, payment_id):
+def payment_details(request: HttpRequest, payment_id: int) -> HttpResponse:
     """
     Default view implemented from docs.
     This view is intended only for interactive testing purposes.
@@ -23,15 +24,15 @@ def payment_details(request, payment_id):
     return TemplateResponse(request, "payment.html", {"form": form, "payment": payment})
 
 
-def payment_success(request):
+def payment_success(request: HttpRequest) -> HttpResponse:
     return HttpResponse("Payment succeeded.")
 
 
-def payment_failure(request):
+def payment_failure(request: HttpRequest) -> HttpResponse:
     return HttpResponse("Payment failed.")
 
 
-def create_test_payment(request):
+def create_test_payment(request: HttpRequest) -> HttpResponse:
     """
     Creates a basic payment with some default parameters
     to make testing easier.

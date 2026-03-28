@@ -61,7 +61,7 @@ class BraintreePaymentForm(CreditCardPaymentFormWithName):
             "last_name": self.payment.billing_last_name,
         }
 
-    def save(self):
+    def save(self) -> None:
         braintree.Transaction.submit_for_settlement(self.transaction_id)
         self.payment.transaction_id = self.transaction_id
         self.payment.captured_amount = self.payment.total

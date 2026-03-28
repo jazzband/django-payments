@@ -35,7 +35,7 @@ PROCESS_POST = {
 }
 
 
-def get_post_with_sha256(post):
+def get_post_with_sha256(post: dict[str, str]) -> dict[str, str]:
     post = post.copy()
     post["pin"] = PIN
     keys = [
@@ -70,30 +70,30 @@ class Payment(Mock):
     total = 100
     status = PaymentStatus.WAITING
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
-    def change_status(self, status):
+    def change_status(self, status: str) -> None:
         self.status = status
 
 
 @pytest.fixture
-def payment():
+def payment() -> Payment:
     return Payment()
 
 
-def test_get_hidden_fields(payment):
+def test_get_hidden_fields(payment: Payment) -> None:
     provider = DotpayProvider(seller_id="123", pin=PIN)
     assert isinstance(provider.get_hidden_fields(payment), dict)
 
 
-def test_process_data_payment_accepted(payment):
+def test_process_data_payment_accepted(payment: Payment) -> None:
     request = MagicMock()
     request.POST = get_post_with_sha256(PROCESS_POST)
     provider = DotpayProvider(
@@ -109,7 +109,7 @@ def test_process_data_payment_accepted(payment):
     assert payment.status == PaymentStatus.CONFIRMED
 
 
-def test_process_data_payment_rejected(payment):
+def test_process_data_payment_rejected(payment: Payment) -> None:
     data = dict(PROCESS_POST)
     data.update({"operation_status": REJECTED})
     request = MagicMock()
@@ -127,7 +127,7 @@ def test_process_data_payment_rejected(payment):
     assert payment.status == PaymentStatus.REJECTED
 
 
-def test_incorrect_process_data(payment):
+def test_incorrect_process_data(payment: Payment) -> None:
     request = MagicMock()
     request.POST = PROCESS_POST  # no signature
     provider = DotpayProvider(seller_id="123", pin=PIN)
@@ -135,7 +135,7 @@ def test_incorrect_process_data(payment):
     assert isinstance(response, HttpResponseForbidden)
 
 
-def test_uses_channel_groups_when_set(payment):
+def test_uses_channel_groups_when_set(payment: Payment) -> None:
     channel_groups = "K,T"
     provider = DotpayProvider(
         seller_id=123,

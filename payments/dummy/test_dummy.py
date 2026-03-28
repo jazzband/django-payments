@@ -25,28 +25,28 @@ class Payment:
     fraud_status = ""
     captured_amount = 0
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
-    def change_status(self, new_status):
+    def change_status(self, new_status: str) -> None:
         self.status = new_status
 
-    def change_fraud_status(self, fraud_status):
+    def change_fraud_status(self, fraud_status: str) -> None:
         self.fraud_status = fraud_status
 
 
 @pytest.fixture
-def payment():
+def payment() -> Payment:
     return Payment()
 
 
-def test_process_data_supports_verification_result(payment):
+def test_process_data_supports_verification_result(payment: Payment) -> None:
     provider = DummyProvider()
     verification_status = PaymentStatus.CONFIRMED
     request = MagicMock()
@@ -58,7 +58,7 @@ def test_process_data_supports_verification_result(payment):
     assert response["location"] == payment.get_success_url()
 
 
-def test_process_data_redirects_to_success_on_payment_success(payment):
+def test_process_data_redirects_to_success_on_payment_success(payment: Payment) -> None:
     payment.status = PaymentStatus.PREAUTH
     provider = DummyProvider()
     request = MagicMock()
@@ -67,7 +67,7 @@ def test_process_data_redirects_to_success_on_payment_success(payment):
     assert response["location"] == payment.get_success_url()
 
 
-def test_process_data_redirects_to_failure_on_payment_failure(payment):
+def test_process_data_redirects_to_failure_on_payment_failure(payment: Payment) -> None:
     payment.status = PaymentStatus.REJECTED
     provider = DummyProvider()
     request = MagicMock()
@@ -76,7 +76,7 @@ def test_process_data_redirects_to_failure_on_payment_failure(payment):
     assert response["location"] == payment.get_failure_url()
 
 
-def test_provider_supports_non_3ds_transactions(payment):
+def test_provider_supports_non_3ds_transactions(payment: Payment) -> None:
     provider = DummyProvider()
     data = {
         "status": PaymentStatus.PREAUTH,
@@ -89,7 +89,9 @@ def test_provider_supports_non_3ds_transactions(payment):
     assert exc.value.args[0] == payment.get_success_url()
 
 
-def test_provider_raises_verification_result_needed_on_success(payment):
+def test_provider_raises_verification_result_needed_on_success(
+    payment: Payment,
+) -> None:
     provider = DummyProvider()
     data = {
         "status": PaymentStatus.WAITING,
@@ -100,7 +102,7 @@ def test_provider_raises_verification_result_needed_on_success(payment):
     assert not form.is_valid()
 
 
-def test_provider_supports_3ds_redirect(payment):
+def test_provider_supports_3ds_redirect(payment: Payment) -> None:
     provider = DummyProvider()
     verification_result = PaymentStatus.CONFIRMED
     data = {
@@ -117,7 +119,7 @@ def test_provider_supports_3ds_redirect(payment):
     assert exc.value.args[0] == expected_redirect
 
 
-def test_provider_supports_gateway_failure(payment):
+def test_provider_supports_gateway_failure(payment: Payment) -> None:
     provider = DummyProvider()
     data = {
         "status": PaymentStatus.WAITING,
@@ -129,7 +131,7 @@ def test_provider_supports_gateway_failure(payment):
         provider.get_form(payment, data)
 
 
-def test_provider_raises_redirect_needed_on_success(payment):
+def test_provider_raises_redirect_needed_on_success(payment: Payment) -> None:
     provider = DummyProvider()
     data = {
         "status": PaymentStatus.PREAUTH,
@@ -142,7 +144,7 @@ def test_provider_raises_redirect_needed_on_success(payment):
     assert exc.value.args[0] == payment.get_success_url()
 
 
-def test_provider_raises_redirect_needed_on_failure(payment):
+def test_provider_raises_redirect_needed_on_failure(payment: Payment) -> None:
     provider = DummyProvider()
     data = {
         "status": PaymentStatus.ERROR,
@@ -155,7 +157,7 @@ def test_provider_raises_redirect_needed_on_failure(payment):
     assert exc.value.args[0] == payment.get_failure_url()
 
 
-def test_provider_raises_payment_error(payment):
+def test_provider_raises_payment_error(payment: Payment) -> None:
     provider = DummyProvider()
     data = {
         "status": PaymentStatus.PREAUTH,
@@ -167,7 +169,7 @@ def test_provider_raises_payment_error(payment):
         provider.get_form(payment, data)
 
 
-def test_provider_switches_payment_status_on_get_form(payment):
+def test_provider_switches_payment_status_on_get_form(payment: Payment) -> None:
     provider = DummyProvider()
     provider.get_form(payment, data={})
     assert payment.status == PaymentStatus.INPUT

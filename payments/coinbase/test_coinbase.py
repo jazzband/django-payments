@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 
 from payments import PaymentStatus
+from payments import PurchasedItem
 
 from . import CoinbaseProvider
 
@@ -36,32 +37,32 @@ class Payment:
     token = PAYMENT_TOKEN
     variant = VARIANT
 
-    def change_status(self, status):
+    def change_status(self, status: str) -> None:
         self.status = status
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_purchased_items(self):
+    def get_purchased_items(self) -> list[PurchasedItem]:
         return []
 
-    def save(self):
+    def save(self) -> Payment:
         return self
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
 
 @pytest.fixture
-def provider():
+def provider() -> tuple[Payment, CoinbaseProvider]:
     payment = Payment()
     return payment, CoinbaseProvider(key=KEY, secret=SECRET)
 
 
-def test_process_data(provider):
+def test_process_data(provider: tuple[Payment, CoinbaseProvider]) -> None:
     payment, prov = provider
     request = MagicMock()
     request.body = json.dumps(COINBASE_REQUEST)
@@ -70,7 +71,9 @@ def test_process_data(provider):
     assert payment.status == PaymentStatus.CONFIRMED
 
 
-def test_incorrect_custom_token_process_data(provider):
+def test_incorrect_custom_token_process_data(
+    provider: tuple[Payment, CoinbaseProvider],
+) -> None:
     payment, prov = provider
     data = dict(COINBASE_REQUEST)
     data.update({"order": {"custom": "fake"}})
@@ -80,7 +83,9 @@ def test_incorrect_custom_token_process_data(provider):
     assert isinstance(response, HttpResponseForbidden)
 
 
-def test_incorrect_data_process_data(provider):
+def test_incorrect_data_process_data(
+    provider: tuple[Payment, CoinbaseProvider],
+) -> None:
     payment, prov = provider
     request = MagicMock()
     request.POST = {"id": "1234"}
@@ -90,7 +95,11 @@ def test_incorrect_data_process_data(provider):
 
 @patch("time.time")
 @patch("requests.post")
-def test_provider_returns_checkout_url(mocked_post, mocked_time, provider):
+def test_provider_returns_checkout_url(
+    mocked_post: MagicMock,
+    mocked_time: MagicMock,
+    provider: tuple[Payment, CoinbaseProvider],
+) -> None:
     payment, prov = provider
     code = "123abc"
     signature = "21d476eff7b2e6cccdfe6deb0c097ba638d5de7e775b303e4fdb2f8bfeff72e2"

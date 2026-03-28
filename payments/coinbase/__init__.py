@@ -32,7 +32,7 @@ class CoinbaseProvider(BasicProvider):
     api_url = "https://api.%(endpoint)s/v1/buttons"
     checkout_url = "https://%(endpoint)s/checkouts"
 
-    def __init__(self, key, secret, endpoint="sandbox.coinbase.com", **kwargs):
+    def __init__(self, key, secret, endpoint="sandbox.coinbase.com", **kwargs) -> None:
         self.endpoint = endpoint
         self.key = key
         self.secret = secret
@@ -74,7 +74,7 @@ class CoinbaseProvider(BasicProvider):
         results = response.json()
         return results["button"]["code"]
 
-    def get_action(self, payment):
+    def get_action(self, payment) -> str:
         checkout_url = self.checkout_url % {"endpoint": self.endpoint}
         return f"{checkout_url}/{self.get_checkout_code(payment)}"
 

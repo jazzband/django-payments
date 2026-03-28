@@ -71,7 +71,7 @@ class BasicProvider:
         """The ``action`` for the HTML form element."""
         return self.get_return_url(payment)
 
-    def __init__(self, capture=True):
+    def __init__(self, capture=True) -> None:
         """Create a new provider instance.
 
         This method should not be called directly; use :func:`provider_factory`

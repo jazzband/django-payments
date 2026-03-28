@@ -53,7 +53,7 @@ class DotpayProvider(BasicProvider):
         lock=False,
         type=2,
         **kwargs,
-    ):
+    ) -> None:
         self.seller_id = seller_id
         self.pin = pin
         self.endpoint = endpoint

@@ -28,34 +28,37 @@ class Payment(Mock):
     billing_first_name = "John"
     description = "foo bar"
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
-    def change_status(self, status):
+    def change_status(self, status: str) -> None:
         self.status = status
 
 
 @pytest.fixture
-def payment():
+def payment() -> Payment:
     return Payment()
 
 
 @pytest.fixture
-def provider():
+def provider() -> SofortProvider:
     return SofortProvider(id=CLIENT_ID, project_id=PROJECT_ID, key=SECRET)
 
 
 @patch("xmltodict.parse")
 @patch("requests.post")
 def test_provider_raises_redirect_needed_on_success(
-    mocked_post, mocked_parser, payment, provider
-):
+    mocked_post: MagicMock,
+    mocked_parser: MagicMock,
+    payment: Payment,
+    provider: SofortProvider,
+) -> None:
     response = MagicMock()
     response.status_code = 200
     mocked_post.return_value = response
@@ -70,8 +73,12 @@ def test_provider_raises_redirect_needed_on_success(
 @patch("requests.post")
 @patch("payments.sofort.redirect")
 def test_provider_redirects_on_success(
-    mocked_redirect, mocked_post, mocked_parser, payment, provider
-):
+    mocked_redirect: MagicMock,
+    mocked_post: MagicMock,
+    mocked_parser: MagicMock,
+    payment: Payment,
+    provider: SofortProvider,
+) -> None:
     transaction_id = "1234"
     request = MagicMock()
     request.GET = {"trans": transaction_id}
@@ -93,8 +100,12 @@ def test_provider_redirects_on_success(
 @patch("requests.post")
 @patch("payments.sofort.redirect")
 def test_provider_redirects_on_failure(
-    mocked_redirect, mocked_post, mocked_parser, payment, provider
-):
+    mocked_redirect: MagicMock,
+    mocked_post: MagicMock,
+    mocked_parser: MagicMock,
+    payment: Payment,
+    provider: SofortProvider,
+) -> None:
     transaction_id = "1234"
     request = MagicMock()
     request.GET = {"trans": transaction_id}
@@ -107,7 +118,12 @@ def test_provider_redirects_on_failure(
 
 @patch("xmltodict.parse")
 @patch("requests.post")
-def test_provider_refunds_payment(mocked_post, mocked_parser, payment, provider):
+def test_provider_refunds_payment(
+    mocked_post: MagicMock,
+    mocked_parser: MagicMock,
+    payment: Payment,
+    provider: SofortProvider,
+) -> None:
     payment.extra_data = json.dumps(
         {
             "transactions": {

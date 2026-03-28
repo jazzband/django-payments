@@ -24,33 +24,37 @@ class Payment(Mock):
     captured_amount = 0
     billing_first_name = "John"
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
-    def change_status(self, status):
+    def change_status(self, status: str) -> None:
         self.status = status
 
 
 @pytest.fixture
-def payment():
+def payment() -> Payment:
     return Payment()
 
 
 @pytest.fixture
-def provider():
+def provider() -> SagepayProvider:
     return SagepayProvider(vendor=VENDOR, encryption_key=ENCRYPTION_KEY)
 
 
 @patch("payments.sagepay.redirect")
-def test_provider_raises_redirect_needed_on_success(mocked_redirect, payment, provider):
-    data = {"Status": "OK"}
-    data = "&".join("{}={}".format(*kv) for kv in data.items())
+def test_provider_raises_redirect_needed_on_success(
+    mocked_redirect: MagicMock,
+    payment: Payment,
+    provider: SagepayProvider,
+) -> None:
+    raw_data = {"Status": "OK"}
+    data = "&".join("{}={}".format(*kv) for kv in raw_data.items())
     with patch.object(SagepayProvider, "aes_dec", return_value=data):
         provider.process_data(payment, MagicMock())
         assert payment.status == PaymentStatus.CONFIRMED
@@ -58,21 +62,25 @@ def test_provider_raises_redirect_needed_on_success(mocked_redirect, payment, pr
 
 
 @patch("payments.sagepay.redirect")
-def test_provider_raises_redirect_needed_on_failure(mocked_redirect, payment, provider):
-    data = {"Status": ""}
-    data = "&".join("{}={}".format(*kv) for kv in data.items())
+def test_provider_raises_redirect_needed_on_failure(
+    mocked_redirect: MagicMock,
+    payment: Payment,
+    provider: SagepayProvider,
+) -> None:
+    raw_data = {"Status": ""}
+    data = "&".join("{}={}".format(*kv) for kv in raw_data.items())
     with patch.object(SagepayProvider, "aes_dec", return_value=data):
         provider.process_data(payment, MagicMock())
         assert payment.status == PaymentStatus.REJECTED
         assert payment.captured_amount == 0
 
 
-def test_provider_encrypts_data(payment, provider):
+def test_provider_encrypts_data(payment: Payment, provider: SagepayProvider) -> None:
     data = provider.get_hidden_fields(payment)
     decrypted_data = provider.aes_dec(data["Crypt"])
     assert payment.billing_first_name in str(decrypted_data)
 
 
-def test_encrypt_method_returns_valid_data(provider):
+def test_encrypt_method_returns_valid_data(provider: SagepayProvider) -> None:
     encrypted = provider.aes_enc("mirumee")
     assert encrypted == b"@e63c293672f50b9c8e291831facb4e4f"

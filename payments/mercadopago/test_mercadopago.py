@@ -14,6 +14,8 @@ from payments import RedirectNeeded
 from payments.mercadopago import MercadoPagoProvider
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from django.test import RequestFactory
 
 
@@ -30,29 +32,34 @@ class Payment(Mock):
     transaction_id: str | None = None
     billing_email = "john@doe.com"
 
-    def change_status(self, status, message=""):
+    def change_status(self, status: str, message: str = "") -> None:
         self.status = status
         self.message = message
 
-    def change_fraud_status(self, status, message="", commit=True):
+    def change_fraud_status(
+        self,
+        status: str,
+        message: str = "",
+        commit: bool = True,
+    ) -> None:
         self.fraud_status = status
         self.fraud_message = message
 
-    def capture(self, amount=None):
+    def capture(self, amount: int | None = None) -> None:
         amount = amount or self.total
         self.captured_amount = amount
         self.change_status(PaymentStatus.CONFIRMED)
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://example.com/success"
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://example.com/failure"
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com/process"
 
-    def get_purchased_items(self):
+    def get_purchased_items(self) -> Iterator[PurchasedItem]:
         yield PurchasedItem(
             name="Some Product",
             sku="SP12",
@@ -63,7 +70,7 @@ class Payment(Mock):
 
 
 @pytest.fixture
-def mp_provider():
+def mp_provider() -> MercadoPagoProvider:
     return MercadoPagoProvider("fake_access_token", True)
 
 
@@ -72,7 +79,10 @@ def mp_provider():
 # etc. However, the structure of the payloads matches what the API currently uses.
 
 
-def test_approved_payment_notification(rf, mp_provider: MercadoPagoProvider):
+def test_approved_payment_notification(
+    rf: RequestFactory,
+    mp_provider: MercadoPagoProvider,
+) -> None:
     payment = Payment()
 
     request = rf.get(
@@ -219,7 +229,9 @@ def test_approved_payment_notification(rf, mp_provider: MercadoPagoProvider):
     assert rv == redirect(payment.get_success_url())
 
 
-def test_create_preference_that_already_exists(mp_provider: MercadoPagoProvider):
+def test_create_preference_that_already_exists(
+    mp_provider: MercadoPagoProvider,
+) -> None:
     payment = Payment()
     payment.transaction_id = "123"
 
@@ -227,7 +239,7 @@ def test_create_preference_that_already_exists(mp_provider: MercadoPagoProvider)
         mp_provider.create_preference(payment)
 
 
-def test_create_preference_failure(mp_provider: MercadoPagoProvider):
+def test_create_preference_failure(mp_provider: MercadoPagoProvider) -> None:
     preference_info = {
         "status": 500,
         "response": "internal server error",
@@ -249,7 +261,7 @@ def test_create_preference_failure(mp_provider: MercadoPagoProvider):
         mp_provider.create_preference(payment)
 
 
-def test_process_successful_collection(mp_provider: MercadoPagoProvider):
+def test_process_successful_collection(mp_provider: MercadoPagoProvider) -> None:
     payment_info = {
         "status": 200,
         "response": {"status": "approved"},
@@ -266,7 +278,7 @@ def test_process_successful_collection(mp_provider: MercadoPagoProvider):
     assert payment.status == PaymentStatus.CONFIRMED
 
 
-def test_process_failed_collection(mp_provider: MercadoPagoProvider):
+def test_process_failed_collection(mp_provider: MercadoPagoProvider) -> None:
     payment_info = {
         "status": 404,
     }
@@ -288,7 +300,7 @@ def test_process_failed_collection(mp_provider: MercadoPagoProvider):
     assert payment.status == PaymentStatus.ERROR
 
 
-def test_process_pending_collection(mp_provider: MercadoPagoProvider):
+def test_process_pending_collection(mp_provider: MercadoPagoProvider) -> None:
     payment_info = {
         "status": 200,
         "response": {"status": "pending"},
@@ -305,7 +317,7 @@ def test_process_pending_collection(mp_provider: MercadoPagoProvider):
     assert payment.status == PaymentStatus.WAITING
 
 
-def test_get_preference(mp_provider: MercadoPagoProvider):
+def test_get_preference(mp_provider: MercadoPagoProvider) -> None:
     preference = Mock()
     mocked_response = {
         "status": 200,
@@ -325,14 +337,16 @@ def test_get_preference(mp_provider: MercadoPagoProvider):
     assert get_preference.call_args == call(payment.transaction_id)
 
 
-def test_get_preference_with_missing_transaction_id(mp_provider: MercadoPagoProvider):
+def test_get_preference_with_missing_transaction_id(
+    mp_provider: MercadoPagoProvider,
+) -> None:
     payment = Payment()
 
     with pytest.raises(ValueError, match="payment does not have a preference"):
         mp_provider.get_preference(payment)
 
 
-def test_get_preference_internal_error(mp_provider: MercadoPagoProvider):
+def test_get_preference_internal_error(mp_provider: MercadoPagoProvider) -> None:
     mocked_response = {
         "status": 500,
         "response": "Internal error",
@@ -368,7 +382,7 @@ def test_get_form_for_existing_preference(
     mp_provider: MercadoPagoProvider,
     is_sandbox: bool,
     url_attr: str,
-):
+) -> None:
     mp_provider.is_sandbox = is_sandbox
 
     mocked_response = {
@@ -393,7 +407,7 @@ def test_get_form_for_existing_preference(
     assert str(exc_info.value) == "https://example.com/pay"
 
 
-def test_get_form_for_inexistent_preference(mp_provider: MercadoPagoProvider):
+def test_get_form_for_inexistent_preference(mp_provider: MercadoPagoProvider) -> None:
     mocked_response = {
         "status": 200,
         "response": {
@@ -420,7 +434,7 @@ def test_get_form_for_inexistent_preference(mp_provider: MercadoPagoProvider):
 def test_process_notification_ignores_merchant_orders(
     mp_provider: MercadoPagoProvider,
     rf: RequestFactory,
-):
+) -> None:
     payment = Payment()
     request = rf.post(
         "/process/xxx-yyy",
@@ -429,13 +443,14 @@ def test_process_notification_ignores_merchant_orders(
     )
     response = mp_provider.process_data(payment, request)
 
+    assert response is not None
     assert response.content.decode() == "Thanks"
 
 
 def test_process_notification_processes_payment_collection(
     mp_provider: MercadoPagoProvider,
     rf: RequestFactory,
-):
+) -> None:
     payment = Payment()
     request = rf.post(
         "/process/xxx-yyy",
@@ -448,6 +463,7 @@ def test_process_notification_processes_payment_collection(
     ) as process_collection:
         response = mp_provider.process_data(payment, request)
 
+    assert response is not None
     assert response.content.decode() == "Thanks"
     assert process_collection.call_count == 1
     assert process_collection.call_args == call(payment, "123")

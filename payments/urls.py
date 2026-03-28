@@ -5,8 +5,12 @@ data (asynchronous transaction updates).
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.db.transaction import atomic
 from django.http import Http404
+from django.http import HttpRequest
+from django.http import HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import path
@@ -17,10 +21,17 @@ from . import PaymentError
 from . import get_payment_model
 from .core import provider_factory
 
+if TYPE_CHECKING:
+    from .core import BasicProvider
+
 
 @csrf_exempt
 @atomic
-def process_data(request, token, provider=None):
+def process_data(
+    request: HttpRequest,
+    token: str,
+    provider: BasicProvider | None = None,
+) -> HttpResponse:
     """
     Calls process_data of an appropriate provider.
 
@@ -40,7 +51,7 @@ def process_data(request, token, provider=None):
 
 @csrf_exempt
 @atomic
-def static_callback(request, variant):
+def static_callback(request: HttpRequest, variant: str) -> HttpResponse:
     """
     Handle webhooks sent to a static provider endpoint.
 

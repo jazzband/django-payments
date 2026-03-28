@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class PaymentAttributeProxy:
-    def __init__(self, payment):
+    def __init__(self, payment) -> None:
         self._payment = payment
         super().__init__()
 
@@ -34,7 +34,7 @@ class PaymentAttributeProxy:
         except KeyError as e:
             raise AttributeError(*e.args) from e
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key, value) -> None:
         if key == "_payment":
             return super().__setattr__(key, value)
         try:
@@ -95,7 +95,7 @@ class BasePayment(models.Model):
     class Meta:
         abstract = True
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.variant
 
     def save(self, **kwargs):
@@ -114,7 +114,7 @@ class BasePayment(models.Model):
 
         return super().save(**kwargs)
 
-    def change_status(self, status: PaymentStatus | str, message=""):
+    def change_status(self, status: PaymentStatus | str, message="") -> None:
         """
         Updates the Payment status and sends the status_changed signal.
         """
@@ -125,7 +125,12 @@ class BasePayment(models.Model):
         self.save(update_fields=["status", "message"])
         status_changed.send(sender=type(self), instance=self)
 
-    def change_fraud_status(self, status: PaymentStatus, message="", commit=True):
+    def change_fraud_status(
+        self,
+        status: PaymentStatus,
+        message="",
+        commit=True,
+    ) -> None:
         available_statuses = [choice[0] for choice in FraudStatus.CHOICES]
         if status not in available_statuses:
             raise ValueError(
@@ -192,7 +197,7 @@ class BasePayment(models.Model):
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
 
-    def capture(self, amount=None):
+    def capture(self, amount=None) -> None:
         """Capture a pre-authorized payment.
 
         Note that not all providers support this method.
@@ -205,7 +210,7 @@ class BasePayment(models.Model):
             self.captured_amount = amount
             self.change_status(PaymentStatus.CONFIRMED)
 
-    def release(self):
+    def release(self) -> None:
         """Release a pre-authorized payment.
 
         Note that not all providers support this method.
@@ -216,7 +221,7 @@ class BasePayment(models.Model):
         provider.release(self)
         self.change_status(PaymentStatus.REFUNDED)
 
-    def refund(self, amount=None):
+    def refund(self, amount=None) -> None:
         if self.status != PaymentStatus.CONFIRMED:
             raise ValueError("Only charged payments can be refunded.")
         if amount and amount > self.captured_amount:
@@ -230,7 +235,7 @@ class BasePayment(models.Model):
         if amount > self.captured_amount:
             logger.error(
                 "Refund amount of payment %s greater than captured amount: %f > %f",
-                self.id,
+                self.pk,
                 amount,
                 self.captured_amount,
             )

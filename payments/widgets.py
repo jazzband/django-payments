@@ -1,14 +1,28 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
+from typing import Any
 
 from django.forms.widgets import MultiWidget
 from django.forms.widgets import Select
 from django.forms.widgets import TextInput
 
+if TYPE_CHECKING:
+    from datetime import date
+
+    from django.forms.renderers import BaseRenderer
+    from django.utils.safestring import SafeString
+
 
 class CreditCardNumberWidget(TextInput):
-    def render(self, name, value, attrs=None, renderer=None):
+    def render(
+        self,
+        name: str,
+        value: str | None,
+        attrs: dict[str, Any] | None = None,
+        renderer: BaseRenderer | None = None,
+    ) -> SafeString:
         if value:
             value = re.sub(r"[\s-]", "", value)
             if len(value) == 16:
@@ -27,7 +41,7 @@ class CreditCardExpiryWidget(MultiWidget):
 
     template_name = "payments/credit_card_expiry_widget.html"
 
-    def decompress(self, value):
+    def decompress(self, value: date | None) -> list[int | None]:
         if value:
             return [value.month, value.year]
         return [None, None]

@@ -43,7 +43,7 @@ class ProcessPaymentForm(forms.Form):
     geoip_country = forms.CharField(required=False)
     signature = forms.CharField(required=True)
 
-    def __init__(self, payment, pin, **kwargs):
+    def __init__(self, payment, pin, **kwargs) -> None:
         super().__init__(**kwargs)
         self.pin = pin
         self.payment = payment
@@ -90,7 +90,7 @@ class ProcessPaymentForm(forms.Form):
                 self._errors["control"] = self.error_class(["Bad payment id"])
         return cleaned_data
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         status = self.cleaned_data["operation_status"]
         self.payment.transaction_id = self.cleaned_data["operation_number"]
         self.payment.save()

@@ -6,6 +6,7 @@ from datetime import timedelta
 from decimal import ROUND_HALF_UP
 from decimal import Decimal
 from functools import wraps
+from typing import NoReturn
 
 import requests
 from django.http import HttpResponseBadRequest
@@ -69,8 +70,12 @@ class PaypalProvider(BasicProvider):
     """
 
     def __init__(
-        self, client_id, secret, endpoint="https://api.sandbox.paypal.com", capture=True
-    ):
+        self,
+        client_id,
+        secret,
+        endpoint="https://api.sandbox.paypal.com",
+        capture=True,
+    ) -> None:
         self.secret = secret
         self.client_id = client_id
         self.endpoint = endpoint
@@ -82,7 +87,7 @@ class PaypalProvider(BasicProvider):
         )
         super().__init__(capture=capture)
 
-    def set_response_data(self, payment, response, is_auth=False):
+    def set_response_data(self, payment, response, is_auth=False) -> None:
         extra_data = json.loads(payment.extra_data or "{}")
         if is_auth:
             extra_data["auth_response"] = response
@@ -93,7 +98,7 @@ class PaypalProvider(BasicProvider):
         payment.extra_data = json.dumps(extra_data)
         payment.save()
 
-    def set_response_links(self, payment, response):
+    def set_response_links(self, payment, response) -> None:
         transaction = response["transactions"][0]
         related_resources = transaction["related_resources"][0]
         resource_key = "sale" if self._capture else "authorization"
@@ -103,7 +108,7 @@ class PaypalProvider(BasicProvider):
         payment.extra_data = json.dumps(extra_data)
         payment.save()
 
-    def set_error_data(self, payment, error):
+    def set_error_data(self, payment, error) -> None:
         extra_data = json.loads(payment.extra_data or "{}")
         extra_data["error"] = error
         payment.extra_data = json.dumps(extra_data)
@@ -221,7 +226,7 @@ class PaypalProvider(BasicProvider):
         data["payer"] = {"payment_method": "paypal"}
         return data
 
-    def get_form(self, payment, data=None):
+    def get_form(self, payment, data=None) -> NoReturn:
         if not payment.id:
             payment.save()
         links = self._get_links(payment)
@@ -311,7 +316,7 @@ class PaypalProvider(BasicProvider):
             raise PaymentError("Payment already refunded")
         return None
 
-    def release(self, payment):
+    def release(self, payment) -> None:
         links = self._get_links(payment)
         url = links["void"]["href"]
         self.post(payment, url)

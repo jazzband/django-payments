@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from unittest.mock import MagicMock
 from unittest.mock import NonCallableMock
 from unittest.mock import patch
 
@@ -16,22 +17,22 @@ from .models import BasePayment
 
 
 @patch("payments.core.PAYMENT_HOST", new_callable=NonCallableMock)
-def test_text_get_base_url(host):
+def test_text_get_base_url(host: NonCallableMock) -> None:
     host.__str__ = lambda x: "example.com/string"
     assert core.get_base_url() == "https://example.com/string"
 
 
 @patch("payments.core.PAYMENT_HOST")
-def test_callable_get_base_url(host):
+def test_callable_get_base_url(host: MagicMock) -> None:
     host.return_value = "example.com/callable"
     assert core.get_base_url() == "https://example.com/callable"
 
 
-def test_provider_factory():
+def test_provider_factory() -> None:
     core.provider_factory("default")
 
 
-def test_provider_does_not_exist():
+def test_provider_does_not_exist() -> None:
     with pytest.raises(
         ValueError,
         match="Payment variant does not exist: fake_provider",
@@ -46,7 +47,7 @@ class Payment(BasePayment):
     """
 
 
-def test_payment_attributes():
+def test_payment_attributes() -> None:
     payment = Payment(extra_data='{"attr1": "test1", "attr2": "test2"}')
     assert payment.attrs.attr1 == "test1"
     assert payment.attrs.attr2 == "test2"
@@ -54,7 +55,7 @@ def test_payment_attributes():
     assert not hasattr(payment.attrs, "attr7")
 
 
-def test_capture_with_wrong_status():
+def test_capture_with_wrong_status() -> None:
     payment = Payment(variant="default", status=PaymentStatus.WAITING)
     with pytest.raises(
         ValueError,
@@ -64,7 +65,7 @@ def test_capture_with_wrong_status():
 
 
 @patch("payments.dummy.DummyProvider.capture")
-def test_capture_preauth_successfully(mocked_capture_method):
+def test_capture_preauth_successfully(mocked_capture_method: MagicMock) -> None:
     amount = Decimal("20")
     with patch.object(BasePayment, "save"):
         mocked_capture_method.return_value = amount
@@ -77,7 +78,7 @@ def test_capture_preauth_successfully(mocked_capture_method):
 
 
 @patch("payments.dummy.DummyProvider.capture")
-def test_capture_preauth_without_amount(mocked_capture_method):
+def test_capture_preauth_without_amount(mocked_capture_method: MagicMock) -> None:
     with patch.object(BasePayment, "save"):
         mocked_capture_method.return_value = None
         captured_amount = Decimal("100")
@@ -93,7 +94,7 @@ def test_capture_preauth_without_amount(mocked_capture_method):
     assert mocked_capture_method.call_count == 1
 
 
-def test_release_with_wrong_status():
+def test_release_with_wrong_status() -> None:
     payment = Payment(variant="default", status=PaymentStatus.WAITING)
     with pytest.raises(
         ValueError,
@@ -103,7 +104,7 @@ def test_release_with_wrong_status():
 
 
 @patch("payments.dummy.DummyProvider.release")
-def test_release_preauth_successfully(mocked_release_method):
+def test_release_preauth_successfully(mocked_release_method: MagicMock) -> None:
     with patch.object(BasePayment, "save"):
         payment = Payment(variant="default", status=PaymentStatus.PREAUTH)
         payment.release()
@@ -111,13 +112,13 @@ def test_release_preauth_successfully(mocked_release_method):
     assert mocked_release_method.call_count == 1
 
 
-def test_refund_with_wrong_status():
+def test_refund_with_wrong_status() -> None:
     payment = Payment(variant="default", status=PaymentStatus.WAITING)
     with pytest.raises(ValueError, match="Only charged payments can be refunded\\."):
         payment.refund()
 
 
-def test_refund_too_high_amount():
+def test_refund_too_high_amount() -> None:
     payment = Payment(
         variant="default",
         status=PaymentStatus.CONFIRMED,
@@ -131,7 +132,7 @@ def test_refund_too_high_amount():
 
 
 @patch("payments.dummy.DummyProvider.refund")
-def test_refund_without_amount(mocked_refund_method):
+def test_refund_without_amount(mocked_refund_method: MagicMock) -> None:
     captured_amount = Decimal("200")
     with patch.object(BasePayment, "save"):
         mocked_refund_method.return_value = captured_amount
@@ -148,7 +149,7 @@ def test_refund_without_amount(mocked_refund_method):
 
 
 @patch("payments.dummy.DummyProvider.refund")
-def test_refund_partial_success(mocked_refund_method):
+def test_refund_partial_success(mocked_refund_method: MagicMock) -> None:
     refund_amount = Decimal("100")
     captured_amount = Decimal("200")
     with patch.object(BasePayment, "save"):
@@ -166,7 +167,7 @@ def test_refund_partial_success(mocked_refund_method):
 
 
 @patch("payments.dummy.DummyProvider.refund")
-def test_refund_fully_success(mocked_refund_method):
+def test_refund_fully_success(mocked_refund_method: MagicMock) -> None:
     refund_amount = Decimal("200")
     captured_amount = Decimal("200")
     with patch.object(BasePayment, "save"):
@@ -184,7 +185,7 @@ def test_refund_fully_success(mocked_refund_method):
 
 
 @pytest.fixture
-def credit_card_data():
+def credit_card_data() -> dict[str, str | int]:
     return {
         "name": "John Doe",
         "number": "4716124728800975",
@@ -194,26 +195,30 @@ def credit_card_data():
     }
 
 
-def test_form_verifies_card_number(credit_card_data):
+def test_form_verifies_card_number(credit_card_data: dict[str, str | int]) -> None:
     form = CreditCardPaymentFormWithName(data=credit_card_data)
     assert form.is_valid()
 
 
-def test_form_raises_error_for_invalid_card_number(credit_card_data):
+def test_form_raises_error_for_invalid_card_number(
+    credit_card_data: dict[str, str | int],
+) -> None:
     data = dict(credit_card_data, number="1112223334445556")
     form = CreditCardPaymentFormWithName(data=data)
     assert not form.is_valid()
     assert "number" in form.errors
 
 
-def test_form_raises_error_for_invalid_cvv2(credit_card_data):
+def test_form_raises_error_for_invalid_cvv2(
+    credit_card_data: dict[str, str | int],
+) -> None:
     data = dict(credit_card_data, cvv2="12345")
     form = CreditCardPaymentFormWithName(data=data)
     assert not form.is_valid()
     assert "cvv2" in form.errors
 
 
-def test_form_contains_hidden_fields():
+def test_form_contains_hidden_fields() -> None:
     data = {
         "field1": "value1",
         "field2": "value2",
@@ -225,7 +230,7 @@ def test_form_contains_hidden_fields():
     assert form.fields["field1"].initial == "value1"
 
 
-def test_mastercard():
+def test_mastercard() -> None:
     assert core.get_credit_card_issuer("2720999018275485") == (
         "mastercard",
         "MasterCard",
@@ -240,13 +245,13 @@ def test_mastercard():
     )
 
 
-def test_visa():
+def test_visa() -> None:
     assert core.get_credit_card_issuer("4929299255922609") == ("visa", "VISA")
     assert core.get_credit_card_issuer("4539883983691685") == ("visa", "VISA")
     assert core.get_credit_card_issuer("4916396455393611281") == ("visa", "VISA")
 
 
-def test_discover():
+def test_discover() -> None:
     assert core.get_credit_card_issuer("6011281400356614") == ("discover", "Discover")
     assert core.get_credit_card_issuer("6011223438090674") == ("discover", "Discover")
     assert core.get_credit_card_issuer("6011509478386387430") == (
@@ -255,7 +260,7 @@ def test_discover():
     )
 
 
-def test_amex():
+def test_amex() -> None:
     assert core.get_credit_card_issuer("341841172626538") == (
         "amex",
         "American Express",

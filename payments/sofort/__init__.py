@@ -30,7 +30,7 @@ class SofortProvider(BasicProvider):
 
     def __init__(
         self, key, id, project_id, endpoint="https://api.sofort.com/api/xml", **kwargs
-    ):
+    ) -> None:
         self.secret = key
         self.client_id = id
         self.project_id = project_id
@@ -47,7 +47,7 @@ class SofortProvider(BasicProvider):
         doc = xmltodict.parse(response.content)
         return doc, response
 
-    def get_form(self, payment, data=None):
+    def get_form(self, payment, data=None) -> None:
         if not payment.id:
             payment.save()
         xml_request = render_to_string(

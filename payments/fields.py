@@ -25,7 +25,7 @@ class CreditCardNumberField(forms.CharField):
         "invalid_type": _("We accept only %(valid_types)s"),
     }
 
-    def __init__(self, valid_types=None, *args, **kwargs):
+    def __init__(self, valid_types=None, *args, **kwargs) -> None:
         self.valid_types = valid_types
         kwargs["max_length"] = kwargs.pop("max_length", 32)
         super().__init__(*args, **kwargs)
@@ -72,7 +72,7 @@ class CreditCardExpiryField(forms.MultiValueField):
         "invalid_year": "Enter a valid year.",
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         errors = self.default_error_messages.copy()
         if "error_messages" in kwargs:
             errors.update(kwargs["error_messages"])
@@ -127,11 +127,11 @@ class CreditCardVerificationField(forms.CharField):
     widget = forms.TextInput(attrs={"autocomplete": "cc-csc"})
     default_error_messages = {"invalid": _("Enter a valid security number.")}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         kwargs["max_length"] = kwargs.pop("max_length", 4)
         super().__init__(*args, **kwargs)
 
-    def validate(self, value):
+    def validate(self, value) -> None:
         if value in validators.EMPTY_VALUES and self.required:
             raise forms.ValidationError(self.error_messages["required"])
         if value and not re.match("^[0-9]{3,4}$", value):

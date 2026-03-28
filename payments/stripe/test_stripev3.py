@@ -8,6 +8,7 @@ import pytest
 
 from payments import PaymentError
 from payments import PaymentStatus
+from payments import PurchasedItem
 from payments import RedirectNeeded
 
 from . import StripeProviderV3
@@ -18,7 +19,7 @@ API_KEY_BAD = "aaaaaaa123"
 
 
 class payment_attrs:
-    session = dict
+    session: dict = {}
 
 
 class Payment(Mock):
@@ -31,28 +32,28 @@ class Payment(Mock):
     tax = 0
     total = 100
     captured_amount = 0
-    transaction_id = None
+    transaction_id: str | None = None
     billing_email = "john@doe.com"
     attrs = payment_attrs()
 
-    def change_status(self, status, message=""):
+    def change_status(self, status: str, message: str = "") -> None:
         self.status = status
         self.message = message
 
-    def get_failure_url(self):
+    def get_failure_url(self) -> str:
         return "http://cancel.com"
 
-    def get_process_url(self):
+    def get_process_url(self) -> str:
         return "http://example.com"
 
-    def get_purchased_items(self):
+    def get_purchased_items(self) -> list[PurchasedItem]:
         return []
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return "http://success.com"
 
 
-def test_provider_create_session_success():
+def test_provider_create_session_success() -> None:
     payment = Payment()
     provider = StripeProviderV3(api_key=API_KEY)
     return_value = {
@@ -73,7 +74,7 @@ def test_provider_create_session_success():
     assert payment.status == PaymentStatus.WAITING
 
 
-def test_provider_create_session_failure():
+def test_provider_create_session_failure() -> None:
     payment = Payment()
     provider = StripeProviderV3(api_key=API_KEY)
 
@@ -85,7 +86,7 @@ def test_provider_create_session_failure():
     assert payment.status == PaymentStatus.ERROR
 
 
-def test_provider_create_session_failure_no_url():
+def test_provider_create_session_failure_no_url() -> None:
     payment = Payment()
     provider = StripeProviderV3(api_key=API_KEY)
     return_value = {
@@ -103,7 +104,7 @@ def test_provider_create_session_failure_no_url():
     assert "id" not in payment.attrs.session
 
 
-def test_provider_create_session_failure_with_transaction_id():
+def test_provider_create_session_failure_with_transaction_id() -> None:
     payment = Payment()
     payment.transaction_id = "transaction-id"
     provider = StripeProviderV3(api_key=API_KEY)
@@ -112,7 +113,7 @@ def test_provider_create_session_failure_with_transaction_id():
 
 
 @pytest.mark.skip(reason="https://github.com/jazzband/django-payments/issues/444")
-def test_provider_create_session_success_with_billing_name():
+def test_provider_create_session_success_with_billing_name() -> None:
     payment = Payment()
     payment.billing_name = "Billy Ngname"
     provider = StripeProviderV3(api_key=API_KEY)
@@ -150,14 +151,14 @@ def test_provider_status_not_paid():
     assert payment.captured_amount == 0
 
 
-def test_provider_refund_failure_bad_status():
+def test_provider_refund_failure_bad_status() -> None:
     payment = Payment()
     provider = StripeProviderV3(api_key=API_KEY)
     with pytest.raises(PaymentError):
         provider.refund(payment)
 
 
-def test_provider_refund_failure_no_payment_intent():
+def test_provider_refund_failure_no_payment_intent() -> None:
     payment = Payment()
     payment.status = PaymentStatus.CONFIRMED
     assert isinstance(payment.attrs.session, dict)
@@ -167,7 +168,7 @@ def test_provider_refund_failure_no_payment_intent():
         provider.refund(payment)
 
 
-def test_provider_refund_failure_stripe_error():
+def test_provider_refund_failure_stripe_error() -> None:
     payment = Payment()
     payment.status = PaymentStatus.CONFIRMED
     provider = StripeProviderV3(api_key=API_KEY)
@@ -180,7 +181,7 @@ def test_provider_refund_failure_stripe_error():
 ## Provider.refund() should not change the payment status.
 ## Status management is handled by BasePayment.refund().
 ## Refunds should be performed via payment.refund() (see docs/refund.rst).
-def test_provider_refund_success():
+def test_provider_refund_success() -> None:
     payment = Payment()
     payment.status = PaymentStatus.CONFIRMED
     payment.attrs.session["payment_intent"] = "pi_..."
