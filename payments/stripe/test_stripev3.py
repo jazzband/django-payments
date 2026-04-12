@@ -270,6 +270,37 @@ def test_provider_refund_zero_decimal_currency_returns_currency_units():
     assert result == 3000
 
 
+def test_cancel_with_transaction_id():
+    payment = Payment()
+    payment.transaction_id = "cs_test_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+
+    with patch("stripe.checkout.Session.expire") as mock_expire:
+        provider.cancel(payment)
+        mock_expire.assert_called_once_with("cs_test_...")
+
+
+def test_cancel_without_transaction_id():
+    payment = Payment()
+    payment.transaction_id = None
+    provider = StripeProviderV3(api_key=API_KEY)
+
+    with patch("stripe.checkout.Session.expire") as mock_expire:
+        provider.cancel(payment)
+        mock_expire.assert_not_called()
+
+
+def test_cancel_stripe_error():
+    payment = Payment()
+    payment.transaction_id = "cs_test_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+
+    with patch("stripe.checkout.Session.expire") as mock_expire:
+        mock_expire.side_effect = PaymentError("Stripe error")
+        with pytest.raises(PaymentError):
+            provider.cancel(payment)
+
+
 def _make_webhook_request(event_type, session_status, payment_status):
     body = json.dumps(
         {
@@ -316,3 +347,18 @@ def test_process_data_does_not_set_captured_amount_on_expiry():
 
     assert payment.status == PaymentStatus.REJECTED
     assert payment.captured_amount == 0
+
+
+def test_process_data_does_not_overwrite_cancelled_on_expiry():
+    payment = Payment()
+    payment.status = PaymentStatus.CANCELLED
+    provider = StripeProviderV3(api_key=API_KEY, secure_endpoint=False)
+    request = _make_webhook_request(
+        event_type="checkout.session.expired",
+        session_status="expired",
+        payment_status="unpaid",
+    )
+
+    provider.process_data(payment, request)
+
+    assert payment.status == PaymentStatus.CANCELLED

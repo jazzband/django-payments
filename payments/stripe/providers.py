@@ -145,6 +145,14 @@ class StripeProviderV3(BasicProvider):
         else:
             raise PaymentError("This payment has already been processed.")
 
+    def cancel(self, payment):
+        if payment.transaction_id:
+            stripe.api_key = self.api_key
+            try:
+                stripe.checkout.Session.expire(payment.transaction_id)
+            except stripe.StripeError as e:
+                raise PaymentError(e) from e
+
     def refund(self, payment, amount=None):
         if payment.status == PaymentStatus.CONFIRMED:
             to_refund = amount or payment.total
@@ -253,8 +261,8 @@ class StripeProviderV3(BasicProvider):
                 ) from e
 
             if session_info["status"] == "expired":
-                # Expired Order
-                payment.change_status(PaymentStatus.REJECTED)
+                if payment.status != PaymentStatus.CANCELLED:
+                    payment.change_status(PaymentStatus.REJECTED)
 
             elif session_info["payment_status"] == "paid":
                 # Paid Order
