@@ -3,35 +3,33 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 
 [project]
 name = "django-payments"
-authors = [
-    {name = "Mirumee Software", email = "hello@mirumee.com"},
-]
+authors = [{ name = "Mirumee Software", email = "hello@mirumee.com" }]
 description = "Universal payment handling for Django"
 readme = "README.rst"
 requires-python = ">=3.10"
 keywords = ["payments"]
-license = {text = "BSD"}
+license = { text = "BSD" }
 classifiers = [
-    "Environment :: Web Environment",
-    "Framework :: Django :: 4.2",
-    "Framework :: Django :: 5.1",
-    "Framework :: Django :: 5.2",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Framework :: Django",
-    "Topic :: Software Development :: Libraries :: Application Frameworks",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+  "Environment :: Web Environment",
+  "Framework :: Django :: 4.2",
+  "Framework :: Django :: 5.1",
+  "Framework :: Django :: 5.2",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Framework :: Django",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+  "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "Django>=4.2,<5.3",
-    "requests>=1.2.0",
-    "django-phonenumber-field[phonenumberslite]>=5.0.0",
+  "django>=4.2,<6.1",
+  "requests>=1.2.0",
+  "django-phonenumber-field[phonenumberslite]>=5.0.0",
 ]
 dynamic = ["version"]
 
@@ -39,17 +37,17 @@ dynamic = ["version"]
 braintree = ["braintree>=3.14.0"]
 cybersource = ["suds-community>=0.6"]
 dev = [
-    "coverage",
-    "django-stubs[compatible-mypy]",
-    "mock",
-    "pytest",
-    "pytest-cov",
-    "pytest-django",
-    "types-braintree",
-    "types-dj-database-url",
-    "types-requests",
-    "types-stripe",
-    "types-xmltodict",
+  "coverage",
+  "django-stubs[compatible-mypy]",
+  "mock",
+  "pytest",
+  "pytest-cov",
+  "pytest-django",
+  "types-braintree",
+  "types-dj-database-url",
+  "types-requests",
+  "types-stripe",
+  "types-xmltodict",
 ]
 docs = ["sphinx_rtd_theme"]
 mercadopago = ["mercadopago>=2.0.0,<3.0.0"]
@@ -64,9 +62,7 @@ changelog = "https://django-payments.readthedocs.io/en/latest/changelog.html"
 issues = "https://github.com/jazzband/django-payments/issues"
 
 [tool.coverage.report]
-exclude_lines = [
-    "if TYPE_CHECKING:",
-]
+exclude_lines = ["if TYPE_CHECKING:"]
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -76,7 +72,7 @@ plugins = ["mypy_django_plugin.main"]
 django_settings_module = "test_settings"
 
 [tool.pytest.ini_options]
-addopts =[
+addopts = [
   "--cov=payments",
   "--cov-report=term-missing:skip-covered",
   "--no-cov-on-fail",
@@ -88,40 +84,40 @@ pythonpath = "."
 
 [tool.ruff.lint]
 extend-select = [
-    # "A", # Conflicts with some django patterns
-    # "ANN", # TODO
-    "B",
-    # "BLE",
-    "C4",
-    "DJ",
-    "E",
-    "ERA",
-    # "FBT", # TODO
-    "G",
-    "I",
-    "ICN",
-    "INP",
-    "INT",
-    "ISC",
-    # "N", # TODO: fixing these would break public API
-    "PGH",
-    "PIE",
-    "PLE",
-    "PT",
-    "PYI",
-    "Q",
-    "RET",
-    "RSE",
-    "RUF",
-    "SIM",
-    "TCH",
-    "TID",
-    "UP",
-    "W",
-    "YTT",
+  # "A", # Conflicts with some django patterns
+  # "ANN", # TODO
+  "B",
+  # "BLE",
+  "C4",
+  "DJ",
+  "E",
+  "ERA",
+  # "FBT", # TODO
+  "G",
+  "I",
+  "ICN",
+  "INP",
+  "INT",
+  "ISC",
+  # "N", # TODO: fixing these would break public API
+  "PGH",
+  "PIE",
+  "PLE",
+  "PT",
+  "PYI",
+  "Q",
+  "RET",
+  "RSE",
+  "RUF",
+  "SIM",
+  "TCH",
+  "TID",
+  "UP",
+  "W",
+  "YTT",
 ]
 ignore = [
-  "RUF012",  # FIXME
+  "RUF012", # FIXME
 ]
 
 [tool.ruff.lint.isort]
