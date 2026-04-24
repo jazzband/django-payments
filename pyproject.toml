@@ -27,7 +27,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-  "django>=4.2,<6.1",
+  "django>=5.2,<6.1",
   "requests>=1.2.0",
   "django-phonenumber-field[phonenumberslite]>=5.0.0",
 ]
