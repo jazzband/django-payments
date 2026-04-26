@@ -25,8 +25,8 @@ v4.0.0
   confirmation in ``process_data()`` and ``status()``, which broke refunds.
 - ``StripeProvider``, which was deprecated in v3.0.0, has been dropped. Use
   ``StripeProviderV3`` instead.
-- Drop support for Django 5.0.
-- Drop support for Python 3.9.
+- Drop support for Django 4.2, 5.0, and 5.1.
+  Supported versions of Django are 5.2 (LTS), and 6.0.
 - The stripe provider now requires ``stripe>=7.8.0``, released Dec 2023.
 
 v3.1.0
