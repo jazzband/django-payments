@@ -21,6 +21,11 @@ v4.0.0
       codes (400, 404, etc.).
     - Payment tokens are no longer exposed in 404 error responses for security.
 
+- **BREAKING** ``BasePayment.extra_data`` is now a JSONField and django will
+  handle the serialisation internally . Usage of the ``BasePayment.attrs``
+  proxy has been deprecated. A migration needs to be generated to update this
+  column in place. Application code needs to be updated from
+  ``payment.extra_data.field`` to ``payment.extra_data["field"]``.
 - Fixed ``StripeProviderV3`` not setting ``captured_amount`` on payment
   confirmation in ``process_data()`` and ``status()``, which broke refunds.
 - ``StripeProvider``, which was deprecated in v3.0.0, has been dropped. Use
