@@ -7,7 +7,7 @@ releases, in reverse chronological order.
 v4.0.0
 ------
 
-- **Breaking** Webhook error responses in ``static_callback`` endpoint now
+- **Breaking**: Webhook error responses in ``static_callback`` endpoint now
   return JSON instead of raising ``Http404``. Error responses include
   ``variant`` and ``error_code`` fields for easier debugging. This helps
   developers identify which payment provider is having issues when viewing
@@ -21,12 +21,14 @@ v4.0.0
       codes (400, 404, etc.).
     - Payment tokens are no longer exposed in 404 error responses for security.
 
+- **Breaking**: ``StripeProvider``, which was deprecated in v3.0.0, has been
+  dropped. Use ``StripeProviderV3`` instead.
+- **Breaking**: Drop support for Django 4.2, 5.0, and 5.1.
+  Supported versions of Django are 5.2 (LTS), and 6.0.
+- **Breaking**: Drop support for Python 3.9.
+  Supported versions of Python are 3.10 thru 3.14.
 - Fixed ``StripeProviderV3`` not setting ``captured_amount`` on payment
   confirmation in ``process_data()`` and ``status()``, which broke refunds.
-- ``StripeProvider``, which was deprecated in v3.0.0, has been dropped. Use
-  ``StripeProviderV3`` instead.
-- Drop support for Django 4.2, 5.0, and 5.1.
-  Supported versions of Django are 5.2 (LTS), and 6.0.
 - The stripe provider now requires ``stripe>=7.8.0``, released Dec 2023.
 
 v3.1.0
