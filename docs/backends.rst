@@ -298,6 +298,9 @@ These are the community providers compatible with ``django-payments``
   * - `BlockBee <https://www.blockbee.io/>`_
     - Worldwide
     - `blockbee-io/django-payments-blockbee <https://github.com/blockbee-io/django-payments-blockbee>`_
+  * - `Solana Payments (self-hosted) <https://django-solana-payments.readthedocs.io/en/latest/django_payments_integration.html>`_
+    - Worldwide
+    - `Artemooon/django-solana-payments <https://github.com/Artemooon/django-solana-payments>`_
 
 
 Creating a New Provider Backend
