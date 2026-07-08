@@ -1,12 +1,13 @@
 version: 2
+# Ref: https://docs.readthedocs.com/platform/stable/config-file/v2.html
 
 sphinx:
   configuration: docs/conf.py
 
 build:
-  os: "ubuntu-20.04"
+  os: "ubuntu-26.04"
   tools:
-    python: "3.10"
+    python: "3.12"
 
 python:
   install:
