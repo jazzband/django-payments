@@ -4,6 +4,12 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+Unreleased
+----------
+
+- Add an optional interface for charging stored payment methods server-side
+  (recurring payments): see ``docs/wallet.rst``. Backward compatible.
+
 v4.1.0
 ------
 

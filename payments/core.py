@@ -143,6 +143,29 @@ class BasicProvider:
             return url + "?" + qs
         return url
 
+    def autocomplete_with_wallet(self, payment):
+        """Charge the stored payment method for ``payment.total``.
+
+        Read the token from ``payment.get_renew_token()``, charge it, update
+        the payment status and call ``self._finalize_wallet_payment(payment)``
+        on success. Raise :class:`~payments.RedirectNeeded` if the user must
+        act (e.g. 3-D Secure), :class:`~payments.PaymentError` on failure.
+        """
+        raise NotImplementedError
+
+    def _finalize_wallet_payment(self, payment, wallet=None):
+        """Notify the payment's wallet, if it has one, of a completed charge."""
+        if wallet is None:
+            wallet = getattr(payment, "wallet", None)
+        if wallet is not None:
+            wallet.payment_completed(payment)
+
+    def erase_wallet(self, token):
+        """Revoke the stored payment method ``token`` at the provider.
+
+        No-op by default, for providers whose tokens need no revoking.
+        """
+
     def capture(self, payment, amount=None):
         raise NotImplementedError
 
