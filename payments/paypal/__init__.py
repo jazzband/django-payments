@@ -122,14 +122,24 @@ class PaypalProvider(BasicProvider):
         return extra_data.get("links", {})
 
     @authorize
-    def http_request(self, payment, *args, http_method=None, **kwargs):
+    def http_request(self, payment, *args, method: str = "get", **kwargs) -> dict:
+        """Perform an authorized request to the PayPal API.
+
+        :param payment: Payment instance (can be None for requests not tied
+            to a payment)
+        :param args: positional arguments passed to :func:`requests.request`
+        :param method: HTTP method name, e.g. ``"get"`` or ``"post"``
+        :param kwargs: keyword arguments passed to :func:`requests.request`
+        :returns: JSON response data from the PayPal API
+        :raises PaymentError: if the API returns an error status code
+        """
         kwargs["headers"] = {
             "Content-Type": "application/json",
             "Authorization": self.access_token,
         }
         if "data" in kwargs:
             kwargs["data"] = json.dumps(kwargs["data"])
-        response = http_method(*args, **kwargs)
+        response = requests.request(method, *args, **kwargs)
         try:
             data = response.json()
         except ValueError:
@@ -155,39 +165,29 @@ class PaypalProvider(BasicProvider):
             self.set_response_data(payment, data)
         return data
 
-    def post(self, payment, *args, **kwargs):
+    def post(self, payment, *args, **kwargs) -> dict:
+        """Perform a POST request to the PayPal API.
+
+        :param payment: Payment instance (can be None for requests not tied
+            to a payment)
+        :param args: positional arguments passed to :func:`requests.request`
+        :param kwargs: keyword arguments passed to :func:`requests.request`
+        :returns: JSON response data from the PayPal API
+        :raises PaymentError: if the API returns an error status code
         """
-        Perform a POST request to the PayPal API.
+        return self.http_request(payment, *args, method="post", **kwargs)
 
-        Args:
-            payment: Payment instance (can be None for requests not tied to a payment)
-            *args: Positional arguments passed to requests.post()
-            **kwargs: Keyword arguments passed to requests.post()
+    def get(self, payment, *args, **kwargs) -> dict:
+        """Perform a GET request to the PayPal API.
 
-        Returns:
-            dict: JSON response data from PayPal API
-
-        Raises:
-            PaymentError: If the API returns an error status code
+        :param payment: Payment instance (can be None for requests not tied
+            to a payment)
+        :param args: positional arguments passed to :func:`requests.request`
+        :param kwargs: keyword arguments passed to :func:`requests.request`
+        :returns: JSON response data from the PayPal API
+        :raises PaymentError: if the API returns an error status code
         """
-        return self.http_request(payment, *args, http_method=requests.post, **kwargs)
-
-    def get(self, payment, *args, **kwargs):
-        """
-        Perform a GET request to the PayPal API.
-
-        Args:
-            payment: Payment instance (can be None for requests not tied to a payment)
-            *args: Positional arguments passed to requests.get()
-            **kwargs: Keyword arguments passed to requests.get()
-
-        Returns:
-            dict: JSON response data from PayPal API
-
-        Raises:
-            PaymentError: If the API returns an error status code
-        """
-        return self.http_request(payment, *args, http_method=requests.get, **kwargs)
+        return self.http_request(payment, *args, method="get", **kwargs)
 
     def get_last_response(self, payment, is_auth=False):
         extra_data = json.loads(payment.extra_data or "{}")

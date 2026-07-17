@@ -214,7 +214,10 @@ def test_provider_raises_redirect_needed_on_success(
     paypal_payment: Payment,
     paypal_provider: PaypalProvider,
 ) -> None:
-    with patch("requests.post") as mocked_post:
+    with (
+        patch("requests.post") as mocked_post,
+        patch("requests.request") as mocked_request,
+    ):
         transaction_id = "1234"
         data = MagicMock()
         data.return_value = {
@@ -227,6 +230,7 @@ def test_provider_raises_redirect_needed_on_success(
         post.json = data
         post.status_code = 200
         mocked_post.return_value = post
+        mocked_request.return_value = post
         with pytest.raises(RedirectNeeded):
             paypal_provider.get_form(payment=paypal_payment)
 
@@ -235,9 +239,11 @@ def test_provider_raises_redirect_needed_on_success(
     assert paypal_payment.transaction_id == transaction_id
 
 
+@patch("requests.request")
 @patch("requests.post")
 def test_provider_captures_payment(
     mocked_post: MagicMock,
+    mocked_request: MagicMock,
     paypal_payment: Payment,
     paypal_provider: PaypalProvider,
 ) -> None:
@@ -251,6 +257,7 @@ def test_provider_captures_payment(
     post.json = data
     post.status_code = 200
     mocked_post.return_value = post
+    mocked_request.return_value = post
     paypal_provider.capture(paypal_payment)
     assert paypal_payment.status == PaymentStatus.CONFIRMED
 
@@ -268,23 +275,28 @@ def test_provider_handles_captured_payment(
     assert paypal_payment.status == PaymentStatus.CONFIRMED
 
 
+@patch("requests.request")
 @patch("requests.post")
 def test_provider_refunds_payment_fully(
     mocked_post: MagicMock,
+    mocked_request: MagicMock,
     paypal_payment: Payment,
     paypal_provider: PaypalProvider,
 ) -> None:
-    data = MagicMock()
-    data.side_effect = [
-        {"token_type": "test_token_type", "access_token": "test_access_token"},
-        {"amount": {"total": "220.00", "currency": "USD"}},
-    ]
-    post = MagicMock()
-    post.json = data
-    post.status_code = 200
-    mocked_post.return_value = post
+    token = MagicMock()
+    token.json.return_value = {
+        "token_type": "test_token_type",
+        "access_token": "test_access_token",
+    }
+    token.status_code = 200
+    mocked_post.return_value = token
+    refund = MagicMock()
+    refund.json.return_value = {"amount": {"total": "220.00", "currency": "USD"}}
+    refund.status_code = 200
+    mocked_request.return_value = refund
     paypal_provider.refund(paypal_payment)
-    mocked_post.assert_called_with(
+    mocked_request.assert_called_with(
+        "post",
         "http://refund.com",
         headers={
             "Content-Type": "application/json",
@@ -295,21 +307,28 @@ def test_provider_refunds_payment_fully(
     assert paypal_payment.status == PaymentStatus.REFUNDED
 
 
+@patch("requests.request")
 @patch("requests.post")
 def test_provider_refunds_payment_partially(
-    mocked_post: MagicMock, paypal_payment: Payment, paypal_provider: PaypalProvider
+    mocked_post: MagicMock,
+    mocked_request: MagicMock,
+    paypal_payment: Payment,
+    paypal_provider: PaypalProvider,
 ) -> None:
-    data = MagicMock()
-    data.side_effect = [
-        {"token_type": "test_token_type", "access_token": "test_access_token"},
-        {"amount": {"total": "1.00", "currency": "USD"}},
-    ]
-    post = MagicMock()
-    post.json = data
-    post.status_code = 200
-    mocked_post.return_value = post
+    token = MagicMock()
+    token.json.return_value = {
+        "token_type": "test_token_type",
+        "access_token": "test_access_token",
+    }
+    token.status_code = 200
+    mocked_post.return_value = token
+    refund = MagicMock()
+    refund.json.return_value = {"amount": {"total": "1.00", "currency": "USD"}}
+    refund.status_code = 200
+    mocked_request.return_value = refund
     paypal_provider.refund(paypal_payment, amount=Decimal(1))
-    mocked_post.assert_called_with(
+    mocked_request.assert_called_with(
+        "post",
         "http://refund.com",
         headers={
             "Content-Type": "application/json",
@@ -320,11 +339,13 @@ def test_provider_refunds_payment_partially(
     assert paypal_payment.status == PaymentStatus.REFUNDED
 
 
+@patch("requests.request")
 @patch("requests.post")
 @patch("payments.paypal.redirect")
 def test_provider_redirects_on_success_captured_payment(
     mocked_redirect: MagicMock,
     mocked_post: MagicMock,
+    mocked_request: MagicMock,
     paypal_payment: Payment,
     paypal_provider: PaypalProvider,
 ) -> None:
@@ -345,6 +366,7 @@ def test_provider_redirects_on_success_captured_payment(
     post.json = data
     post.status_code = 200
     mocked_post.return_value = post
+    mocked_request.return_value = post
 
     request = MagicMock()
     request.GET = {"token": "test", "PayerID": "1234"}
@@ -357,10 +379,14 @@ def test_provider_redirects_on_success_captured_payment(
     assert paypal_payment.captured_amount == paypal_payment.total
 
 
+@patch("requests.request")
 @patch("requests.post")
 @patch("payments.paypal.redirect")
 def test_provider_redirects_on_success_preauth_payment(
-    mocked_redirect: MagicMock, mocked_post: MagicMock, paypal_payment: Payment
+    mocked_redirect: MagicMock,
+    mocked_post: MagicMock,
+    mocked_request: MagicMock,
+    paypal_payment: Payment,
 ) -> None:
     data = MagicMock()
     data.return_value = {
@@ -379,6 +405,7 @@ def test_provider_redirects_on_success_preauth_payment(
     post.json = data
     post.status_code = 200
     mocked_post.return_value = post
+    mocked_request.return_value = post
 
     request = MagicMock()
     request.GET = {"token": "test", "PayerID": "1234"}
@@ -404,9 +431,11 @@ def test_provider_request_without_payerid_redirects_on_failure(
     assert paypal_payment.status == PaymentStatus.REJECTED
 
 
+@patch("requests.request")
 @patch("requests.post")
 def test_provider_renews_access_token(
     mocked_post: MagicMock,
+    mocked_request: MagicMock,
     paypal_payment: Payment,
     paypal_provider: PaypalProvider,
 ) -> None:
@@ -418,7 +447,9 @@ def test_provider_renews_access_token(
     response = MagicMock()
     response.json = data
     response.status_code = 200
-    mocked_post.side_effect = [HTTPError(response=response401), response, response]
+    # The API call 401s, @authorize renews the token via oauth and retries.
+    mocked_request.side_effect = [HTTPError(response=response401), response]
+    mocked_post.return_value = response
 
     paypal_payment.created = timezone.now()
     paypal_payment.extra_data = json.dumps(
@@ -451,7 +482,10 @@ def paypal_card_provider() -> PaypalCardProvider:
 def test_provider_raises_redirect_needed_on_success_captured_payment_card(
     paypal_card_payment: Payment, paypal_card_provider: PaypalCardProvider
 ) -> None:
-    with patch("requests.post") as mocked_post:
+    with (
+        patch("requests.post") as mocked_post,
+        patch("requests.request") as mocked_request,
+    ):
         transaction_id = "1234"
         data = MagicMock()
         data.return_value = {
@@ -476,6 +510,7 @@ def test_provider_raises_redirect_needed_on_success_captured_payment_card(
         post.json = data
         post.status_code = 200
         mocked_post.return_value = post
+        mocked_request.return_value = post
         with pytest.raises(RedirectNeeded) as exc:
             paypal_card_provider.get_form(
                 payment=paypal_card_payment, data=PROCESS_DATA
@@ -493,7 +528,10 @@ def test_provider_raises_redirect_needed_on_success_preauth_payment_card(
     paypal_card_payment: Payment,
 ) -> None:
     provider = PaypalCardProvider(secret=SECRET, client_id=CLIENT_ID, capture=False)
-    with patch("requests.post") as mocked_post:
+    with (
+        patch("requests.post") as mocked_post,
+        patch("requests.request") as mocked_request,
+    ):
         transaction_id = "1234"
         data = MagicMock()
         data.return_value = {
@@ -519,6 +557,7 @@ def test_provider_raises_redirect_needed_on_success_preauth_payment_card(
         post.json = data
         post.status_code = 200
         mocked_post.return_value = post
+        mocked_request.return_value = post
         with pytest.raises(RedirectNeeded) as exc:
             provider.get_form(payment=paypal_card_payment, data=PROCESS_DATA)
         assert str(exc.value) == paypal_card_payment.get_success_url()
@@ -557,7 +596,10 @@ def test_provider_get_with_none_payment(paypal_provider: PaypalProvider) -> None
     expected_token = "test_access_token"
     expected_token_type = "Bearer"
 
-    with patch("requests.post") as mocked_post, patch("requests.get") as mocked_get:
+    with (
+        patch("requests.post") as mocked_post,
+        patch("requests.request") as mocked_request,
+    ):
         # Mock for token acquisition
         token_response_mock = MagicMock()
         token_response_mock.json.return_value = {
@@ -573,7 +615,7 @@ def test_provider_get_with_none_payment(paypal_provider: PaypalProvider) -> None
         get_response_mock.status_code = 200
 
         mocked_post.return_value = token_response_mock
-        mocked_get.return_value = get_response_mock
+        mocked_request.return_value = get_response_mock
 
         response_data = paypal_provider.get(None, test_url)
 
@@ -584,7 +626,8 @@ def test_provider_get_with_none_payment(paypal_provider: PaypalProvider) -> None
             auth=(paypal_provider.client_id, paypal_provider.secret),
         )
 
-        mocked_get.assert_called_once_with(
+        mocked_request.assert_called_once_with(
+            "get",
             test_url,
             headers={
                 "Content-Type": "application/json",
@@ -598,7 +641,10 @@ def test_form_shows_internal_error_message(
     paypal_card_payment: Payment,
     paypal_card_provider: PaypalCardProvider,
 ) -> None:
-    with patch("requests.post") as mocked_post:
+    with (
+        patch("requests.post") as mocked_post,
+        patch("requests.request") as mocked_request,
+    ):
         error_message = "error message"
         data = MagicMock()
         data.return_value = {
@@ -610,6 +656,7 @@ def test_form_shows_internal_error_message(
         post.status_code = 400
         post.json = data
         mocked_post.return_value = post
+        mocked_request.return_value = post
         with pytest.raises(PaymentError):
             paypal_card_provider.get_form(
                 payment=paypal_card_payment, data=PROCESS_DATA
@@ -618,14 +665,19 @@ def test_form_shows_internal_error_message(
     assert paypal_card_payment.message == error_message
 
 
-def test_provider_get_with_none_payment_handles_401(paypal_provider):
+def test_provider_get_with_none_payment_handles_401(
+    paypal_provider: PaypalProvider,
+) -> None:
     """Test that get() method with payment=None handles 401 errors correctly."""
     test_url = "http://example.com/api/test"
     expected_get_response_data = {"status": "success"}
     expected_token = "test_access_token"
     expected_token_type = "Bearer"
 
-    with patch("requests.post") as mocked_post, patch("requests.get") as mocked_get:
+    with (
+        patch("requests.post") as mocked_post,
+        patch("requests.request") as mocked_request,
+    ):
         # Mock for token acquisition (called twice due to 401 retry)
         token_response_mock = MagicMock()
         token_response_mock.json.return_value = {
@@ -644,7 +696,7 @@ def test_provider_get_with_none_payment_handles_401(paypal_provider):
         get_response_200.status_code = 200
 
         mocked_post.return_value = token_response_mock
-        mocked_get.side_effect = [
+        mocked_request.side_effect = [
             HTTPError(response=get_response_401),
             get_response_200,
         ]
@@ -653,6 +705,6 @@ def test_provider_get_with_none_payment_handles_401(paypal_provider):
 
         # Should have called post twice (initial token + retry after 401)
         assert mocked_post.call_count == 2
-        # Should have called get twice (initial 401 + retry)
-        assert mocked_get.call_count == 2
+        # Should have called the API twice (initial 401 + retry)
+        assert mocked_request.call_count == 2
         assert response_data == expected_get_response_data
