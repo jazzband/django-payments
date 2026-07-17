@@ -58,6 +58,20 @@ def test_base_wallet_default_status():
     assert wallet.status == WalletStatus.PENDING
 
 
+class MinimalPayment(BasePayment):
+    """Payment without wallet overrides - exercises the BasePayment defaults."""
+
+    class Meta:
+        app_label = "test_wallet"
+
+
+def test_payment_base_defaults_return_none():
+    """BasePayment hook defaults return None when not overridden."""
+    payment = MinimalPayment()
+    assert payment.get_renew_token() is None
+    assert payment.get_renew_data() is None
+
+
 def test_payment_get_renew_token_default():
     """get_renew_token() returns None by default."""
     payment = Payment()

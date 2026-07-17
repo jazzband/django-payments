@@ -3,13 +3,13 @@ from __future__ import annotations
 import os
 import sys
 
+from django.urls import include
+from django.urls import path
+
 # Add testapp/testapp to Python path so testmain can be imported
 TESTAPP_ROOT = os.path.join(os.path.dirname(__file__), "testapp", "testapp")
 if TESTAPP_ROOT not in sys.path:
     sys.path.insert(0, TESTAPP_ROOT)
-
-from django.urls import include
-from django.urls import path
 
 PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "payments"))
 TEMPLATES = [
