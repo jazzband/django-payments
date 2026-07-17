@@ -4,6 +4,24 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+Unreleased
+----------
+
+- Added the wallet interface for server-initiated recurring payments
+  (merchant-initiated transactions with stored payment methods):
+
+  * ``BasePayment`` hooks: ``autocomplete_with_wallet()``,
+    ``get_renew_token()`` / ``get_renew_data()`` / ``set_renew_token()``
+  * ``BasicProvider.autocomplete_with_wallet()`` and
+    ``BasicProvider.erase_wallet(token)`` provider contract
+  * ``BaseWallet`` optional abstract model with a
+    PENDING/ACTIVE/ERASED lifecycle (``WalletStatus``)
+  * reference implementation in ``DummyProvider``; see ``docs/wallet.rst``
+
+  All additions are backward compatible: defaults are no-ops and existing
+  providers keep working unchanged. Implemented by ``django-payments-payu``
+  and the upcoming PayPal Complete Payments provider; Stripe support in #467.
+
 v4.0.0
 ------
 
