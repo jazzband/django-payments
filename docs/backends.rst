@@ -140,6 +140,71 @@ Example::
 PayPal
 ------
 
+.. autoclass:: payments.paypal.ppcp.PaypalPPCPProvider
+
+Example::
+
+      PAYMENT_VARIANTS = {
+          'paypal': (
+              'payments.paypal.ppcp.PaypalPPCPProvider',
+              {
+                  'client_id': 'AeA1QIZXiflr...',
+                  'secret': 'EBLtcaBGXhXHR...',
+                  # sandbox; for production use https://api-m.paypal.com
+                  'endpoint': 'https://api-m.sandbox.paypal.com',
+              }
+          ),
+          # Wallet-capable variant: vaults the payment method on checkout
+          # and enables server-initiated renewals (see the wallet docs).
+          'paypal-recurring': (
+              'payments.paypal.ppcp.PaypalPPCPProvider',
+              {
+                  'client_id': 'AeA1QIZXiflr...',
+                  'secret': 'EBLtcaBGXhXHR...',
+                  'endpoint': 'https://api-m.sandbox.paypal.com',
+                  'vault': True,
+              }
+          ),
+      }
+
+Migrating from ``PaypalProvider``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The integrator-facing flow is unchanged: ``payment.get_form()`` raises
+``RedirectNeeded`` to PayPal's approval page, the buyer returns to the
+process URL, and the payment ends up ``CONFIRMED``/``REJECTED``;
+``payment.refund()`` keeps working. The same REST application
+credentials (``client_id``/``secret``) work for both providers, so no
+new PayPal onboarding is needed.
+
+Differences to check before switching:
+
+* **Pre-authorization is not supported yet** — ``capture=False``
+  raises ``NotImplementedError`` at configuration time (the legacy
+  provider authorizes in this mode). Keep using ``PaypalProvider`` for
+  preauth flows for now.
+* **Direct card payments** (``PaypalCardProvider``) have no PPCP
+  equivalent yet (PayPal's Advanced Card Payments are not implemented).
+* **transaction_id semantics changed**: the legacy provider stores the
+  v1 payment id (``PAY-…``) at order creation; this provider stores the
+  *capture* id, set only once the payment is captured.
+* **extra_data layout changed**: raw API responses are stored under
+  ``ppcp_order``/``ppcp_capture``/``ppcp_refund`` instead of the legacy
+  ``response``/``links`` keys. Code that parses ``extra_data`` directly
+  (e.g. fee extraction) must read the new keys — the PayPal fee is at
+  ``ppcp_capture.purchase_units[0].payments.captures[0]
+  .seller_receivable_breakdown.paypal_fee``.
+* **Endpoint host**: use ``https://api-m.paypal.com`` (or
+  ``https://api-m.sandbox.paypal.com``).
+
+Migrate by adding a *new* variant name for this provider and keeping
+the legacy variant configured until payments created under it are
+finished — a payment must be processed by the provider that created it.
+
+The providers below use PayPal's v1 Payments API, which PayPal has
+deprecated; they remain for existing integrations. New integrations
+should use :class:`~payments.paypal.ppcp.PaypalPPCPProvider` above.
+
 .. autoclass:: payments.paypal.PaypalProvider
 
 Example::

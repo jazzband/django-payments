@@ -7,6 +7,8 @@ releases, in reverse chronological order.
 Unreleased
 ----------
 
+- Add ``PaypalPPCPProvider``: PayPal on the Orders v2 API, with refunds and,
+  with ``vault=True``, wallet support.
 - Add an optional interface for charging stored payment methods server-side
   (recurring payments): see ``docs/wallet.rst``. Backward compatible.
 

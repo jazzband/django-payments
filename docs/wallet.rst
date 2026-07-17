@@ -102,6 +102,6 @@ Implementations
 ---------------
 
 * `django-payments-payu <https://github.com/PetrDlouhy/django-payments-payu>`_
-* PayPal Complete Payments (`#490 <https://github.com/jazzband/django-payments/pull/490>`_)
+* :class:`~payments.paypal.ppcp.PaypalPPCPProvider`
 * Stripe, work in progress (`#467 <https://github.com/jazzband/django-payments/pull/467>`_)
 * ``DummyProvider`` in this repository
