@@ -7,6 +7,15 @@ releases, in reverse chronological order.
 Unreleased
 ----------
 
+- Added ``payments.paypal.ppcp.PaypalPPCPProvider`` — modern PayPal
+  provider built on the Orders API v2 (PayPal has deprecated the v1
+  Payments API used by ``PaypalProvider``). Supports the redirect
+  checkout flow with synchronous capture, refunds via the Payments v2
+  API, idempotent API calls (``PayPal-Request-Id``), and — with
+  ``vault=True`` — the wallet interface: payment methods are vaulted on
+  checkout and later charged server-side (merchant-initiated
+  transactions).
+
 - Added the wallet interface for server-initiated recurring payments
   (merchant-initiated transactions with stored payment methods):
 

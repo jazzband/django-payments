@@ -221,9 +221,9 @@ Known implementations
 * `django-payments-payu <https://github.com/PetrDlouhy/django-payments-payu>`_
   (released) — card tokens, raises ``RedirectNeeded`` for CVV/3-D Secure
   re-verification during renewals.
-* PayPal Complete Payments (Orders v2 + Vault) — vault payment tokens,
-  merchant-initiated renewal charges; in production at
-  `Blendkit <https://www.blendkit.com>`_, upstream PR planned.
+* :class:`~payments.paypal.ppcp.PaypalPPCPProvider` (this repository) —
+  vault payment tokens, merchant-initiated renewal charges; the same flow
+  runs in production at `Blendkit <https://www.blendkit.com>`_.
 * Stripe (`#467 <https://github.com/jazzband/django-payments/pull/467>`_)
   — PaymentMethod + Customer via ``get_renew_data()``, ``off_session``
   PaymentIntents.
