@@ -63,6 +63,18 @@ class FraudStatus:
     ]
 
 
+class WalletStatus:
+    PENDING = "pending"
+    ACTIVE = "active"
+    ERASED = "erased"
+
+    CHOICES = [
+        (PENDING, pgettext_lazy("wallet status", "Pending")),
+        (ACTIVE, pgettext_lazy("wallet status", "Active")),
+        (ERASED, pgettext_lazy("wallet status", "Erased")),
+    ]
+
+
 class RedirectNeeded(Exception):
     pass
 
