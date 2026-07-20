@@ -100,3 +100,10 @@ fraud status of your payment by accessing ``payment.fraud_status`` and
 
 ``review``
       The payment was marked for review.
+
+Recurring payments
+------------------
+
+For server-initiated recurring payments (subscriptions, auto-renewals), see
+:doc:`wallet`. The wallet interface allows you to store payment methods and
+charge them without user interaction.
