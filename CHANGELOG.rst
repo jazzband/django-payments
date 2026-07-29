@@ -4,6 +4,15 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+Unreleased
+------
+
+- **BREAKING** ``BasePayment.extra_data`` is now a JSONField and django will
+  handle the serialisation internally . Usage of the ``BasePayment.attrs``
+  proxy has been deprecated. A migration needs to be generated to update this
+  column in place. Application code needs to be updated from
+  ``payment.extra_data.field`` to ``payment.extra_data["field"]``.
+
 v4.0.0
 ------
 

@@ -32,6 +32,10 @@ class Payment(Mock):
     transaction_id: str | None = None
     billing_email = "john@doe.com"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra_data = {}
+
     def change_status(self, status: str, message: str = "") -> None:
         self.status = status
         self.message = message
