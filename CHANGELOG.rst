@@ -7,6 +7,13 @@ releases, in reverse chronological order.
 v4.0.0
 ------
 
+- ``process_data`` accepts a ``payment_model`` argument, and its two steps are
+  exposed as ``get_payment_or_404(token, payment_model=None)`` and
+  ``process_payment_data(payment, request, provider=None)``. Projects that
+  charge through more than one payment model (``PAYMENT_MODEL`` names only
+  one) can now route or compose the canonical callback flow instead of
+  copying the view - copies silently miss later fixes made here, such as the
+  row locking below.
 - Fixed a race between concurrent callbacks for the same payment: the
   ``process_data`` view now fetches the payment with ``select_for_update()``
   inside its existing transaction, so e.g. a provider's asynchronous webhook
