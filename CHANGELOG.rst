@@ -4,6 +4,13 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+Unreleased
+----------
+
+- ``process_data`` locks the payment row (``select_for_update()``), so a
+  webhook and a browser callback for the same payment no longer overwrite
+  each other's state.
+
 v4.1.0
 ------
 

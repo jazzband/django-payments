@@ -40,7 +40,10 @@ def process_data(
     and converted to JSON error responses for webhook systems.
     """
     Payment = get_payment_model()
-    payment = get_object_or_404(Payment, token=token)
+    # Lock the row so concurrent callbacks for one payment run one after another.
+    payment = get_object_or_404(
+        Payment._default_manager.select_for_update(), token=token
+    )
     if not provider:
         try:
             provider = provider_factory(payment.variant, payment)
