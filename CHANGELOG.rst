@@ -4,6 +4,11 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+v4.1.0
+------
+
+- Add support for Django 6.1.
+
 v4.0.0
 ------
 

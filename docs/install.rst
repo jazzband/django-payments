@@ -4,8 +4,8 @@ Installation
 Requirements
 ------------
 
-- Python 3.10 to 3.13
-- Django 4.2, 5.1 and 5.2
+- Python 3.10 to 3.14
+- Django 5.2, 6.0 and 6.1
 
 Install the package
 -------------------
