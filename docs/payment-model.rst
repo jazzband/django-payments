@@ -135,3 +135,51 @@ the payment model for an application. This is done by adding a variable to the
 
   # A dotted path to the Payment class.
   PAYMENT_MODEL = 'mypaymentapp.models.Payment'
+
+Using more than one payment model
+---------------------------------
+
+``PAYMENT_MODEL`` names a single model, but a project may charge through
+several (e.g. subscriptions and marketplace orders with separate models and
+separate callback URLs). Rather than reimplementing the callback view for the
+additional models, route :func:`payments.urls.process_data` for them with a
+``payment_model`` keyword argument:
+
+.. code-block:: python
+
+  from payments.urls import process_data
+
+  from .models import MarketplacePayment
+
+  urlpatterns = [
+      path(
+          "marketplace/process/<uuid:token>/",
+          process_data,
+          {"payment_model": MarketplacePayment},
+          name="process_marketplace_payment",
+      ),
+  ]
+
+A view that needs custom logic around the provider call can compose the two
+steps instead, keeping the locked fetch that makes concurrent callbacks safe:
+
+.. code-block:: python
+
+  from django.db.transaction import atomic
+  from django.views.decorators.csrf import csrf_exempt
+
+  from payments.urls import get_payment_or_404
+  from payments.urls import process_payment_data
+
+  @csrf_exempt
+  @atomic
+  def process_marketplace_payment(request, token):
+      payment = get_payment_or_404(token, MarketplacePayment)
+      if payment.order.is_cancelled:
+          return redirect("order-cancelled")
+      return process_payment_data(payment, request)
+
+Both helpers must run inside a transaction - ``get_payment_or_404`` locks the
+payment row so that a provider's asynchronous webhook and the customer's
+browser hitting the same URL are serialized instead of overwriting each
+other's state.
