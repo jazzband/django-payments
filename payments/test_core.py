@@ -66,7 +66,7 @@ def test_capture_with_wrong_status() -> None:
 
 @patch("payments.dummy.DummyProvider.capture")
 def test_capture_preauth_successfully(mocked_capture_method: MagicMock) -> None:
-    amount = Decimal("20")
+    amount = Decimal(20)
     with patch.object(BasePayment, "save"):
         mocked_capture_method.return_value = amount
         payment = Payment(variant="default", status=PaymentStatus.PREAUTH)
@@ -81,7 +81,7 @@ def test_capture_preauth_successfully(mocked_capture_method: MagicMock) -> None:
 def test_capture_preauth_without_amount(mocked_capture_method: MagicMock) -> None:
     with patch.object(BasePayment, "save"):
         mocked_capture_method.return_value = None
-        captured_amount = Decimal("100")
+        captured_amount = Decimal(100)
         payment = Payment(
             variant="default",
             status=PaymentStatus.PREAUTH,
@@ -122,18 +122,18 @@ def test_refund_too_high_amount() -> None:
     payment = Payment(
         variant="default",
         status=PaymentStatus.CONFIRMED,
-        captured_amount=Decimal("100"),
+        captured_amount=Decimal(100),
     )
     with pytest.raises(
         ValueError,
         match="Refund amount can not be greater then captured amount",
     ):
-        payment.refund(Decimal("200"))
+        payment.refund(Decimal(200))
 
 
 @patch("payments.dummy.DummyProvider.refund")
 def test_refund_without_amount(mocked_refund_method: MagicMock) -> None:
-    captured_amount = Decimal("200")
+    captured_amount = Decimal(200)
     with patch.object(BasePayment, "save"):
         mocked_refund_method.return_value = captured_amount
         payment = Payment(
@@ -144,14 +144,14 @@ def test_refund_without_amount(mocked_refund_method: MagicMock) -> None:
         payment.refund()
 
         assert payment.status == PaymentStatus.REFUNDED
-        assert payment.captured_amount == Decimal("0")
+        assert payment.captured_amount == Decimal(0)
     assert mocked_refund_method.call_count == 1
 
 
 @patch("payments.dummy.DummyProvider.refund")
 def test_refund_partial_success(mocked_refund_method: MagicMock) -> None:
-    refund_amount = Decimal("100")
-    captured_amount = Decimal("200")
+    refund_amount = Decimal(100)
+    captured_amount = Decimal(200)
     with patch.object(BasePayment, "save"):
         mocked_refund_method.return_value = refund_amount
         payment = Payment(
@@ -162,14 +162,14 @@ def test_refund_partial_success(mocked_refund_method: MagicMock) -> None:
         payment.refund(refund_amount)
 
         assert payment.status == PaymentStatus.CONFIRMED
-        assert payment.captured_amount == Decimal("100")
+        assert payment.captured_amount == Decimal(100)
     assert mocked_refund_method.call_count == 1
 
 
 @patch("payments.dummy.DummyProvider.refund")
 def test_refund_fully_success(mocked_refund_method: MagicMock) -> None:
-    refund_amount = Decimal("200")
-    captured_amount = Decimal("200")
+    refund_amount = Decimal(200)
+    captured_amount = Decimal(200)
     with patch.object(BasePayment, "save"):
         mocked_refund_method.return_value = refund_amount
         payment = Payment(
@@ -180,7 +180,7 @@ def test_refund_fully_success(mocked_refund_method: MagicMock) -> None:
         payment.refund(refund_amount)
 
         assert payment.status == PaymentStatus.REFUNDED
-        assert payment.captured_amount == Decimal("0")
+        assert payment.captured_amount == Decimal(0)
     assert mocked_refund_method.call_count == 1
 
 
