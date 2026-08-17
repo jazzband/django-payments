@@ -132,7 +132,7 @@ class Payment(Mock):
     def get_purchased_items(self) -> list[PurchasedItem]:
         return [
             PurchasedItem(
-                name="foo", quantity=10, price=Decimal("20"), currency="USD", sku="bar"
+                name="foo", quantity=10, price=Decimal(20), currency="USD", sku="bar"
             )
         ]
 
@@ -173,7 +173,7 @@ class Payment(Mock):
             include_hidden: bool = False,
         ) -> tuple[Mock, ...]:
             fields = []
-            for field_name in {
+            for field_name in (
                 "id",
                 "description",
                 "currency",
@@ -187,7 +187,7 @@ class Payment(Mock):
                 "transaction_id",
                 "message",
                 "extra_data",
-            }:
+            ):
                 field = Mock()
                 field.name = field_name
                 fields.append(field)
@@ -235,7 +235,7 @@ def test_provider_raises_redirect_needed_on_success(
             paypal_provider.get_form(payment=paypal_payment)
 
     assert paypal_payment.status == PaymentStatus.WAITING
-    assert paypal_payment.captured_amount == Decimal("0")
+    assert paypal_payment.captured_amount == Decimal(0)
     assert paypal_payment.transaction_id == transaction_id
 
 
@@ -413,10 +413,10 @@ def test_provider_redirects_on_success_preauth_payment(
     provider.process_data(paypal_payment, request)
 
     assert paypal_payment.status == PaymentStatus.PREAUTH
-    assert paypal_payment.captured_amount == Decimal("0")
+    assert paypal_payment.captured_amount == Decimal(0)
     paypal_payment.refresh_from_db()
     assert paypal_payment.status == PaymentStatus.PREAUTH
-    assert paypal_payment.captured_amount == Decimal("0")
+    assert paypal_payment.captured_amount == Decimal(0)
 
 
 @patch("payments.paypal.redirect")
@@ -564,7 +564,7 @@ def test_provider_raises_redirect_needed_on_success_preauth_payment_card(
 
     links = provider._get_links(paypal_card_payment)
     assert paypal_card_payment.status == PaymentStatus.PREAUTH
-    assert paypal_card_payment.captured_amount == Decimal("0")
+    assert paypal_card_payment.captured_amount == Decimal(0)
     assert paypal_card_payment.transaction_id == transaction_id
     assert "capture" in links
     assert "refund" in links

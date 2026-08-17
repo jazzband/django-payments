@@ -65,8 +65,8 @@ class Payment(Mock):
         return [
             PurchasedItem(
                 name="foo",
-                quantity=Decimal("10"),
-                price=Decimal("20"),
+                quantity=Decimal(10),
+                price=Decimal(20),
                 currency="USD",
                 sku="bar",
             )
