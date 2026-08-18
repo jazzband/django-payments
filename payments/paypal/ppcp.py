@@ -252,9 +252,10 @@ class PaypalPPCPProvider(BasicProvider):
             return redirect(payment.get_failure_url())
 
         capture = self._extract_capture(capture_data)
-        payment.transaction_id = capture["id"]
-        payment.captured_amount = payment.total
-        payment.save()
+        if capture.get("status") != "COMPLETED":
+            self._hold_pending_capture(payment, capture)
+            return redirect(payment.get_success_url())
+        self._book_capture(payment, capture)
 
         vault_data = (
             capture_data.get("payment_source", {})
@@ -280,6 +281,40 @@ class PaypalPPCPProvider(BasicProvider):
             f"PayPal capture response has no capture object: "
             f"order {capture_data.get('id')}"
         )
+
+    def _book_capture(self, payment, capture) -> None:
+        """Persist the settled capture's bookkeeping on the payment.
+
+        Saves explicitly because a later ``change_status()`` persists only
+        status and message. Subclasses can override this to store extra
+        bookkeeping from the capture object — e.g. the PayPal fee at
+        ``capture["seller_receivable_breakdown"]["paypal_fee"]``.
+        """
+        payment.transaction_id = capture["id"]
+        payment.captured_amount = payment.total
+        payment.save()
+
+    def _hold_pending_capture(self, payment, capture) -> None:
+        """Keep a payment whose capture has not settled in WAITING.
+
+        A capture can come back ``PENDING`` (eCheck funding, risk review)
+        even when the order reports ``COMPLETED``. The money has not
+        arrived, so nothing is booked and the payment must not confirm.
+        The capture id is persisted so the payment can be reconciled once
+        PayPal settles the capture.
+        """
+        payment.transaction_id = capture.get("id", "")
+        payment.save()
+        reason = capture.get("status_details", {}).get("reason")
+        message = f"PayPal capture {capture.get('status')}" + (
+            f": {reason}" if reason else ""
+        )
+        logger.warning(
+            "Payment %s: %s -- awaiting settlement, nothing booked",
+            payment.pk,
+            message,
+        )
+        payment.change_status(PaymentStatus.WAITING, message)
 
     # -- wallet interface (server-initiated recurring charges) -------------
 
@@ -318,10 +353,10 @@ class PaypalPPCPProvider(BasicProvider):
             )
             return
         capture = self._extract_capture(order_data)
-        payment.transaction_id = capture["id"]
-        payment.captured_amount = payment.total
-        # Persist bookkeeping before change_status's partial save (see above).
-        payment.save()
+        if capture.get("status") != "COMPLETED":
+            self._hold_pending_capture(payment, capture)
+            return
+        self._book_capture(payment, capture)
         payment.change_status(PaymentStatus.CONFIRMED)
         self._finalize_wallet_payment(payment)
 
