@@ -404,6 +404,80 @@ class PaypalPPCPProviderTests(TestCase):
                 {"id": ORDER_ID, "purchase_units": [{"payments": {"captures": []}}]}
             )
 
+    def _pending_capture_response(self):
+        """Order COMPLETED but the capture itself not settled (eCheck)."""
+        response = capture_response()
+        capture = response["purchase_units"][0]["payments"]["captures"][0]
+        capture["status"] = "PENDING"
+        capture["status_details"] = {"reason": "ECHECK"}
+        del capture["seller_receivable_breakdown"]
+        return response
+
+    def test_process_data_pending_capture_stays_waiting(self):
+        self.payment.extra_data = json.dumps({"ppcp_order": CREATE_ORDER_RESPONSE})
+        self._mock_api(self.provider, [self._pending_capture_response()])
+        request = self.factory.get(
+            self.payment.get_process_url(),
+            {"token": ORDER_ID, "PayerID": "PAYER123"},
+        )
+        response = self.provider.process_data(self.payment, request)
+        assert self.payment.status == PaymentStatus.WAITING
+        assert "ECHECK" in self.payment.message
+        assert response.url == self.payment.get_success_url()
+        # Nothing settled: no captured amount is booked, but the capture id
+        # is persisted so the payment can be reconciled after settlement.
+        assert self.payment.persisted["transaction_id"] == CAPTURE_ID
+        assert self.payment.persisted["captured_amount"] == Decimal("0")
+
+    def test_process_data_pending_capture_does_not_arm_vault(self):
+        response = self._pending_capture_response()
+        response["payment_source"] = {
+            "paypal": {"attributes": {"vault": {"id": VAULT_ID, "status": "VAULTED"}}}
+        }
+        self.payment.extra_data = json.dumps({"ppcp_order": CREATE_ORDER_RESPONSE})
+        self._mock_api(self.vault_provider, [response])
+        request = self.factory.get(
+            self.payment.get_process_url(),
+            {"token": ORDER_ID, "PayerID": "PAYER123"},
+        )
+        self.vault_provider.process_data(self.payment, request)
+        assert self.payment.status == PaymentStatus.WAITING
+        assert self.payment.renew_token_calls == []
+
+    def test_autocomplete_with_wallet_pending_capture_stays_waiting(self):
+        self.payment.renew_token = VAULT_ID
+        self._mock_api(self.vault_provider, [self._pending_capture_response()])
+        self.vault_provider.autocomplete_with_wallet(self.payment)
+        assert self.payment.status == PaymentStatus.WAITING
+        assert "ECHECK" in self.payment.message
+        assert self.payment.persisted["transaction_id"] == CAPTURE_ID
+        assert self.payment.persisted["captured_amount"] == Decimal("0")
+
+    def test_book_capture_is_a_subclass_hook(self):
+        """Integrations store extra bookkeeping (e.g. the PayPal fee) here."""
+        booked = {}
+
+        class FeeBookingProvider(PaypalPPCPProvider):
+            def _book_capture(self, payment, capture):
+                super()._book_capture(payment, capture)
+                fee = capture["seller_receivable_breakdown"]["paypal_fee"]
+                booked["fee"] = fee["value"]
+
+        provider = FeeBookingProvider(
+            client_id="client-id",
+            secret="secret",
+            endpoint="https://api-m.sandbox.paypal.com",
+        )
+        self.payment.extra_data = json.dumps({"ppcp_order": CREATE_ORDER_RESPONSE})
+        self._mock_api(provider, [capture_response(fee="0.84")])
+        request = self.factory.get(
+            self.payment.get_process_url(),
+            {"token": ORDER_ID, "PayerID": "PAYER123"},
+        )
+        provider.process_data(self.payment, request)
+        assert self.payment.status == PaymentStatus.CONFIRMED
+        assert booked["fee"] == "0.84"
+
     def test_process_data_capture_without_fee_breakdown_confirms(self):
         response_without_fee = capture_response()
         del response_without_fee["purchase_units"][0]["payments"]["captures"][0][

@@ -193,7 +193,17 @@ Differences to check before switching:
   ``response``/``links`` keys. Code that parses ``extra_data`` directly
   (e.g. fee extraction) must read the new keys — the PayPal fee is at
   ``ppcp_capture.purchase_units[0].payments.captures[0]
-  .seller_receivable_breakdown.paypal_fee``.
+  .seller_receivable_breakdown.paypal_fee``. Alternatively, subclass the
+  provider and override ``_book_capture(payment, capture)``, which
+  receives the settled capture object — the natural place to store the
+  fee or other per-capture bookkeeping on your payment model.
+* **Unsettled captures stay WAITING**: a capture can come back
+  ``PENDING`` (eCheck funding, risk review) even when the order reports
+  ``COMPLETED``. The payment is then kept in ``WAITING`` with the PayPal
+  reason in ``message`` and nothing booked — it is *not* confirmed,
+  since the money has not arrived. The provider has no webhook support
+  yet, so such payments must be reconciled against the PayPal API (the
+  capture id is stored in ``transaction_id``) once PayPal settles them.
 * **Endpoint host**: use ``https://api-m.paypal.com`` (or
   ``https://api-m.sandbox.paypal.com``).
 
