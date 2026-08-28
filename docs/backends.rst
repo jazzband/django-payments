@@ -201,9 +201,17 @@ Differences to check before switching:
   ``PENDING`` (eCheck funding, risk review) even when the order reports
   ``COMPLETED``. The payment is then kept in ``WAITING`` with the PayPal
   reason in ``message`` and nothing booked — it is *not* confirmed,
-  since the money has not arrived. The provider has no webhook support
-  yet, so such payments must be reconciled against the PayPal API (the
-  capture id is stored in ``transaction_id``) once PayPal settles them.
+  since the money has not arrived. Resolve such payments by feeding the
+  ``PAYMENT.CAPTURE.*`` webhook events to
+  ``apply_capture_webhook(payment, resource)`` /
+  ``apply_refund_webhook(payment, resource)``; webhook transport
+  (endpoint, signature verification via PayPal's
+  ``verify-webhook-signature``, looking the payment up by the capture id
+  stored in ``transaction_id``) is the integration's business.
+* **Revoked payment methods raise** ``WalletTokenRevoked`` from
+  ``autocomplete_with_wallet()`` when PayPal reports the vaulted token
+  gone (a 404 on the token), so the integration can disarm automatic
+  billing instead of retrying a dead token on every schedule slot.
 * **Endpoint host**: use ``https://api-m.paypal.com`` (or
   ``https://api-m.sandbox.paypal.com``).
 
