@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from decimal import Decimal
 from unittest.mock import MagicMock
+from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
@@ -23,6 +24,7 @@ from payments import PaymentStatus
 from payments import RedirectNeeded
 
 from .ppcp import PaypalPPCPProvider
+from .ppcp import WalletTokenRevoked
 
 ORDER_ID = "5O190127TN364715T"
 CAPTURE_ID = "3C679366HH908993F"
@@ -561,3 +563,155 @@ class PaypalPPCPProviderTests(TestCase):
         self._mock_delete(500)
         with pytest.raises(requests.HTTPError):
             self.provider.erase_wallet(VAULT_ID)
+
+
+def http_error(status_code, details=None):
+    """A requests.HTTPError carrying a PayPal-shaped error body."""
+    response = Mock()
+    response.status_code = status_code
+    response.json.return_value = {"details": details or []}
+    return requests.HTTPError("boom", response=response)
+
+
+class RenewalResilienceTests(PaypalPPCPProviderTests):
+    """Merchant-initiated renewals must not explode, retry forever or lie."""
+
+    def test_capture_step_failure_does_not_escape(self):
+        """An error escaping here lands in whatever schedules the renewals
+        and can abort a whole batch of unrelated accounts."""
+        self.payment.renew_token = VAULT_ID
+        created = {"id": ORDER_ID, "status": "CREATED"}
+        self._mock_api(self.vault_provider, [created, http_error(500)])
+
+        self.vault_provider.autocomplete_with_wallet(self.payment)
+
+        assert self.payment.status == PaymentStatus.ERROR
+        assert "capture failed" in self.payment.message
+        # The order response is persisted before the capture is attempted.
+        assert "ppcp_order" in json.loads(self.payment.persisted["extra_data"])
+
+    def test_revoked_token_raises_so_billing_can_be_disarmed(self):
+        """A 404 on the token means it is gone for good; without a distinct
+        signal the caller retries a dead token on every schedule slot."""
+        self.payment.renew_token = VAULT_ID
+        self._mock_api(self.vault_provider, http_error(404))
+
+        with pytest.raises(WalletTokenRevoked):
+            self.vault_provider.autocomplete_with_wallet(self.payment)
+
+        assert self.payment.status == PaymentStatus.ERROR
+
+    def test_transient_failure_is_not_treated_as_revoked(self):
+        """A false positive would disarm a paying customer's billing."""
+        self.payment.renew_token = VAULT_ID
+        self._mock_api(
+            self.vault_provider, http_error(500, [{"issue": "INTERNAL_SERVER_ERROR"}])
+        )
+
+        self.vault_provider.autocomplete_with_wallet(self.payment)
+
+        assert self.payment.status == PaymentStatus.ERROR
+
+    def test_renewal_request_id_is_an_override_point(self):
+        """Integrations whose retries create a new payment row per attempt
+        scope the idempotency key to what is being paid instead."""
+        calls = []
+
+        class ScopedProvider(PaypalPPCPProvider):
+            @staticmethod
+            def _renewal_request_id(payment, step):
+                calls.append(step)
+                return f"renew-{step}-scoped"
+
+        provider = ScopedProvider(
+            client_id="client-id",
+            secret="secret",
+            endpoint="https://api-m.sandbox.paypal.com",
+            vault=True,
+        )
+        self.payment.renew_token = VAULT_ID
+        api = self._mock_api(provider, [capture_response()])
+        provider.autocomplete_with_wallet(self.payment)
+
+        assert api.call_args_list[0].kwargs["request_id"] == "renew-order-scoped"
+        assert calls == ["order"]
+
+
+class CaptureWebhookTests(PaypalPPCPProviderTests):
+    """apply_capture_webhook / apply_refund_webhook state transitions."""
+
+    def _capture(self, status="COMPLETED", **extra):
+        capture = {
+            "id": CAPTURE_ID,
+            "status": status,
+            "amount": {"currency_code": "USD", "value": "14.31"},
+        }
+        capture.update(extra)
+        return capture
+
+    def test_completed_capture_confirms_and_books(self):
+        new_status = self.provider.apply_capture_webhook(self.payment, self._capture())
+
+        assert new_status == PaymentStatus.CONFIRMED
+        assert self.payment.status == PaymentStatus.CONFIRMED
+        assert self.payment.persisted["transaction_id"] == CAPTURE_ID
+        assert self.payment.persisted["captured_amount"] == self.payment.total
+
+    def test_completed_capture_is_idempotent(self):
+        self.provider.apply_capture_webhook(self.payment, self._capture())
+
+        new_status = self.provider.apply_capture_webhook(self.payment, self._capture())
+
+        assert new_status is None
+        assert self.payment.status == PaymentStatus.CONFIRMED
+
+    def test_denied_capture_rejects(self):
+        new_status = self.provider.apply_capture_webhook(
+            self.payment, self._capture(status="DENIED")
+        )
+
+        assert new_status == PaymentStatus.REJECTED
+        assert self.payment.status == PaymentStatus.REJECTED
+
+    def test_denial_never_demotes_a_confirmed_payment(self):
+        """PayPal can deliver events out of order."""
+        self.payment.change_status(PaymentStatus.CONFIRMED)
+
+        new_status = self.provider.apply_capture_webhook(
+            self.payment, self._capture(status="DENIED")
+        )
+
+        assert new_status is None
+        assert self.payment.status == PaymentStatus.CONFIRMED
+
+    def test_pending_capture_stays_waiting(self):
+        new_status = self.provider.apply_capture_webhook(
+            self.payment,
+            self._capture(status="PENDING", status_details={"reason": "ECHECK"}),
+        )
+
+        assert new_status == PaymentStatus.WAITING
+        assert "ECHECK" in self.payment.message
+
+    def test_full_refund_marks_refunded(self):
+        self.payment.captured_amount = self.payment.total
+        refund = {
+            "id": "REFUND-1",
+            "amount": {"currency_code": "USD", "value": str(self.payment.total)},
+        }
+
+        new_status = self.provider.apply_refund_webhook(self.payment, refund)
+
+        assert new_status == PaymentStatus.REFUNDED
+        assert self.payment.status == PaymentStatus.REFUNDED
+
+    def test_partial_refund_only_records(self):
+        self.payment.status = PaymentStatus.CONFIRMED
+        self.payment.captured_amount = self.payment.total
+        refund = {"id": "REFUND-2", "amount": {"currency_code": "USD", "value": "1.00"}}
+
+        new_status = self.provider.apply_refund_webhook(self.payment, refund)
+
+        assert new_status is None
+        assert self.payment.status == PaymentStatus.CONFIRMED
+        assert "ppcp_refund_webhook" in json.loads(self.payment.extra_data)
