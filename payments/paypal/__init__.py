@@ -343,7 +343,7 @@ class PaypalProvider(BasicProvider):
             except ValueError:
                 error = {}
             if error.get("name") != "AUTHORIZATION_ALREADY_COMPLETED":
-                raise e
+                raise
             capture = {"state": "completed"}
         state = capture["state"]
         if state == "completed":

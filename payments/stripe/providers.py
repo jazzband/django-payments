@@ -101,7 +101,7 @@ class StripeProviderV3(BasicProvider):
                 session = self.create_session(payment)
             except PaymentError as pe:
                 payment.change_status(PaymentStatus.ERROR, str(pe))
-                raise pe
+                raise
             else:
                 payment.attrs.session = session
                 payment.transaction_id = session.get("id", None)
@@ -224,12 +224,12 @@ class StripeProviderV3(BasicProvider):
                     request.headers["STRIPE_SIGNATURE"],
                     self.endpoint_secret,
                 )
-            except ValueError as e:
+            except ValueError:
                 # Invalid payload
-                raise e
-            except stripe.SignatureVerificationError as e:  # type: ignore[attr-defined]
+                raise
+            except stripe.SignatureVerificationError:  # type: ignore[attr-defined]
                 # Invalid signature
-                raise e
+                raise
         else:
             return json.loads(request.body)
 
