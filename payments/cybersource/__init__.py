@@ -476,9 +476,11 @@ class CyberSourceProvider(BasicProvider):
         if payment.status in [PaymentStatus.CONFIRMED, PaymentStatus.PREAUTH]:
             return redirect(payment.get_success_url())
         cc_data = request.GET.get("token")
+        if cc_data is None:
+            return redirect(payment.get_failure_url())
         try:
             cc_data = signing.loads(cc_data)
-        except Exception:
+        except signing.BadSignature:
             return redirect(payment.get_failure_url())
         else:
             expiration = cc_data["expiration"]
