@@ -214,5 +214,5 @@ class MercadoPagoProvider(BasicProvider):
 
         logger.info("Found payment info for %s: %s.", payment, data)
 
-        if data["results"]:
-            self.process_collection(payment, data["results"][-1]["id"])
+        if data["response"]["results"]:
+            self.process_collection(payment, data["response"]["results"][-1]["id"])

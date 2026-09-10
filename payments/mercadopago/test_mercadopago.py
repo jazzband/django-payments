@@ -447,6 +447,40 @@ def test_process_notification_ignores_merchant_orders(
     assert response.content.decode() == "Thanks"
 
 
+def test_poll_for_updates(mp_provider: MercadoPagoProvider) -> None:
+    search_response = {
+        "status": 200,
+        "response": {
+            "results": [
+                {"id": "123"},
+                {"id": "456"},
+            ],
+            "paging": {"total": 2, "offset": 0, "limit": 0},
+        },
+    }
+
+    payment = Payment()
+    payment.attrs = Mock(external_reference="ref")
+
+    with (
+        patch(
+            "mercadopago.resources.payment.Payment.search",
+            spec=True,
+            return_value=search_response,
+        ) as search,
+        patch(
+            "payments.mercadopago.MercadoPagoProvider.process_collection",
+            spec=True,
+        ) as process_collection,
+    ):
+        mp_provider.poll_for_updates(payment)
+
+    assert search.call_count == 1
+    assert search.call_args == call({"external_reference": "ref"})
+    assert process_collection.call_count == 1
+    assert process_collection.call_args == call(payment, "456")
+
+
 def test_process_notification_processes_payment_collection(
     mp_provider: MercadoPagoProvider,
     rf: RequestFactory,
