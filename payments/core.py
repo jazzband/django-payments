@@ -159,7 +159,10 @@ class BasicProvider:
 PROVIDER_CACHE = {}
 
 
-def _default_provider_factory(variant: str, payment: BasePayment | None = None):
+def _default_provider_factory(
+    variant: str,
+    payment: BasePayment | None = None,
+) -> BasicProvider:
     """Return the provider instance based on ``variant``.
 
     :arg variant: The name of a variant defined in ``PAYMENT_VARIANTS``.
