@@ -40,7 +40,7 @@ class CreditCardNumberField(forms.CharField):
         card_type, _issuer_name = get_credit_card_issuer(value)
         if value in validators.EMPTY_VALUES and self.required:
             raise forms.ValidationError(self.error_messages["required"])
-        if value and not self.cart_number_checksum_validation(self, value):
+        if value and not self.cart_number_checksum_validation(value):
             raise forms.ValidationError(self.error_messages["invalid"])
         if value and self.valid_types is not None and card_type not in self.valid_types:
             card_type_names = {ct: name for _, ct, name in CARD_TYPES}
@@ -51,7 +51,7 @@ class CreditCardNumberField(forms.CharField):
             raise forms.ValidationError(error_message)
 
     @staticmethod
-    def cart_number_checksum_validation(cls, number):
+    def cart_number_checksum_validation(number):
         digits = []
         even = False
         if not number.isdigit():
