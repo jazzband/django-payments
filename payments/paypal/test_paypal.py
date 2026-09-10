@@ -173,7 +173,7 @@ class Payment(Mock):
             include_hidden: bool = False,
         ) -> tuple[Mock, ...]:
             fields = []
-            for field_name in {
+            for field_name in (
                 "id",
                 "description",
                 "currency",
@@ -187,7 +187,7 @@ class Payment(Mock):
                 "transaction_id",
                 "message",
                 "extra_data",
-            }:
+            ):
                 field = Mock()
                 field.name = field_name
                 fields.append(field)
