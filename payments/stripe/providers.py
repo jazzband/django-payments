@@ -218,20 +218,14 @@ class StripeProviderV3(BasicProvider):
                     code=400, message="STRIPE_SIGNATURE not in request.headers"
                 )
 
-            try:
-                return stripe.Webhook.construct_event(
-                    request.body,
-                    request.headers["STRIPE_SIGNATURE"],
-                    self.endpoint_secret,
-                )
-            except ValueError:
-                # Invalid payload
-                raise
-            except stripe.SignatureVerificationError:  # type: ignore[attr-defined]
-                # Invalid signature
-                raise
-        else:
-            return json.loads(request.body)
+            # construct_event raises ValueError for an invalid payload and
+            # stripe.SignatureVerificationError for an invalid signature.
+            return stripe.Webhook.construct_event(
+                request.body,
+                request.headers["STRIPE_SIGNATURE"],
+                self.endpoint_secret,
+            )
+        return json.loads(request.body)
 
     def get_token_from_request(self, payment, request) -> str:
         """Return payment token from provider request."""
