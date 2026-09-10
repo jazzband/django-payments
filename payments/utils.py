@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
-
+from django.utils.timezone import localdate
 from django.utils.translation import gettext_lazy as _
 
 
@@ -12,6 +11,6 @@ def get_month_choices():
 
 def get_year_choices():
     year_choices = [
-        (str(x), str(x)) for x in range(date.today().year, date.today().year + 15)
+        (str(x), str(x)) for x in range(localdate().year, localdate().year + 15)
     ]
     return [("", _("Year")), *year_choices]

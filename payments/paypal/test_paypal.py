@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
 from unittest.mock import Mock
@@ -10,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 from django.utils import timezone
+from django.utils.timezone import localdate
 from requests import HTTPError
 
 from payments import PaymentError
@@ -29,7 +29,7 @@ PROCESS_DATA = {
     "name": "John Doe",
     "number": "371449635398431",
     "expiration_0": "5",
-    "expiration_1": date.today().year + 1,
+    "expiration_1": localdate().year + 1,
     "cvv2": "1234",
 }
 

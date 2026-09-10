@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from datetime import date
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
+from django.utils.timezone import localdate
 
 from payments import PaymentStatus
 from payments import RedirectNeeded
@@ -20,7 +20,7 @@ PROCESS_DATA = {
     "name": "John Doe",
     "number": "371449635398431",
     "expiration_0": "5",
-    "expiration_1": date.today().year + 1,
+    "expiration_1": localdate().year + 1,
     "cvv2": "1234",
 }
 

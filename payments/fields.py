@@ -6,6 +6,7 @@ from datetime import date
 
 from django import forms
 from django.core import validators
+from django.utils.timezone import localdate
 from django.utils.translation import gettext_lazy as _
 
 from .core import CARD_TYPES
@@ -101,7 +102,7 @@ class CreditCardExpiryField(forms.MultiValueField):
 
     def clean(self, value):
         exp = super().clean(value)
-        if exp and date.today() > exp:
+        if exp and localdate() > exp:
             raise forms.ValidationError(
                 "The expiration date you entered is in the past."
             )

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import types
-from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
 from unittest.mock import Mock
@@ -9,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core import signing
+from django.utils.timezone import localdate
 
 from payments import PaymentStatus
 from payments import PurchasedItem
@@ -27,7 +27,7 @@ PROCESS_DATA = {
     "name": "John Doe",
     "number": "371449635398431",
     "expiration_0": "5",
-    "expiration_1": date.today().year + 1,
+    "expiration_1": localdate().year + 1,
     "cvv2": "1234",
     "fingerprint": "abcd1234",
 }

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
 from unittest.mock import NonCallableMock
 from unittest.mock import patch
 
 import pytest
+from django.utils.timezone import localdate
 
 from payments import core
 
@@ -190,7 +190,7 @@ def credit_card_data() -> dict[str, str | int]:
         "name": "John Doe",
         "number": "4716124728800975",
         "expiration_0": "5",
-        "expiration_1": date.today().year + 1,
+        "expiration_1": localdate().year + 1,
         "cvv2": "123",
     }
 
