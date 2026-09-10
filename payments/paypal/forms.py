@@ -8,7 +8,7 @@ from payments.forms import CreditCardPaymentFormWithName
 
 
 class PaymentForm(CreditCardPaymentFormWithName):
-    VALID_TYPES = ["visa", "mastercard", "discover", "amex"]
+    VALID_TYPES = ("visa", "mastercard", "discover", "amex")
 
     def clean(self):
         cleaned_data = super().clean()
