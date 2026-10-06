@@ -301,6 +301,9 @@ These are the community providers compatible with ``django-payments``
   * - `Solana Payments (self-hosted) <https://django-solana-payments.readthedocs.io/en/latest/django_payments_integration.html>`_
     - Worldwide
     - `Artemooon/django-solana-payments <https://github.com/Artemooon/django-solana-payments>`_
+  * - `Payzum <https://payzum.com/>`_
+    - Worldwide
+    - `payzum-dev/django-payments-payzum <https://github.com/payzum-dev/django-payments-payzum>`_
 
 
 Creating a New Provider Backend
