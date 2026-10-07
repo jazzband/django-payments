@@ -17,6 +17,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from . import FraudStatus
 from . import PaymentStatus
 from . import PurchasedItem
+from . import WalletStatus
 from .core import provider_factory
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,53 @@ class PaymentAttributeProxy:
         data[key] = value
         self._payment.extra_data = json.dumps(data)
         return None
+
+
+class BaseWallet(models.Model):
+    """A stored payment method that can be charged without the user.
+
+    Optional storage for the wallet interface (see ``docs/wallet.rst``).
+    The token becomes usable (ACTIVE) after the first successful payment
+    and stays unusable once ERASED.
+    """
+
+    token = models.CharField(
+        _("wallet token/id"),
+        help_text=_("Stored payment method token/ID from the provider"),
+        max_length=255,
+        default="",
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=10, choices=WalletStatus.CHOICES, default=WalletStatus.PENDING
+    )
+    extra_data = models.JSONField(
+        _("extra data"),
+        help_text=_("Provider-specific data"),
+        default=dict,
+    )
+
+    class Meta:
+        abstract = True
+
+    def payment_completed(self, payment):
+        """Activate a pending wallet after its first confirmed payment."""
+        if (
+            payment.status == PaymentStatus.CONFIRMED
+            and self.status == WalletStatus.PENDING
+        ):
+            self.status = WalletStatus.ACTIVE
+            self.save(update_fields=["status"])
+
+    def activate(self):
+        """Mark wallet as active and ready for recurring charges."""
+        self.status = WalletStatus.ACTIVE
+        self.save(update_fields=["status"])
+
+    def erase(self):
+        """Mark wallet as erased (no longer usable)."""
+        self.status = WalletStatus.ERASED
+        self.save(update_fields=["status"])
 
 
 class BasePayment(models.Model):
@@ -196,6 +244,31 @@ class BasePayment(models.Model):
 
     def get_process_url(self) -> str:
         return reverse("process_payment", kwargs={"token": self.token})
+
+    def autocomplete_with_wallet(self):
+        """Charge the stored payment method for ``self.total``, server-side.
+
+        Performs no authorization checks; the caller decides who is charged
+        and how much. Raises :class:`~payments.RedirectNeeded` if the
+        provider needs the user after all (e.g. 3-D Secure).
+        """
+        provider = provider_factory(self.variant)
+        provider.autocomplete_with_wallet(self)
+
+    def get_renew_token(self):
+        """Return the stored payment method token, or None if none is usable.
+
+        Override to read it from your storage. Return only tokens that may be
+        charged (e.g. from an ACTIVE wallet).
+        """
+        return
+
+    def set_renew_token(self, token, **kwargs):
+        """Store a payment method token returned by the provider.
+
+        Override to save it in your storage. Providers may pass extra
+        provider-specific metadata as keyword arguments.
+        """
 
     def capture(self, amount=None) -> None:
         """Capture a pre-authorized payment.

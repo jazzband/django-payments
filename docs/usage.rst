@@ -100,3 +100,9 @@ fraud status of your payment by accessing ``payment.fraud_status`` and
 
 ``review``
       The payment was marked for review.
+
+Recurring payments
+------------------
+
+To charge a stored payment method later without the user (renewals,
+usage-based billing), see :doc:`wallet`.
