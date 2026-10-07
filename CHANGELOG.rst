@@ -4,6 +4,14 @@ Changelog
 This file contains a brief summary of new features and dependency changes or
 releases, in reverse chronological order.
 
+Unreleased
+----------
+
+- Add ``PaypalPPCPProvider``: PayPal on the Orders v2 API, with refunds and,
+  with ``vault=True``, wallet support.
+- Add an optional interface for charging stored payment methods server-side
+  (recurring payments): see ``docs/wallet.rst``. Backward compatible.
+
 v4.1.0
 ------
 
