@@ -83,4 +83,4 @@ def test_provider_encrypts_data(payment: Payment, provider: SagepayProvider) -> 
 
 def test_encrypt_method_returns_valid_data(provider: SagepayProvider) -> None:
     encrypted = provider.aes_enc("mirumee")
-    assert encrypted == b"@e63c293672f50b9c8e291831facb4e4f"
+    assert encrypted == "@e63c293672f50b9c8e291831facb4e4f"

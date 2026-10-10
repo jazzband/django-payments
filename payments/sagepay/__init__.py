@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import binascii
+from typing import TYPE_CHECKING
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
@@ -12,6 +13,12 @@ from django.shortcuts import redirect
 
 from payments import PaymentStatus
 from payments.core import BasicProvider
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+    from django.http import HttpResponse
+
+    from payments.models import BasePayment
 
 
 class SagepayProvider(BasicProvider):
@@ -33,7 +40,13 @@ class SagepayProvider(BasicProvider):
     _version = "3.00"
     _action = "https://test.sagepay.com/Simulator/VSPFormGateway.asp"
 
-    def __init__(self, vendor, encryption_key, endpoint=_action, **kwargs) -> None:
+    def __init__(
+        self,
+        vendor: str,
+        encryption_key: str,
+        endpoint: str = _action,
+        **kwargs,
+    ) -> None:
         self._vendor = vendor
         self._enckey = encryption_key.encode("utf-8")
         self._action = endpoint
@@ -41,31 +54,33 @@ class SagepayProvider(BasicProvider):
         if not self._capture:
             raise ImproperlyConfigured("Sagepay does not support pre-authorization.")
 
-    def _get_cipher(self):
+    def _get_cipher(self) -> Cipher[modes.CBC]:
         backend = default_backend()
         return Cipher(
             algorithms.AES(self._enckey), modes.CBC(self._enckey), backend=backend
         )
 
-    def _get_padding(self):
+    def _get_padding(self) -> padding.PKCS7:
         return padding.PKCS7(128)
 
-    def aes_enc(self, data):
-        data = data.encode("utf-8")
+    def aes_enc(self, data: str) -> str:
+        raw = data.encode("utf-8")
         padder = self._get_padding().padder()
-        data = padder.update(data) + padder.finalize()
+        raw = padder.update(raw) + padder.finalize()
         encryptor = self._get_cipher().encryptor()
-        enc = encryptor.update(data) + encryptor.finalize()
-        return b"@" + binascii.hexlify(enc)
+        enc = encryptor.update(raw) + encryptor.finalize()
+        return "@" + binascii.hexlify(enc).decode("utf-8")
 
-    def aes_dec(self, data):
+    def aes_dec(self, data: str | bytes) -> str:
+        if isinstance(data, str):
+            data = data.encode("utf-8")
         data = data.lstrip(b"@")
         data = binascii.unhexlify(data)
         decryptor = self._get_cipher().decryptor()
         data = decryptor.update(data) + decryptor.finalize()
         return data.decode("utf-8")
 
-    def get_hidden_fields(self, payment):
+    def get_hidden_fields(self, payment: BasePayment) -> dict[str, str]:
         payment.save()
         return_url = self.get_return_url(payment)
         data = {
@@ -102,7 +117,11 @@ class SagepayProvider(BasicProvider):
             "Crypt": crypt,
         }
 
-    def process_data(self, payment, request):
+    def process_data(
+        self,
+        payment: BasePayment,
+        request: HttpRequest,
+    ) -> HttpResponse:
         udata = self.aes_dec(request.GET["crypt"])
         data = {}
         for kv in udata.split("&"):
