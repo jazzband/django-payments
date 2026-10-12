@@ -12,6 +12,7 @@ from django.http import HttpResponse
 from django.test import TestCase
 
 from payments import PaymentError
+from payments.urls import process_data
 
 
 class StaticCallbackTestCase(TestCase):
@@ -113,3 +114,24 @@ class ProcessDataLockingTestCase(TestCase):
         locked_queryset.get.assert_called_once_with(token=uuid.UUID(token))
         provider.process_data.assert_called_once()
         assert provider.process_data.call_args[0][0] is payment
+
+    @patch("payments.urls.provider_factory")
+    @patch("payments.urls.get_payment_model")
+    def test_process_data_uses_the_given_payment_model(
+        self, mock_get_model, mock_factory
+    ):
+        """``payment_model`` replaces PAYMENT_MODEL and is locked the same way."""
+        token = "550e8400-e29b-41d4-a716-446655440000"
+        payment = Mock(variant="dummy")
+        locked_queryset = MagicMock(spec=QuerySet)
+        locked_queryset.get.return_value = payment
+        other_model = Mock()
+        other_model._default_manager.select_for_update.return_value = locked_queryset
+        mock_factory.return_value.process_data.return_value = HttpResponse("ok")
+
+        response = process_data(Mock(), token, payment_model=other_model)
+
+        assert response.status_code == 200
+        mock_get_model.assert_not_called()
+        locked_queryset.get.assert_called_once_with(token=token)
+        assert mock_factory.return_value.process_data.call_args[0][0] is payment

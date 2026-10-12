@@ -22,6 +22,8 @@ from . import get_payment_model
 from .core import provider_factory
 
 if TYPE_CHECKING:
+    from django.db.models import Model
+
     from .core import BasicProvider
 
 
@@ -31,6 +33,7 @@ def process_data(
     request: HttpRequest,
     token: str,
     provider: BasicProvider | None = None,
+    payment_model: type[Model] | None = None,
 ) -> HttpResponse:
     """
     Calls process_data of an appropriate provider.
@@ -38,8 +41,10 @@ def process_data(
     Raises Http404 if variant does not exist.
     Note: When called via static_callback, Http404 exceptions are caught
     and converted to JSON error responses for webhook systems.
+
+    ``payment_model`` overrides ``PAYMENT_MODEL``.
     """
-    Payment = get_payment_model()
+    Payment = payment_model or get_payment_model()
     # Lock the row so concurrent callbacks for one payment run one after another.
     payment = get_object_or_404(
         Payment._default_manager.select_for_update(), token=token

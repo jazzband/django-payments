@@ -135,3 +135,27 @@ the payment model for an application. This is done by adding a variable to the
 
   # A dotted path to the Payment class.
   PAYMENT_MODEL = 'mypaymentapp.models.Payment'
+
+Using more than one payment model
+---------------------------------
+
+``PAYMENT_MODEL`` names one model. To process callbacks for another one, route
+:func:`payments.urls.process_data` with a ``payment_model`` argument:
+
+.. code-block:: python
+
+  from payments.urls import process_data
+
+  urlpatterns = [
+      path(
+          "marketplace/process/<uuid:token>/",
+          process_data,
+          {"payment_model": MarketplacePayment},
+          name="process_marketplace_payment",
+      ),
+  ]
+
+If you write your own callback view instead, run it in a transaction and fetch
+the payment with ``select_for_update()``, as ``process_data`` does. Otherwise a
+provider webhook and the customer's browser arriving at the same time can
+overwrite each other's changes to the payment.
