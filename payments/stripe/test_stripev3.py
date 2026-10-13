@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
+import time
 from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
+import stripe
 
 from payments import PaymentError
 from payments import PaymentStatus
@@ -20,6 +24,7 @@ API_KEY_BAD = "aaaaaaa123"
 
 class payment_attrs:
     session: dict = {}
+    refund: str = ""
 
 
 class Payment(Mock):
@@ -362,3 +367,98 @@ def test_process_data_does_not_overwrite_cancelled_on_expiry():
     provider.process_data(payment, request)
 
     assert payment.status == PaymentStatus.CANCELLED
+
+
+# Real Stripe objects: since stripe 15 they are not dicts.
+ENDPOINT_SECRET = "whsec_test_secret"
+
+
+def _signed_webhook_request(event: dict) -> Mock:
+    body = json.dumps(event)
+    timestamp = int(time.time())
+    signature = hmac.new(
+        ENDPOINT_SECRET.encode(),
+        f"{timestamp}.{body}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    request = Mock()
+    request.body = body
+    request.headers = {"STRIPE_SIGNATURE": f"t={timestamp},v1={signature}"}
+    return request
+
+
+def test_provider_create_session_stores_stripe_session_as_json() -> None:
+    payment = Payment()
+    payment.attrs = payment_attrs()
+    provider = StripeProviderV3(api_key=API_KEY)
+    session = stripe.checkout.Session.construct_from(
+        {
+            "id": "cs_test_123",
+            "url": "https://checkout.stripe.com/c/pay/cs_test_123",
+            "currency_conversion": {"fx_rate": "1.2300"},
+        },
+        API_KEY,
+    )
+    with (
+        patch("stripe.checkout.Session.create", return_value=session),
+        pytest.raises(RedirectNeeded),
+    ):
+        provider.get_form(payment)
+
+    assert payment.transaction_id == "cs_test_123"
+    assert payment.attrs.session["currency_conversion"]["fx_rate"] == "1.2300"
+    json.dumps(payment.attrs.session)
+
+
+def test_provider_status_confirmed_stores_stripe_session_as_json() -> None:
+    payment = Payment()
+    payment.attrs = payment_attrs()
+    payment.transaction_id = "cs_test_123"
+    provider = StripeProviderV3(api_key=API_KEY)
+    session = stripe.checkout.Session.construct_from(
+        {"id": "cs_test_123", "payment_status": "paid"}, API_KEY
+    )
+    with patch("stripe.checkout.Session.retrieve", return_value=session):
+        provider.status(payment)
+
+    assert payment.status == PaymentStatus.CONFIRMED
+    json.dumps(payment.attrs.session)
+
+
+def test_provider_refund_stores_stripe_refund_as_json() -> None:
+    payment = Payment()
+    payment.attrs = payment_attrs()
+    payment.attrs.session = {"payment_intent": "pi_test_123"}
+    payment.status = PaymentStatus.CONFIRMED
+    provider = StripeProviderV3(api_key=API_KEY)
+    refund = stripe.Refund.construct_from({"id": "re_test_123"}, API_KEY)
+    with patch("stripe.Refund.create", return_value=refund):
+        provider.refund(payment)
+
+    assert json.loads(payment.attrs.refund)["id"] == "re_test_123"
+
+
+def test_process_data_signed_webhook_confirms_payment() -> None:
+    payment = Payment()
+    payment.attrs = payment_attrs()
+    provider = StripeProviderV3(api_key=API_KEY, endpoint_secret=ENDPOINT_SECRET)
+    request = _signed_webhook_request(
+        {
+            "id": "evt_test",
+            "object": "event",
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "status": "complete",
+                    "payment_status": "paid",
+                    "currency_conversion": {"fx_rate": "1.2300"},
+                }
+            },
+        }
+    )
+
+    provider.process_data(payment, request)
+
+    assert payment.status == PaymentStatus.CONFIRMED
+    assert payment.attrs.session["currency_conversion"]["fx_rate"] == "1.2300"
+    json.dumps(payment.attrs.session)

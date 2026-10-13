@@ -70,6 +70,13 @@ stripe_enabled_events: list = [
 ]
 
 
+def _to_json_dict(stripe_object: Any) -> Any:
+    """Since stripe 15, Stripe objects are not dicts; make them JSON-safe."""
+    if isinstance(stripe_object, stripe.StripeObject):
+        return stripe_object.to_dict(for_json=True)
+    return stripe_object
+
+
 class StripeProviderV3(BasicProvider):
     """Provider backend using `Stripe <https://stripe.com/>`_ api version 3.
 
@@ -98,7 +105,7 @@ class StripeProviderV3(BasicProvider):
     def get_form(self, payment, data=None) -> NoReturn:
         if not payment.transaction_id:
             try:
-                session = self.create_session(payment)
+                session = _to_json_dict(self.create_session(payment))
             except PaymentError as pe:
                 payment.change_status(PaymentStatus.ERROR, str(pe))
                 raise
@@ -139,7 +146,7 @@ class StripeProviderV3(BasicProvider):
                 )
             try:
                 return stripe.checkout.Session.create(**session_data)
-            except stripe.StripeError as e:  # type: ignore[attr-defined]
+            except stripe.StripeError as e:
                 # Payment has been declined by Stripe, check Stripe Dashboard
                 raise PaymentError(e) from e
         else:
@@ -168,10 +175,10 @@ class StripeProviderV3(BasicProvider):
                     amount=self.convert_amount(payment.currency, to_refund),
                     reason="requested_by_customer",
                 )
-            except stripe.StripeError as e:  # type: ignore[attr-defined]
+            except stripe.StripeError as e:
                 raise PaymentError(e) from e
             else:
-                payment.attrs.refund = json.dumps(refund)
+                payment.attrs.refund = json.dumps(_to_json_dict(refund))
                 payment.save()
                 return to_refund
 
@@ -184,7 +191,7 @@ class StripeProviderV3(BasicProvider):
             if session.payment_status == "paid":
                 payment.captured_amount = payment.total
                 payment.change_status(PaymentStatus.CONFIRMED)
-                payment.attrs.session = session
+                payment.attrs.session = _to_json_dict(session)
                 payment.save()
 
         return payment
@@ -220,10 +227,12 @@ class StripeProviderV3(BasicProvider):
 
             # construct_event raises ValueError for an invalid payload and
             # stripe.SignatureVerificationError for an invalid signature.
-            return stripe.Webhook.construct_event(
-                request.body,
-                request.headers["STRIPE_SIGNATURE"],
-                self.endpoint_secret,
+            return _to_json_dict(
+                stripe.Webhook.construct_event(
+                    request.body,
+                    request.headers["STRIPE_SIGNATURE"],
+                    self.endpoint_secret,
+                )
             )
         return json.loads(request.body)
 
