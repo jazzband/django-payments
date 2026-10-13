@@ -61,13 +61,16 @@ class Payment(Mock):
 def test_provider_create_session_success() -> None:
     payment = Payment()
     provider = StripeProviderV3(api_key=API_KEY)
-    return_value = {
-        "id": "cs_test_...",
-        "url": "https://checkout.stripe.com/c/pay/cs_test_...",
-        "status": "open",
-        "payment_status": "unpaid",
-        "payment_intent": "pi_...",
-    }
+    return_value = stripe.checkout.Session.construct_from(
+        {
+            "id": "cs_test_...",
+            "url": "https://checkout.stripe.com/c/pay/cs_test_...",
+            "status": "open",
+            "payment_status": "unpaid",
+            "payment_intent": "pi_...",
+        },
+        API_KEY,
+    )
     with (
         patch("stripe.checkout.Session.create", return_value=return_value),
         pytest.raises(RedirectNeeded),
@@ -94,11 +97,14 @@ def test_provider_create_session_failure() -> None:
 def test_provider_create_session_failure_no_url() -> None:
     payment = Payment()
     provider = StripeProviderV3(api_key=API_KEY)
-    return_value = {
-        "status": "open",
-        "payment_status": "unpaid",
-        "payment_intent": "pi_...",
-    }
+    return_value = stripe.checkout.Session.construct_from(
+        {
+            "status": "open",
+            "payment_status": "unpaid",
+            "payment_intent": "pi_...",
+        },
+        API_KEY,
+    )
     with (
         patch("stripe.checkout.Session.create", return_value=return_value),
         pytest.raises(PaymentError),
@@ -131,10 +137,11 @@ def test_provider_status_confirmed():
     payment.transaction_id = "cs_test_..."
     provider = StripeProviderV3(api_key=API_KEY)
 
-    class MockSession:
-        payment_status = "paid"
+    session = stripe.checkout.Session.construct_from(
+        {"payment_status": "paid"}, API_KEY
+    )
 
-    with patch("stripe.checkout.Session.retrieve", return_value=MockSession()):
+    with patch("stripe.checkout.Session.retrieve", return_value=session):
         provider.status(payment)
 
     assert payment.status == PaymentStatus.CONFIRMED
@@ -146,10 +153,11 @@ def test_provider_status_not_paid():
     payment.transaction_id = "cs_test_..."
     provider = StripeProviderV3(api_key=API_KEY)
 
-    class MockSession:
-        payment_status = "unpaid"
+    session = stripe.checkout.Session.construct_from(
+        {"payment_status": "unpaid"}, API_KEY
+    )
 
-    with patch("stripe.checkout.Session.retrieve", return_value=MockSession()):
+    with patch("stripe.checkout.Session.retrieve", return_value=session):
         provider.status(payment)
 
     assert payment.status == PaymentStatus.WAITING
@@ -191,11 +199,10 @@ def test_provider_refund_success() -> None:
     payment.status = PaymentStatus.CONFIRMED
     payment.attrs.session["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
-    return_value = {
-        "id": "re_...",
-        "payment_status": "succeeded",
-        "amount": 100,
-    }
+    return_value = stripe.Refund.construct_from(
+        {"id": "re_...", "payment_status": "succeeded", "amount": 100},
+        API_KEY,
+    )
 
     with patch("stripe.Refund.create", return_value=return_value):
         provider.refund(payment)
@@ -210,11 +217,10 @@ def test_provider_refund_returns_currency_units():
     payment.currency = "USD"
     payment.attrs.session["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
-    return_value = {
-        "id": "re_...",
-        "payment_status": "succeeded",
-        "amount": 3000,
-    }
+    return_value = stripe.Refund.construct_from(
+        {"id": "re_...", "payment_status": "succeeded", "amount": 3000},
+        API_KEY,
+    )
 
     with patch("stripe.Refund.create", return_value=return_value) as mock_create:
         result = provider.refund(payment)
@@ -234,11 +240,10 @@ def test_provider_refund_partial_returns_currency_units():
     payment.currency = "USD"
     payment.attrs.session["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
-    return_value = {
-        "id": "re_...",
-        "payment_status": "succeeded",
-        "amount": 1500,
-    }
+    return_value = stripe.Refund.construct_from(
+        {"id": "re_...", "payment_status": "succeeded", "amount": 1500},
+        API_KEY,
+    )
 
     with patch("stripe.Refund.create", return_value=return_value) as mock_create:
         result = provider.refund(payment, amount=15)
@@ -258,11 +263,10 @@ def test_provider_refund_zero_decimal_currency_returns_currency_units():
     payment.currency = "JPY"
     payment.attrs.session["payment_intent"] = "pi_..."
     provider = StripeProviderV3(api_key=API_KEY)
-    return_value = {
-        "id": "re_...",
-        "payment_status": "succeeded",
-        "amount": 3000,
-    }
+    return_value = stripe.Refund.construct_from(
+        {"id": "re_...", "payment_status": "succeeded", "amount": 3000},
+        API_KEY,
+    )
 
     with patch("stripe.Refund.create", return_value=return_value) as mock_create:
         result = provider.refund(payment, amount=3000)
@@ -369,7 +373,7 @@ def test_process_data_does_not_overwrite_cancelled_on_expiry():
     assert payment.status == PaymentStatus.CANCELLED
 
 
-# Real Stripe objects: since stripe 15 they are not dicts.
+# Stored Stripe objects must be JSON-safe: since stripe 15 they are not dicts.
 ENDPOINT_SECRET = "whsec_test_secret"
 
 

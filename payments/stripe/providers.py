@@ -70,11 +70,9 @@ stripe_enabled_events: list = [
 ]
 
 
-def _to_json_dict(stripe_object: Any) -> Any:
+def _to_json_dict(stripe_object: stripe.StripeObject) -> dict[str, Any]:
     """Since stripe 15, Stripe objects are not dicts; make them JSON-safe."""
-    if isinstance(stripe_object, stripe.StripeObject):
-        return stripe_object.to_dict(for_json=True)
-    return stripe_object
+    return stripe_object.to_dict(for_json=True)
 
 
 class StripeProviderV3(BasicProvider):
