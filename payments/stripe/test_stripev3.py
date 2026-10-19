@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -244,6 +245,30 @@ def test_provider_refund_partial_returns_currency_units():
         )
 
     assert result == 15
+
+
+def test_provider_refund_zero_does_not_refund_the_total():
+    payment = Payment()
+    payment.status = PaymentStatus.CONFIRMED
+    payment.total = Decimal("100.00")
+    payment.currency = "USD"
+    payment.attrs.session["payment_intent"] = "pi_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+    return_value = {
+        "id": "re_...",
+        "payment_status": "succeeded",
+        "amount": 0,
+    }
+
+    with patch("stripe.Refund.create", return_value=return_value) as mock_create:
+        result = provider.refund(payment, amount=Decimal("0"))
+        mock_create.assert_called_once_with(
+            payment_intent="pi_...",
+            amount=0,
+            reason="requested_by_customer",
+        )
+
+    assert result == Decimal("0")
 
 
 def test_provider_refund_zero_decimal_currency_returns_currency_units():
