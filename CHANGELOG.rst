@@ -7,6 +7,8 @@ releases, in reverse chronological order.
 Unreleased
 ----------
 
+- A Stripe refund of zero stays zero. ``None`` is still the signal for the full total.
+
 - ``process_data`` locks the payment row (``select_for_update()``), so a
   webhook and a browser callback for the same payment no longer overwrite
   each other's state.
