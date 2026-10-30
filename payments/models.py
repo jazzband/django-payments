@@ -100,7 +100,7 @@ class BasePayment(models.Model):
 
     def save(self, **kwargs):
         if not self.token:
-            tries = {}  # Stores a set of tried values
+            tries = set()  # Stores a set of tried values
             while True:
                 token = str(uuid4())
                 if (
