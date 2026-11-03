@@ -10,6 +10,9 @@ Unreleased
 - ``process_data`` locks the payment row (``select_for_update()``), so a
   webhook and a browser callback for the same payment no longer overwrite
   each other's state.
+- ``process_data`` takes an optional ``payment_model``, so it can be routed
+  for a second payment model. See *Using more than one payment model* in the
+  docs.
 
 v4.1.0
 ------
