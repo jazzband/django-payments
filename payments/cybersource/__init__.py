@@ -484,9 +484,7 @@ class CyberSourceProvider(BasicProvider):
             return redirect(payment.get_failure_url())
         else:
             expiration = cc_data["expiration"]
-            cc_data["expiration"] = dt.date(
-                expiration["year"], expiration["month"], 1
-            )
+            cc_data["expiration"] = dt.date(expiration["year"], expiration["month"], 1)
         params = self._prepare_payer_auth_validation_check(
             payment, cc_data, request.POST.get("PaRes")
         )
