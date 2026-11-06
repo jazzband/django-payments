@@ -601,6 +601,33 @@ class RenewalResilienceTests(PaypalPPCPProviderTests):
 
         assert self.payment.status == PaymentStatus.ERROR
 
+    def test_revoked_token_is_invalidated_on_models_that_support_it(self):
+        """Same contract as the PayU provider: a model that can drop its dead
+        token gets told to, so renewal tasks stop selecting the account even
+        when the caller does not handle WalletTokenRevoked itself."""
+        invalidated = []
+        self.payment.invalidate_renew_token = lambda: invalidated.append(True)
+        self.payment.renew_token = VAULT_ID
+        self._mock_api(self.vault_provider, http_error(404))
+
+        with pytest.raises(WalletTokenRevoked):
+            self.vault_provider.autocomplete_with_wallet(self.payment)
+
+        assert invalidated == [True]
+
+    def test_transient_failure_keeps_the_token(self):
+        """A decline or outage must never drop a paying customer's token."""
+        invalidated = []
+        self.payment.invalidate_renew_token = lambda: invalidated.append(True)
+        self.payment.renew_token = VAULT_ID
+        self._mock_api(
+            self.vault_provider, http_error(500, [{"issue": "INTERNAL_SERVER_ERROR"}])
+        )
+
+        self.vault_provider.autocomplete_with_wallet(self.payment)
+
+        assert invalidated == []
+
     def test_transient_failure_is_not_treated_as_revoked(self):
         """A false positive would disarm a paying customer's billing."""
         self.payment.renew_token = VAULT_ID

@@ -463,6 +463,12 @@ class PaypalPPCPProvider(BasicProvider):
                 payment.change_status(
                     PaymentStatus.ERROR, "PayPal payment method no longer available"
                 )
+                # Same contract as django-payments-payu: a model that can drop
+                # its dead token is told to, so renewal tasks stop selecting
+                # the account even if the caller ignores WalletTokenRevoked.
+                invalidate = getattr(payment, "invalidate_renew_token", None)
+                if callable(invalidate):
+                    invalidate()
                 raise WalletTokenRevoked(
                     f"PayPal vault token for payment {payment.pk} no longer exists"
                 ) from e
