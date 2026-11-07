@@ -131,6 +131,25 @@ def test_refund_too_high_amount() -> None:
         payment.refund(Decimal(200))
 
 
+def test_refund_zero_or_negative_amount() -> None:
+    payment = Payment(
+        variant="default",
+        status=PaymentStatus.CONFIRMED,
+        captured_amount=Decimal(100),
+    )
+    with pytest.raises(
+        ValueError,
+        match="Refund amount must be greater than zero",
+    ):
+        payment.refund(Decimal(0))
+
+    with pytest.raises(
+        ValueError,
+        match="Refund amount must be greater than zero",
+    ):
+        payment.refund(Decimal(-10))
+
+
 @patch("payments.dummy.DummyProvider.refund")
 def test_refund_without_amount(mocked_refund_method: MagicMock) -> None:
     captured_amount = Decimal(200)

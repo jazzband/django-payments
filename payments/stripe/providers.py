@@ -155,7 +155,9 @@ class StripeProviderV3(BasicProvider):
 
     def refund(self, payment, amount=None):
         if payment.status == PaymentStatus.CONFIRMED:
-            to_refund = amount or payment.total
+            to_refund = payment.total if amount is None else amount
+            if to_refund <= 0:
+                raise ValueError("Refund amount must be greater than zero")
             try:
                 payment_intent = payment.attrs.session["payment_intent"]
             except Exception as e:
