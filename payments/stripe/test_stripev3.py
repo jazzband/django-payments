@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -268,6 +269,24 @@ def test_provider_refund_zero_decimal_currency_returns_currency_units():
         )
 
     assert result == 3000
+
+
+def test_provider_refund_zero_or_negative_amount():
+    payment = Payment()
+    payment.status = PaymentStatus.CONFIRMED
+    payment.total = 30
+    payment.currency = "USD"
+    payment.attrs.session["payment_intent"] = "pi_..."
+    provider = StripeProviderV3(api_key=API_KEY)
+
+    with pytest.raises(ValueError, match="Refund amount must be greater than zero"):
+        provider.refund(payment, amount=0)
+
+    with pytest.raises(ValueError, match="Refund amount must be greater than zero"):
+        provider.refund(payment, amount=Decimal(0))
+
+    with pytest.raises(ValueError, match="Refund amount must be greater than zero"):
+        provider.refund(payment, amount=Decimal(-10))
 
 
 def test_cancel_with_transaction_id():

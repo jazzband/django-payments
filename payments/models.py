@@ -224,8 +224,13 @@ class BasePayment(models.Model):
     def refund(self, amount=None) -> None:
         if self.status != PaymentStatus.CONFIRMED:
             raise ValueError("Only charged payments can be refunded.")
-        if amount and amount > self.captured_amount:
-            raise ValueError("Refund amount can not be greater then captured amount")
+        if amount is not None:
+            if amount > self.captured_amount:
+                raise ValueError(
+                    "Refund amount can not be greater then captured amount"
+                )
+            if amount <= 0:
+                raise ValueError("Refund amount must be greater than zero")
         provider = provider_factory(self.variant, self)
         amount = provider.refund(self, amount)
         # If the initial amount is None, the code above has no chance to check whether
