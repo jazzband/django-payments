@@ -10,6 +10,9 @@ Unreleased
 - ``process_data`` locks the payment row (``select_for_update()``), so a
   webhook and a browser callback for the same payment no longer overwrite
   each other's state.
+- ``stripe>=15.0.1`` is now required, and support for older versions was
+  dropped due to incompatible APIs. This only requires intervention if
+  the ``stripe`` module is also being used directly.
 
 v4.1.0
 ------
