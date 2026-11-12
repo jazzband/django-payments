@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import time
+from decimal import Decimal
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -14,6 +15,7 @@ from payments import PaymentError
 from payments import PaymentStatus
 from payments import PurchasedItem
 from payments import RedirectNeeded
+from payments.models import BasePayment
 
 from . import StripeProviderV3
 
@@ -53,6 +55,14 @@ class Payment(Mock):
 
     def get_purchased_items(self) -> list[PurchasedItem]:
         return []
+
+    def get_success_url(self) -> str:
+        return "http://success.com"
+
+
+class StoredPayment(BasePayment):
+    def get_failure_url(self) -> str:
+        return "http://cancel.com"
 
     def get_success_url(self) -> str:
         return "http://success.com"
@@ -412,6 +422,29 @@ def test_provider_create_session_stores_stripe_session_as_json() -> None:
     assert payment.transaction_id == "cs_test_123"
     assert payment.attrs.session["currency_conversion"]["fx_rate"] == "1.2300"
     json.dumps(payment.attrs.session)
+
+
+def test_provider_create_session_round_trips_through_payment_attrs() -> None:
+    payment = StoredPayment(currency="USD", total=Decimal("100.00"))
+    provider = StripeProviderV3(api_key=API_KEY)
+    session = stripe.checkout.Session.construct_from(
+        {
+            "id": "cs_test_123",
+            "url": "https://checkout.stripe.com/c/pay/cs_test_123",
+            "currency_conversion": {"fx_rate": "1.2300"},
+        },
+        API_KEY,
+    )
+    with (
+        patch("stripe.checkout.Session.create", return_value=session),
+        patch.object(StoredPayment, "save"),
+        pytest.raises(RedirectNeeded),
+    ):
+        provider.get_form(payment)
+
+    expected = session.to_dict(for_json=True)
+    assert payment.attrs.session == expected
+    assert json.loads(payment.extra_data)["session"] == expected
 
 
 def test_provider_status_confirmed_stores_stripe_session_as_json() -> None:
