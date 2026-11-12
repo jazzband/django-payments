@@ -4,6 +4,7 @@ import json
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import NoReturn
 
@@ -15,6 +16,11 @@ from payments import PaymentStatus
 from payments import RedirectNeeded
 from payments.core import BasicProvider
 from payments.forms import PaymentForm as BasePaymentForm
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
+    from payments.models import BasePayment
 
 
 @dataclass
@@ -117,11 +123,11 @@ class StripeProviderV3(BasicProvider):
 
         raise RedirectNeeded(payment.attrs.session.get("url"))
 
-    def create_session(self, payment):
+    def create_session(self, payment: BasePayment) -> stripe.checkout.Session:
         """Makes the call to Stripe to create the Checkout Session"""
         if not payment.transaction_id:
             stripe.api_key = self.api_key
-            session_data = {
+            session_data: dict[str, Any] = {
                 "line_items": self.get_line_items(payment),
                 "mode": "payment",
                 "success_url": payment.get_success_url(),
@@ -146,7 +152,7 @@ class StripeProviderV3(BasicProvider):
                 return stripe.checkout.Session.create(**session_data)
             except stripe.StripeError as e:
                 # Payment has been declined by Stripe, check Stripe Dashboard
-                raise PaymentError(e) from e
+                raise PaymentError(str(e)) from e
         else:
             raise PaymentError("This payment has already been processed.")
 
@@ -216,7 +222,7 @@ class StripeProviderV3(BasicProvider):
 
         return int(amount * factor)
 
-    def return_event_payload(self, request) -> Any:
+    def return_event_payload(self, request: HttpRequest) -> dict[str, Any]:
         if self.secure_endpoint:
             if "STRIPE_SIGNATURE" not in request.headers:
                 raise PaymentError(
