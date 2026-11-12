@@ -373,6 +373,38 @@ def test_process_data_does_not_overwrite_cancelled_on_expiry():
     assert payment.status == PaymentStatus.CANCELLED
 
 
+def test_process_data_confirms_only_once_on_redelivery():
+    payment = Payment()
+    payment.change_status = Mock(wraps=payment.change_status)
+    provider = StripeProviderV3(api_key=API_KEY, secure_endpoint=False)
+    request = _make_webhook_request(
+        event_type="checkout.session.completed",
+        session_status="complete",
+        payment_status="paid",
+    )
+
+    provider.process_data(payment, request)
+    provider.process_data(payment, request)
+
+    payment.change_status.assert_called_once_with(PaymentStatus.CONFIRMED)
+
+
+def test_process_data_does_not_confirm_refunded_payment():
+    payment = Payment()
+    payment.status = PaymentStatus.REFUNDED
+    provider = StripeProviderV3(api_key=API_KEY, secure_endpoint=False)
+    request = _make_webhook_request(
+        event_type="checkout.session.completed",
+        session_status="complete",
+        payment_status="paid",
+    )
+
+    provider.process_data(payment, request)
+
+    assert payment.status == PaymentStatus.REFUNDED
+    assert payment.captured_amount == 0
+
+
 # Stored Stripe objects must be JSON-safe: since stripe 15 they are not dicts.
 ENDPOINT_SECRET = "whsec_test_secret"
 

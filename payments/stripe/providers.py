@@ -265,8 +265,11 @@ class StripeProviderV3(BasicProvider):
                 if payment.status != PaymentStatus.CANCELLED:
                     payment.change_status(PaymentStatus.REJECTED)
 
-            elif session_info["payment_status"] == "paid":
-                # Paid Order
+            elif session_info["payment_status"] == "paid" and payment.status in (
+                PaymentStatus.WAITING,
+                PaymentStatus.INPUT,
+            ):
+                # Paid Order; Stripe may redeliver events, so only confirm once
                 payment.captured_amount = payment.total
                 payment.change_status(PaymentStatus.CONFIRMED)
 
