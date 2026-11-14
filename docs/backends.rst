@@ -137,6 +137,30 @@ Example::
           )
       }
 
+Nano
+----
+
+.. autoclass:: payments.nano.NanoProvider
+
+  .. automethod:: __init__
+
+Example::
+
+      PAYMENT_VARIANTS = {
+          'nano': (
+              'payments.nano.NanoProvider',
+              {
+                  'account': 'nano_...',  # the account that receives payments
+                  'node_url': 'https://your-node.example/rpc',
+              }
+          )
+      }
+
+Payments of this variant use the currency ``XNO``. The form's ``nano_request``
+holds ``pay_to``, ``amount_raw`` and ``representative``: show all three, since
+the customer's send block must use that representative for the payment to be
+accepted. The form posts the block hash back to the payment's process URL.
+
 PayPal
 ------
 

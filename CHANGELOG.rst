@@ -7,6 +7,10 @@ releases, in reverse chronological order.
 Unreleased
 ----------
 
+- Add a ``nano`` provider for Nano (XNO) payments, verified against a node the
+  operator configures. It holds no key, binds each send to its payment through
+  the block's representative, and refuses a block hash already stored on
+  another payment.
 - ``process_data`` locks the payment row (``select_for_update()``), so a
   webhook and a browser callback for the same payment no longer overwrite
   each other's state.
