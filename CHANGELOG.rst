@@ -7,6 +7,10 @@ releases, in reverse chronological order.
 Unreleased
 ----------
 
+- Stripe: a redelivered ``checkout.session.completed`` webhook no longer
+  confirms the payment again. Only a payment that is still ``waiting`` or
+  ``input`` is confirmed, so ``status_changed`` is not sent twice and a
+  refunded payment stays refunded.
 - ``process_data`` locks the payment row (``select_for_update()``), so a
   webhook and a browser callback for the same payment no longer overwrite
   each other's state.
