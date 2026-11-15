@@ -466,6 +466,52 @@ def test_provider_renews_access_token(
     assert payment_response["access_token"] == new_token
 
 
+def _token_response(token: str) -> MagicMock:
+    response = MagicMock(status_code=200)
+    response.json.return_value = {
+        "access_token": token,
+        "token_type": "Bearer",
+        "expires_in": 3600,
+    }
+    return response
+
+
+def test_provider_renews_access_token_on_a_401_response(
+    paypal_provider: PaypalProvider,
+) -> None:
+    # PayPal answers an expired token with a 401 response; requests doesn't raise.
+    unauthorized = MagicMock(status_code=401)
+    unauthorized.json.return_value = {"error": "invalid_token"}
+    ok = MagicMock(status_code=200)
+    ok.json.return_value = {"status": "success"}
+    with (
+        patch("requests.post", return_value=_token_response("t")) as mocked_post,
+        patch("requests.request", side_effect=[unauthorized, ok]) as mocked_request,
+    ):
+        assert paypal_provider.get(None, "http://example.com/api") == {
+            "status": "success"
+        }
+    assert mocked_post.call_count == 2
+    assert mocked_request.call_count == 2
+
+
+def test_provider_fails_when_the_renewed_token_gets_a_401_too(
+    paypal_payment: Payment,
+    paypal_provider: PaypalProvider,
+) -> None:
+    unauthorized = MagicMock(status_code=401)
+    unauthorized.json.return_value = {"error": "invalid_token"}
+    paypal_payment.created = timezone.now()
+    with (
+        patch("requests.post", return_value=_token_response("t")),
+        patch("requests.request", return_value=unauthorized) as mocked_request,
+        pytest.raises(PaymentError),
+    ):
+        paypal_provider.get(paypal_payment, "http://example.com/api")
+    assert mocked_request.call_count == 2
+    assert paypal_payment.status == PaymentStatus.ERROR
+
+
 # PaypalCardProvider tests
 
 

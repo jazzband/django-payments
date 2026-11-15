@@ -30,7 +30,9 @@ CENTS = Decimal("0.01")
 
 
 class UnauthorizedRequest(Exception):
-    pass
+    def __init__(self, response):
+        super().__init__(response)
+        self.response = response
 
 
 def authorize(fun):
@@ -41,7 +43,7 @@ def authorize(fun):
         self.access_token = self.get_access_token(payment)
         try:
             response = fun(*args, **kwargs)
-        except HTTPError as e:
+        except (HTTPError, UnauthorizedRequest) as e:
             if e.response.status_code == 401:
                 if payment is not None:
                     last_auth_response = self.get_last_response(payment, is_auth=True)
@@ -51,7 +53,10 @@ def authorize(fun):
                             payment, last_auth_response, is_auth=True
                         )
                 self.access_token = self.get_access_token(payment)
-                response = fun(*args, **kwargs)
+                try:
+                    response = fun(*args, **kwargs)
+                except UnauthorizedRequest as retry_error:
+                    self._raise_error_response(payment, retry_error.response)
             else:
                 raise
         return response
@@ -140,30 +145,41 @@ class PaypalProvider(BasicProvider):
         if "data" in kwargs:
             kwargs["data"] = json.dumps(kwargs["data"])
         response = requests.request(method, *args, **kwargs)
+        if response.status_code == 401:
+            # Leave it to @authorize, which renews the token and retries once
+            raise UnauthorizedRequest(response)
+        if 400 <= response.status_code <= 500:
+            self._raise_error_response(payment, response)
         try:
             data = response.json()
         except ValueError:
             data = {}
-        if 400 <= response.status_code <= 500:
-            if payment is not None:
-                self.set_error_data(payment, data)
-            logger.debug(data)
-            message = "Paypal error"
-            if response.status_code == 400:
-                error_data = response.json()
-                logger.warning(
-                    message,
-                    extra={"response": error_data, "status_code": response.status_code},
-                )
-                message = error_data.get("message", message)
-            else:
-                logger.warning(message, extra={"status_code": response.status_code})
-            if payment is not None:
-                payment.change_status(PaymentStatus.ERROR, message)
-            raise PaymentError(message)
         if payment is not None:
             self.set_response_data(payment, data)
         return data
+
+    def _raise_error_response(self, payment, response):
+        """Record an error response from the PayPal API and raise PaymentError."""
+        try:
+            data = response.json()
+        except ValueError:
+            data = {}
+        if payment is not None:
+            self.set_error_data(payment, data)
+        logger.debug(data)
+        message = "Paypal error"
+        if response.status_code == 400:
+            error_data = response.json()
+            logger.warning(
+                message,
+                extra={"response": error_data, "status_code": response.status_code},
+            )
+            message = error_data.get("message", message)
+        else:
+            logger.warning(message, extra={"status_code": response.status_code})
+        if payment is not None:
+            payment.change_status(PaymentStatus.ERROR, message)
+        raise PaymentError(message)
 
     def post(self, payment, *args, **kwargs) -> dict:
         """Perform a POST request to the PayPal API.
