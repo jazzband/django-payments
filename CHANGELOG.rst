@@ -7,6 +7,9 @@ releases, in reverse chronological order.
 Unreleased
 ----------
 
+- PayPal: a request that gets a ``401`` response now renews the access
+  token and retries once, as intended, instead of failing with
+  ``PaymentError``.
 - Stripe: a redelivered ``checkout.session.completed`` webhook no longer
   confirms the payment again. Only a payment that is still ``waiting`` or
   ``input`` is confirmed, so ``status_changed`` is not sent twice and a
