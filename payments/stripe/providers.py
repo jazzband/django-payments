@@ -271,6 +271,11 @@ class StripeProviderV3(BasicProvider):
                 if payment.status != PaymentStatus.CANCELLED:
                     payment.change_status(PaymentStatus.REJECTED)
 
+            elif event["type"] == "checkout.session.async_payment_failed":
+                # A delayed payment method (e.g. bank debit) failed after checkout
+                if payment.status in (PaymentStatus.WAITING, PaymentStatus.INPUT):
+                    payment.change_status(PaymentStatus.REJECTED)
+
             elif session_info["payment_status"] == "paid" and payment.status in (
                 PaymentStatus.WAITING,
                 PaymentStatus.INPUT,

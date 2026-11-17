@@ -383,6 +383,36 @@ def test_process_data_does_not_overwrite_cancelled_on_expiry():
     assert payment.status == PaymentStatus.CANCELLED
 
 
+def test_process_data_rejects_on_async_payment_failed():
+    payment = Payment()
+    provider = StripeProviderV3(api_key=API_KEY, secure_endpoint=False)
+    request = _make_webhook_request(
+        event_type="checkout.session.async_payment_failed",
+        session_status="complete",
+        payment_status="unpaid",
+    )
+
+    provider.process_data(payment, request)
+
+    assert payment.status == PaymentStatus.REJECTED
+    assert payment.captured_amount == 0
+
+
+def test_process_data_async_payment_failed_does_not_overwrite_final_status():
+    payment = Payment()
+    payment.status = PaymentStatus.CANCELLED
+    provider = StripeProviderV3(api_key=API_KEY, secure_endpoint=False)
+    request = _make_webhook_request(
+        event_type="checkout.session.async_payment_failed",
+        session_status="complete",
+        payment_status="unpaid",
+    )
+
+    provider.process_data(payment, request)
+
+    assert payment.status == PaymentStatus.CANCELLED
+
+
 def test_process_data_confirms_only_once_on_redelivery():
     payment = Payment()
     payment.change_status = Mock(wraps=payment.change_status)
