@@ -7,6 +7,10 @@ releases, in reverse chronological order.
 Unreleased
 ----------
 
+- Stripe: a ``checkout.session.async_payment_failed`` webhook now rejects the
+  payment. Before, a failed delayed payment (e.g. a bank debit) stayed
+  ``waiting``. Only a payment that is still ``waiting`` or ``input`` is
+  changed.
 - Stripe: a redelivered ``checkout.session.completed`` webhook no longer
   confirms the payment again. Only a payment that is still ``waiting`` or
   ``input`` is confirmed, so ``status_changed`` is not sent twice and a
