@@ -30,6 +30,7 @@ Contents:
    payment-model.rst
    variants.rst
    backends.rst
+   yolfi.rst
    usage.rst
    refund.rst
    preauth.rst
