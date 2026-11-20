@@ -30,10 +30,7 @@ def _amount(value):
     try:
         amount = Decimal(value)
         # BasePayment.total has seven integer places and two decimal places.
-        if (
-            not amount.is_finite()
-            or not Decimal("0.01") <= amount < Decimal("10000000")
-        ):
+        if not amount.is_finite() or not Decimal("0.01") <= amount < Decimal(10000000):
             raise ValueError
         if amount != amount.quantize(Decimal("0.01")):
             raise ValueError
@@ -56,11 +53,15 @@ def _url(value, *, hosted=False):
         raise PaymentError("Invalid Yolfi checkout URL", code=409)
     try:
         parsed = urlsplit(value)
-        if (parsed.scheme not in (("https",) if hosted else ("https", "http"))
-                or not parsed.hostname or parsed.username or parsed.password):
+        if (
+            parsed.scheme not in (("https",) if hosted else ("https", "http"))
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+        ):
             raise ValueError
         # Access also rejects malformed ports, even though no server fetch occurs.
-        parsed.port
+        _ = parsed.port
     except ValueError:
         raise PaymentError("Invalid Yolfi checkout URL", code=409) from None
     return value
@@ -77,8 +78,12 @@ class YolfiProvider(BasicProvider):
 
     def __init__(self, api_key, webhook_secret, capture=True):
         for value in (api_key, webhook_secret):
-            if (not isinstance(value, str) or not value or len(value) > 8192
-                    or any(ord(char) <= 32 for char in value)):
+            if (
+                not isinstance(value, str)
+                or not value
+                or len(value) > 8192
+                or any(ord(char) <= 32 for char in value)
+            ):
                 raise ValueError("Yolfi requires a nonempty API key and webhook secret")
         if hmac.compare_digest(api_key.encode(), webhook_secret.encode()):
             raise ValueError("Use the webhook secret, not the API key, for signatures")
@@ -95,25 +100,39 @@ class YolfiProvider(BasicProvider):
 
     def _match_pricing(self, data, payment):
         amount, currency, reference = self._pricing(payment)
-        if (not isinstance(data, dict) or _amount(data.get("amount")) != amount
-                or data.get("currency") != currency
-                or data.get("merchantOrderId") != reference):
+        if (
+            not isinstance(data, dict)
+            or _amount(data.get("amount")) != amount
+            or data.get("currency") != currency
+            or data.get("merchantOrderId") != reference
+        ):
             raise PaymentError("Yolfi checkout pricing or reference mismatch", code=409)
 
     def _session(self, data, payment):
         self._match_pricing(data, payment)
         session_id = data.get("id")
-        if (not isinstance(session_id, str)
-                or not re.fullmatch(r"ycs_[A-Za-z0-9_-]{1,200}", session_id)
-                or data.get("object") != "checkout_session"
-                or data.get("status") not in ("OPEN", "PROCESSING", "COMPLETED")
-                or data.get("paylinkId") is not None):
+        if (
+            not isinstance(session_id, str)
+            or not re.fullmatch(r"ycs_[A-Za-z0-9_-]{1,200}", session_id)
+            or data.get("object") != "checkout_session"
+            or data.get("status") not in ("OPEN", "PROCESSING", "COMPLETED")
+            or data.get("paylinkId") is not None
+        ):
             raise PaymentError("Invalid Yolfi checkout session", code=409)
         _url(data.get("url"), hosted=True)
         # Store only the immutable checkout contract needed for correlation.
-        return {key: data[key] for key in (
-            "id", "object", "status", "url", "amount", "currency", "merchantOrderId",
-        )}
+        return {
+            key: data[key]
+            for key in (
+                "id",
+                "object",
+                "status",
+                "url",
+                "amount",
+                "currency",
+                "merchantOrderId",
+            )
+        }
 
     def _request(self, payment):
         amount, currency, reference = self._pricing(payment)
@@ -125,8 +144,11 @@ class YolfiProvider(BasicProvider):
         if not isinstance(description, str) or len(description) > 1000:
             raise PaymentError("Invalid Yolfi checkout description", code=400)
         payload = {
-            "amount": amount, "currency": currency, "merchantOrderId": reference,
-            "description": description, "successUrl": _url(payment.get_success_url()),
+            "amount": amount,
+            "currency": currency,
+            "merchantOrderId": reference,
+            "description": description,
+            "successUrl": _url(payment.get_success_url()),
             "cancelUrl": _url(payment.get_failure_url()),
         }
         # Persist before HTTP: timeouts retry the identical body and key, even
@@ -158,7 +180,9 @@ class YolfiProvider(BasicProvider):
                 response = requests.post(
                     CHECKOUT_ENDPOINT,
                     headers=headers,
-                    json=payload, timeout=10, allow_redirects=False,
+                    json=payload,
+                    timeout=10,
+                    allow_redirects=False,
                 )
             except requests.RequestException:
                 raise PaymentError(
@@ -170,8 +194,11 @@ class YolfiProvider(BasicProvider):
                 result = response.json()
             except ValueError:
                 raise PaymentError("Invalid Yolfi checkout response") from None
-            if (not isinstance(result, dict) or result.get("success") is not True
-                    or not isinstance(result.get("data"), dict)):
+            if (
+                not isinstance(result, dict)
+                or result.get("success") is not True
+                or not isinstance(result.get("data"), dict)
+            ):
                 raise PaymentError("Invalid Yolfi response", code=502)
             session = self._session(result["data"], payment)
             payment.transaction_id = session["id"]
@@ -184,8 +211,12 @@ class YolfiProvider(BasicProvider):
             raise PaymentError("Yolfi webhooks require POST", code=405)
         body = request.body
         signature = request.headers.get("X-Yolfi-Signature")
-        if (not isinstance(body, bytes) or len(body) > 1048576
-                or not isinstance(signature, str) or len(signature) > 128):
+        if (
+            not isinstance(body, bytes)
+            or len(body) > 1048576
+            or not isinstance(signature, str)
+            or len(signature) > 128
+        ):
             raise PaymentError("Invalid Yolfi signature", code=400)
         try:
             received = base64.b64decode(signature, validate=True)
@@ -198,11 +229,14 @@ class YolfiProvider(BasicProvider):
             event = json.loads(body)
         except (ValueError, UnicodeError):
             raise PaymentError("Invalid Yolfi webhook payload", code=400) from None
-        if (not isinstance(event, dict) or not isinstance(event.get("data"), dict)
-                or not isinstance(event.get("id"), str)
-                or not re.fullmatch(r"[A-Za-z0-9_-]{1,200}", event["id"])
-                or not isinstance(event.get("type"), str)
-                or not 1 <= len(event["type"]) <= 100):
+        if (
+            not isinstance(event, dict)
+            or not isinstance(event.get("data"), dict)
+            or not isinstance(event.get("id"), str)
+            or not re.fullmatch(r"[A-Za-z0-9_-]{1,200}", event["id"])
+            or not isinstance(event.get("type"), str)
+            or not 1 <= len(event["type"]) <= 100
+        ):
             raise PaymentError("Invalid Yolfi webhook payload", code=400)
         # This header is not signed and must never override the body identity.
         event_header = request.headers.get("X-Yolfi-Event-ID")
@@ -222,10 +256,12 @@ class YolfiProvider(BasicProvider):
                 getattr(payment.attrs, "yolfi_session", None), payment
             )
             self._match_pricing(getattr(payment.attrs, "yolfi_request", None), payment)
-            if (payment.transaction_id != session["id"]
-                    or data.get("checkoutSessionId") != session["id"]
-                    or data.get("merchantOrderId") != str(payment.token)
-                    or data.get("currency") != session["currency"]):
+            if (
+                payment.transaction_id != session["id"]
+                or data.get("checkoutSessionId") != session["id"]
+                or data.get("merchantOrderId") != str(payment.token)
+                or data.get("currency") != session["currency"]
+            ):
                 raise PaymentError(
                     "Yolfi payment reference or currency mismatch", code=409
                 )
@@ -249,7 +285,8 @@ class YolfiProvider(BasicProvider):
             # transaction. Replays cannot emit a second confirmation signal.
             if payment.status in PENDING_STATUSES:
                 payment.attrs.yolfi_confirmation = {
-                    "event_id": event["id"], "invoice_id": invoice_id,
+                    "event_id": event["id"],
+                    "invoice_id": invoice_id,
                 }
                 # Native event.amount is a token amount; amountUsd is USD even
                 # when pricing uses EUR. Capture the bound local pricing total.
